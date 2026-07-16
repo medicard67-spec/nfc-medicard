@@ -53,7 +53,7 @@ export default function PatientProfile() {
 
       <Card>
         <div className="mb-4 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900 text-2xl font-bold text-brand-700 dark:text-brand-300">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-700 text-2xl font-bold text-brand-700 dark:text-brand-100">
             {profile.name?.charAt(0)}
           </div>
           <div>

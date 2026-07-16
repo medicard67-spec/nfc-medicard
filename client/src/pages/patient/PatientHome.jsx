@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import EmergencyBanner from "../../components/EmergencyBanner.jsx";
 import Card from "../../components/Card.jsx";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
 const quickLinks = [
   { to: "/patient/history", label: "Medical History", icon: "📋" },
@@ -15,6 +16,8 @@ const quickLinks = [
 
 export default function PatientHome() {
   const { profile } = useAuth();
+  const { theme } = useTheme();
+  const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
   const [vitals, setVitals] = useState([]);
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function PatientHome() {
                 <XAxis dataKey="id" hide />
                 <YAxis width={30} />
                 <Tooltip />
-                <Line type="monotone" dataKey="heartRate" stroke="#1c70f0" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="heartRate" stroke={lineColor} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -62,7 +65,7 @@ export default function PatientHome() {
             <Link
               key={q.to}
               to={q.to}
-              className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-brand-300 hover:bg-brand-50 dark:bg-brand-950"
+              className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900"
             >
               <span className="text-2xl">{q.icon}</span>
               {q.label}

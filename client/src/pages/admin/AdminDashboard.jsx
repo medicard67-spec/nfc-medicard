@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
-const GENDER_COLORS = ["#3390fb", "#f472b6", "#94a3b8"];
+const GENDER_COLORS_LIGHT = ["#7c3aed", "#f97316", "#94a3b8"];
+const GENDER_COLORS_DARK = ["#a78bfa", "#fb923c", "#cbd5e1"];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
+  const { theme } = useTheme();
+  const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
+  const genderColors = theme === "dark" ? GENDER_COLORS_DARK : GENDER_COLORS_LIGHT;
 
   useEffect(() => {
     api.get("/admin/stats").then((res) => setStats(res.data));
@@ -33,7 +38,7 @@ export default function AdminDashboard() {
             <PieChart>
               <Pie data={genderData} dataKey="value" nameKey="name" outerRadius={80} label>
                 {genderData.map((_, i) => (
-                  <Cell key={i} fill={GENDER_COLORS[i % GENDER_COLORS.length]} />
+                  <Cell key={i} fill={genderColors[i % genderColors.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -49,7 +54,7 @@ export default function AdminDashboard() {
               <XAxis dataKey="month" />
               <YAxis allowDecimals={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="visits" stroke="#1c70f0" strokeWidth={2} />
+              <Line type="monotone" dataKey="visits" stroke={lineColor} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

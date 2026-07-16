@@ -42,7 +42,7 @@ export function ToastProvider({ children }) {
                 ? "border-accent-200 bg-accent-50 text-accent-800 dark:border-accent-800 dark:bg-accent-950 dark:text-accent-200"
                 : t.type === "error"
                 ? "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
-                : "border-brand-200 bg-brand-50 text-brand-800 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200"
+                : "border-brand-200 bg-brand-50 text-brand-800 dark:border-brand-700 dark:bg-brand-800 dark:text-brand-100"
             }`}
           >
             <span className="mt-0.5">

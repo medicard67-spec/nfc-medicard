@@ -5,9 +5,12 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
 export default function DoctorDashboard() {
   const { profile } = useAuth();
+  const { theme } = useTheme();
+  const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
   const [patientCount, setPatientCount] = useState(0);
   const [stats, setStats] = useState(null);
 
@@ -52,7 +55,7 @@ export default function DoctorDashboard() {
               <XAxis dataKey="week" tick={{ fontSize: 11 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Line type="monotone" dataKey="records" stroke="#3b6ef5" strokeWidth={2} />
+              <Line type="monotone" dataKey="records" stroke={lineColor} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         )}

@@ -29,7 +29,7 @@ export default function AdminDoctorReports() {
               <button
                 onClick={() => setActiveDoctor(null)}
                 className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                  !activeDoctor ? "bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300" : "hover:bg-slate-50"
+                  !activeDoctor ? "bg-brand-50 dark:bg-brand-800 text-brand-700 dark:text-brand-100" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 All Doctors
@@ -40,7 +40,7 @@ export default function AdminDoctorReports() {
                 <button
                   onClick={() => setActiveDoctor(d.uid)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                    activeDoctor === d.uid ? "bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300" : "hover:bg-slate-50"
+                    activeDoctor === d.uid ? "bg-brand-50 dark:bg-brand-800 text-brand-700 dark:text-brand-100" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   <p className="font-medium">{d.name}</p>
