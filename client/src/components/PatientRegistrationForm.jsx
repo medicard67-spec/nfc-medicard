@@ -71,6 +71,10 @@ export default function PatientRegistrationForm({ onRegistered }) {
             Patient registered: {success.name} ({success.email}). No NFC card is bound yet — this
             patient can still be looked up via the Patient Directory.
           </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            A verification email has been sent to {success.email} — they must confirm it before
+            they can log in.
+          </p>
         </Card>
       )}
     </div>

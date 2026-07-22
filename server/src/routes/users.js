@@ -33,11 +33,15 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false,
   });
   if (createError) {
     return res.status(400).json({ error: createError.message });
   }
+
+  supabase.auth.resend({ type: "signup", email }).catch((err) => {
+    console.error("Failed to send verification email:", err.message);
+  });
 
   const uid = created.user.id;
   const { error: profileError } = await supabase

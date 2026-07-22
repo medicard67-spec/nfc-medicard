@@ -14,11 +14,17 @@ async function createPatientAccount({ email, password, name, ic, dob, age, gende
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false,
   });
   if (createError) throw new Error(createError.message);
 
   const uid = created.user.id;
+
+  // admin.createUser() does not itself send an email; trigger Supabase's
+  // built-in "confirm signup" email so the patient must verify before login.
+  supabase.auth.resend({ type: "signup", email }).catch((err) => {
+    console.error("Failed to send verification email:", err.message);
+  });
 
   const { error: profileError } = await supabase
     .from("profiles")

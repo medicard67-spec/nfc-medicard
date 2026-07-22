@@ -3,6 +3,7 @@ import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import QrCodeCard from "../../components/QrCodeCard.jsx";
 
 const emptyForm = {
   name: "", email: "", password: "", ic: "", dob: "", age: "", gender: "Male",
@@ -129,6 +130,16 @@ export default function AdminRegisterCard() {
             <p className="text-sm font-semibold text-green-600">
               Card registered to {success.name} (UID: {success.cardUid}).
             </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              A verification email has been sent to {success.email} — they must confirm it before
+              they can log in.
+            </p>
+            <div className="mt-4">
+              <QrCodeCard
+                value={success.cardUid}
+                label="Optional: print this QR code on the card as a fallback for phones without NFC."
+              />
+            </div>
           </Card>
         )}
       </div>

@@ -11,12 +11,14 @@ import PatientLabs from "./pages/patient/PatientLabs.jsx";
 import PatientRadiology from "./pages/patient/PatientRadiology.jsx";
 import PatientMessages from "./pages/patient/PatientMessages.jsx";
 import PatientProfile from "./pages/patient/PatientProfile.jsx";
+import PatientAppointments from "./pages/patient/PatientAppointments.jsx";
 
 import DoctorDashboard from "./pages/doctor/DoctorDashboard.jsx";
 import DoctorScan from "./pages/doctor/DoctorScan.jsx";
 import DoctorDirectory from "./pages/doctor/DoctorDirectory.jsx";
 import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail.jsx";
 import DoctorAddPatient from "./pages/doctor/DoctorAddPatient.jsx";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments.jsx";
 
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminRegisterCard from "./pages/admin/AdminRegisterCard.jsx";
@@ -30,6 +32,7 @@ const doctorNav = [
   { to: "/doctor/scan", label: "Scan NFC Card", icon: "📶" },
   { to: "/doctor/directory", label: "Patient Directory", icon: "📁" },
   { to: "/doctor/add-patient", label: "Register Patient", icon: "➕" },
+  { to: "/doctor/appointments", label: "Appointments", icon: "📅" },
 ];
 
 const adminNav = [
@@ -56,6 +59,7 @@ export default function App() {
     { to: "/patient/labs", label: "Lab Results", icon: "🧪" },
     { to: "/patient/radiology", label: "Imaging", icon: "🩻" },
     { to: "/patient/messages", label: "Messages", icon: "💬", badge: unreadCount },
+    { to: "/patient/appointments", label: "Appointments", icon: "📅" },
     { to: "/patient/profile", label: "Profile", icon: "👤" },
   ];
 
@@ -77,6 +81,7 @@ export default function App() {
         <Route path="labs" element={<PatientLabs />} />
         <Route path="radiology" element={<PatientRadiology />} />
         <Route path="messages" element={<PatientMessages />} />
+        <Route path="appointments" element={<PatientAppointments />} />
         <Route path="profile" element={<PatientProfile />} />
       </Route>
 
@@ -92,6 +97,7 @@ export default function App() {
         <Route path="scan" element={<DoctorScan />} />
         <Route path="directory" element={<DoctorDirectory />} />
         <Route path="add-patient" element={<DoctorAddPatient />} />
+        <Route path="appointments" element={<DoctorAppointments />} />
         <Route path="patient/:id" element={<DoctorPatientDetail />} />
       </Route>
 

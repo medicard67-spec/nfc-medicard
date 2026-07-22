@@ -21,6 +21,21 @@ function toJson(row) {
   };
 }
 
+// A doctor's own appointments across all their patients (for a calendar view).
+router.get("/mine", requireAuth, requireRole("doctor"), async (req, res) => {
+  const [appointmentsRes, patientsRes] = await Promise.all([
+    supabase.from("appointments").select("*").eq("doctor_id", req.user.uid).order("date", { ascending: true }),
+    supabase.from("patients").select("id, name"),
+  ]);
+  if (appointmentsRes.error) return res.status(500).json({ error: appointmentsRes.error.message });
+  if (patientsRes.error) return res.status(500).json({ error: patientsRes.error.message });
+
+  const nameById = new Map(patientsRes.data.map((p) => [p.id, p.name]));
+  res.json(
+    appointmentsRes.data.map((row) => ({ ...toJson(row), patientName: nameById.get(row.patient_id) || "Unknown" }))
+  );
+});
+
 router.get("/", requireAuth, async (req, res) => {
   const { patientId } = req.query;
   if (!patientId) return res.status(400).json({ error: "patientId query param required" });

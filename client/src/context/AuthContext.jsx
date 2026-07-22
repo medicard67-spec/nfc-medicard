@@ -49,9 +49,18 @@ export function AuthProvider({ children }) {
     setError(null);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      setError("Invalid email or password.");
+      if (signInError.message?.toLowerCase().includes("email not confirmed")) {
+        setError("email_not_confirmed");
+      } else {
+        setError("Invalid email or password.");
+      }
       throw signInError;
     }
+  };
+
+  const resendVerificationEmail = async (email) => {
+    const { error: resendError } = await supabase.auth.resend({ type: "signup", email });
+    if (resendError) throw resendError;
   };
 
   const logout = () => supabase.auth.signOut();
@@ -64,6 +73,7 @@ export function AuthProvider({ children }) {
     error,
     login,
     logout,
+    resendVerificationEmail,
     refreshProfile: loadProfile,
   };
 

@@ -7,7 +7,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
-  const { login } = useAuth();
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resendState, setResendState] = useState("idle");
+  const { login, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,13 +17,29 @@ export default function Login() {
     e.preventDefault();
     setSubmitting(true);
     setFormError(null);
+    setUnconfirmed(false);
     try {
       await login(email, password);
       navigate(location.state?.from || "/", { replace: true });
     } catch (err) {
-      setFormError("Invalid email or password.");
+      if (err.message?.toLowerCase().includes("email not confirmed")) {
+        setUnconfirmed(true);
+        setFormError("Please verify your email before signing in.");
+      } else {
+        setFormError("Invalid email or password.");
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      await resendVerificationEmail(email);
+      setResendState("sent");
+    } catch {
+      setResendState("idle");
     }
   };
 
@@ -115,6 +133,26 @@ export default function Login() {
             </div>
 
             {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+
+            {unconfirmed && (
+              <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                <p className="mb-2">
+                  Didn't get the email? Check spam, or we can send it again.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendState === "sending" || resendState === "sent"}
+                  className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100"
+                >
+                  {resendState === "sending"
+                    ? "Sending..."
+                    : resendState === "sent"
+                    ? "Verification email sent ✓"
+                    : "Resend verification email"}
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"

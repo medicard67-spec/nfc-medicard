@@ -10,8 +10,11 @@ portals (Patient, Doctor, Admin) built on:
   Supabase Storage. Fully hosted, so there's nothing to run locally besides your own Node
   processes (no Java, no emulators).
 - **NFC scanning:** real hardware support via the **Web NFC API** on Android Chrome (tap a
-  physical card, no app install needed) — automatically falls back to manual Card UID entry on
-  unsupported browsers/devices (iOS, desktop). Same backend lookup either way.
+  physical card, no app install needed), with a **QR code fallback** (any phone camera) for
+  iOS/desktop, and manual Card UID entry as a last resort. All three paths hit the same backend
+  lookup.
+- **Testing/CI:** Vitest + Supertest backend test suite, run automatically on every push via
+  GitHub Actions (`.github/workflows/ci.yml`).
 
 ## Prerequisites
 
@@ -32,8 +35,14 @@ portals (Patient, Doctor, Admin) built on:
 3. Go to **Settings → API** and copy three values: the **Project URL**, the **anon / public key**,
    and the **service_role key** (keep this one secret — it's never used in the frontend).
 4. Under **Authentication → Providers**, make sure **Email** sign-in is enabled (it is by default).
-   Under **Authentication → Settings**, you can turn off "Confirm email" for local dev convenience
-   since the seed script creates users with `email_confirm: true` already.
+5. Under **Authentication → Settings**, make sure **"Confirm email"** is turned **ON**. Patients and
+   doctors registered through the app (admin/doctor "Add Patient", "Register New Card") are created
+   unconfirmed and sent a real verification email — they can't log in until they click it. Demo
+   accounts from `npm run seed` are still pre-confirmed regardless of this setting, so seeding and
+   local testing aren't affected either way.
+   - Supabase's built-in email sending is rate-limited on the free tier (a handful of emails per
+     hour) and may land in spam. If a real email doesn't arrive, you can manually confirm a user
+     from **Authentication → Users** → select the user → "Confirm email" as a fallback.
 
 Storage buckets (`lab-results`, `radiology`) are created automatically the first time the backend
 starts — no manual setup needed.
@@ -115,15 +124,33 @@ Runs on http://localhost:5173. Log in with any of the demo accounts above.
   auto-clears when the Messages page is opened.
 - **Doctor dashboard chart** — weekly record-logging activity, backed by `/api/doctor/stats`.
 - **Search/filter** — on Medical History, Lab Results, and Imaging (patient + doctor views).
+- **Appointment calendar** — Patient and Doctor both have an "Appointments" page with a month-view
+  calendar; appointments are created from a doctor's "Update Record" form.
+- **QR code fallback** — Admin's card registration screen generates a printable QR code for the
+  physical card; Doctor's scan page can read it back with the device camera.
+- **Email verification** — patients/doctors registered through the app must confirm their email
+  before they can log in (seeded demo accounts are exempt for convenience).
+
+## Running tests
+
+From `/server`:
+```bash
+npm test
+```
+Runs the Vitest + Supertest suite (auth middleware, patient CRUD, NFC lookup) against a mocked
+Supabase client — no real database or network access needed. The same command runs automatically
+on every push/PR via GitHub Actions.
 
 ## Project structure
 
 ```
 nfc-medicard/
+├── .github/workflows/ci.yml              # Runs backend tests + frontend build on push/PR
 ├── supabase/
 │   ├── schema.sql                        # Full schema + RLS (fresh setup)
 │   └── migration_002_audit_and_unread.sql # Incremental migration (existing projects)
 ├── server/                  # Express API (Supabase service-role client)
+│   ├── test/                # Vitest + Supertest suite, mocked Supabase client
 │   └── src/
 │       ├── routes/          # patients, medical-history, lab-results, radiology,
 │       │                    # messages, nfc, appointments, admin, doctor, audit, users
@@ -133,6 +160,7 @@ nfc-medicard/
 └── client/                  # React app
     └── src/
         ├── pages/{patient,doctor,admin}/
+        ├── components/{MonthCalendar,QrCodeCard,QrScannerView}.jsx
         ├── context/{AuthContext,ThemeContext,ToastContext,UnreadContext}.jsx
         └── lib/{supabase.js,api.js,webNfc.js,exportPdf.js}
 ```
