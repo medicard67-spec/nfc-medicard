@@ -44,7 +44,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
+    <div className="flex min-h-screen">
       {/* Brand panel */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-700 via-fuchsia-600 to-accent-500 p-10 text-white lg:flex">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/20 blur-3xl" />

@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PortalLayout from "./components/PortalLayout.jsx";
+import BackgroundImage from "./components/BackgroundImage.jsx";
 import Login from "./pages/Login.jsx";
 
 import PatientHome from "./pages/patient/PatientHome.jsx";
@@ -64,7 +65,9 @@ export default function App() {
   ];
 
   return (
-    <Routes>
+    <>
+      <BackgroundImage />
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<RoleRedirect />} />
 
@@ -119,6 +122,7 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

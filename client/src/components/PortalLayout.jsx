@@ -12,7 +12,7 @@ export default function PortalLayout({ navItems, title }) {
   useEffect(() => setMobileOpen(false), [location.pathname]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen">
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-900/90">
         <button
@@ -42,7 +42,7 @@ export default function PortalLayout({ navItems, title }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-shrink-0 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 dark:border-slate-800 dark:bg-slate-900 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-shrink-0 -translate-x-full flex-col border-r border-slate-200 bg-white/85 backdrop-blur-md transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 dark:border-slate-800 dark:bg-slate-900/85 ${
           mobileOpen ? "translate-x-0" : ""
         }`}
       >
