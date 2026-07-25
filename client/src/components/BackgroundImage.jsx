@@ -7,10 +7,10 @@ export default function BackgroundImage() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
       <div
-        className="absolute inset-0 scale-105 bg-cover bg-center blur-sm"
+        className="absolute inset-0 scale-105 bg-cover bg-center blur-[2px]"
         style={{ backgroundImage: `url(${hospitalBg})` }}
       />
-      <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/85" />
+      <div className="absolute inset-0 bg-white/45 dark:bg-slate-950/60" />
       <div className="absolute inset-0 bg-gradient-to-br from-brand-600/10 via-fuchsia-500/5 to-accent-500/10" />
     </div>
   );
