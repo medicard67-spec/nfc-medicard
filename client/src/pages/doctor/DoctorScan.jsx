@@ -19,11 +19,11 @@ export default function DoctorScan() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const lookupCard = async (uid) => {
+  const lookupCard = async (uid, method) => {
     setError(null);
     setScanning(true);
     try {
-      const { data } = await api.get(`/nfc/${uid.trim()}`);
+      const { data } = await api.get(`/nfc/${uid.trim()}`, { params: { method } });
       navigate(`/doctor/patient/${data.uid}`);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to read card.");
@@ -34,7 +34,7 @@ export default function DoctorScan() {
 
   const handleManualScan = (e) => {
     e.preventDefault();
-    lookupCard(cardUid);
+    lookupCard(cardUid, "manual");
   };
 
   const startNfcScan = async () => {
@@ -46,7 +46,7 @@ export default function DoctorScan() {
       toast.info("Hold the patient's NFC card near your device...", { duration: 6000 });
       const uid = await scanOnce({ signal: controller.signal });
       setNfcScanning(false);
-      await lookupCard(uid);
+      await lookupCard(uid, "nfc");
     } catch (err) {
       setNfcScanning(false);
       setError(err.message || "NFC scan failed or was cancelled.");
@@ -55,7 +55,7 @@ export default function DoctorScan() {
 
   const handleQrDecode = (text) => {
     setShowQr(false);
-    lookupCard(text);
+    lookupCard(text, "qr");
   };
 
   return (

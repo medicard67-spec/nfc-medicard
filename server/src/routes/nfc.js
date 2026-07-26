@@ -7,8 +7,13 @@ import { logAudit } from "../lib/audit.js";
 
 const router = Router();
 
-// Doctor/Admin scans a card -> look up the bound patient profile.
+const SCAN_METHODS = new Set(["nfc", "qr", "manual"]);
+
+// Doctor/Admin scans a card -> look up the bound patient profile. ?method=
+// records how the card UID was obtained (real NFC tap, QR scan, or typed in)
+// for the emergency-access audit trail.
 router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
+  const method = SCAN_METHODS.has(req.query.method) ? req.query.method : "manual";
   const { data, error } = await supabase
     .from("patients")
     .select("*")
@@ -18,7 +23,7 @@ router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req,
   if (!data) {
     return res.status(404).json({ error: "This card is not registered to any patient." });
   }
-  await logAudit(req.user, "nfc.scan", "patient", data.id, { cardUid: req.params.cardUid });
+  await logAudit(req.user, "nfc.scan", "patient", data.id, { cardUid: req.params.cardUid, method });
   res.json(toPatientJson(data));
 });
 

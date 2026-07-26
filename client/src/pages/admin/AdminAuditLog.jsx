@@ -7,6 +7,7 @@ import { SkeletonList } from "../../components/Skeleton.jsx";
 const ACTION_LABELS = {
   "patient.register": "Registered patient",
   "patient.update": "Updated patient profile",
+  "patient.avatar_update": "Updated profile picture",
   "nfc.scan": "Scanned NFC card",
   "nfc.register": "Registered NFC card",
   "medical_history.create": "Added medical history record",
@@ -17,11 +18,18 @@ const ACTION_LABELS = {
 const ACTION_ICONS = {
   "patient.register": "🆕",
   "patient.update": "✏️",
+  "patient.avatar_update": "🖼️",
   "nfc.scan": "📶",
   "nfc.register": "💳",
   "medical_history.create": "📋",
   "lab_result.create": "🧪",
   "radiology.create": "🩻",
+};
+
+const METHOD_LABELS = {
+  nfc: "📶 NFC tap",
+  qr: "🔳 QR scan",
+  manual: "⌨️ Manual entry",
 };
 
 export default function AdminAuditLog() {
@@ -85,6 +93,7 @@ export default function AdminAuditLog() {
                     {e.details?.diagnosis && <> &middot; {e.details.diagnosis}</>}
                     {e.details?.testName && <> &middot; {e.details.testName}</>}
                     {e.details?.cardUid && <> &middot; card {e.details.cardUid}</>}
+                    {e.details?.method && <> &middot; {METHOD_LABELS[e.details.method] || e.details.method}</>}
                   </p>
                 </div>
                 <p className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
