@@ -59,7 +59,11 @@ export function AuthProvider({ children }) {
   };
 
   const resendVerificationEmail = async (email) => {
-    const { error: resendError } = await supabase.auth.resend({ type: "signup", email });
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (resendError) throw resendError;
   };
 

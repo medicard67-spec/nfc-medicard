@@ -1,10 +1,34 @@
 import { Router } from "express";
-import { supabase } from "../lib/supabase.js";
+import multer from "multer";
+import { supabase, AVATARS_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { uploadBuffer } from "../lib/upload.js";
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.use(requireAuth, requireRole("doctor"));
+
+// Upload/replace the logged-in doctor's own profile picture.
+router.post("/avatar", upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "file is required" });
+  if (!req.file.mimetype.startsWith("image/")) {
+    return res.status(400).json({ error: "File must be an image" });
+  }
+
+  const doctorId = req.user.uid;
+  const destPath = `${doctorId}/avatar-${Date.now()}-${req.file.originalname}`;
+  const avatarUrl = await uploadBuffer(AVATARS_BUCKET, req.file.buffer, destPath, req.file.mimetype);
+
+  const { data, error } = await supabase
+    .from("doctors")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", doctorId)
+    .select()
+    .single();
+  if (error || !data) return res.status(404).json({ error: "Doctor not found" });
+  res.json({ department: data.department, avatarUrl: data.avatar_url });
+});
 
 router.get("/stats", async (req, res) => {
   const doctorId = req.user.uid;

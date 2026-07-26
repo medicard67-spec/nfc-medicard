@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
+import Avatar from "../../components/Avatar.jsx";
 
 export default function DoctorDirectory() {
   const [patients, setPatients] = useState([]);
@@ -43,11 +44,14 @@ export default function DoctorDirectory() {
               onClick={() => navigate(`/doctor/patient/${p.uid}`)}
               className="flex cursor-pointer items-center justify-between px-4 py-3 hover:bg-slate-50"
             >
-              <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{p.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {p.gender}, {p.age} yrs &middot; IC: {p.ic}
-                </p>
+              <div className="flex items-center gap-3">
+                <Avatar name={p.name} url={p.avatarUrl} size="sm" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{p.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {p.gender}, {p.age} yrs &middot; IC: {p.ic}
+                  </p>
+                </div>
               </div>
               <span className="text-sm text-brand-600 dark:text-brand-400">View →</span>
             </li>

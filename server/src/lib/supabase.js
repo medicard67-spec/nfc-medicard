@@ -18,19 +18,29 @@ export const supabase = createClient(supabaseUrl, serviceRoleKey, {
 
 export const LAB_RESULTS_BUCKET = "lab-results";
 export const RADIOLOGY_BUCKET = "radiology";
+export const AVATARS_BUCKET = "avatars";
+export const MEDICAL_IMAGES_BUCKET = "medical-images";
 
 export async function ensureStorageBuckets() {
   const { data: buckets, error } = await supabase.storage.listBuckets();
   if (error) throw error;
 
-  const existing = new Set(buckets.map((b) => b.name));
-  for (const bucket of [LAB_RESULTS_BUCKET, RADIOLOGY_BUCKET]) {
-    if (!existing.has(bucket)) {
+  const byName = new Map(buckets.map((b) => [b.name, b]));
+  for (const bucket of [LAB_RESULTS_BUCKET, RADIOLOGY_BUCKET, AVATARS_BUCKET, MEDICAL_IMAGES_BUCKET]) {
+    const existing = byName.get(bucket);
+    // Public so uploadBuffer()'s getPublicUrl() results actually resolve in
+    // the browser -- the backend still gates who can upload via its own
+    // requireAuth/requireRole checks, this only affects read access to files.
+    if (!existing) {
       const { error: createError } = await supabase.storage.createBucket(bucket, {
-        public: false,
+        public: true,
       });
       if (createError) throw createError;
       console.log(`Created Supabase Storage bucket: ${bucket}`);
+    } else if (!existing.public) {
+      const { error: updateError } = await supabase.storage.updateBucket(bucket, { public: true });
+      if (updateError) throw updateError;
+      console.log(`Made existing Supabase Storage bucket public: ${bucket}`);
     }
   }
 }

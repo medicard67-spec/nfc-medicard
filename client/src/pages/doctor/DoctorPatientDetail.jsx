@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import api from "../../lib/api.js";
 import EmergencyBanner from "../../components/EmergencyBanner.jsx";
 import Card from "../../components/Card.jsx";
+import Avatar from "../../components/Avatar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -42,11 +43,14 @@ export default function DoctorPatientDetail() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{patient.name}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            IC: {patient.ic} &middot; {patient.gender}, {patient.age} yrs
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar name={patient.name} url={patient.avatarUrl} size="sm" />
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{patient.name}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              IC: {patient.ic} &middot; {patient.gender}, {patient.age} yrs
+            </p>
+          </div>
         </div>
         <button
           onClick={() => exportPatientRecordPdf({ patient, history, labs, radiology })}
@@ -121,6 +125,15 @@ function HistoryTab({ history }) {
               {r.date} &middot; {r.physician}
             </p>
             {r.remarks && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
+            {r.imageUrls?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {r.imageUrls.map((url) => (
+                  <a key={url} href={url} target="_blank" rel="noreferrer">
+                    <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
+                  </a>
+                ))}
+              </div>
+            )}
           </Card>
         ))}
         {filtered.length === 0 && (
@@ -315,19 +328,26 @@ function UpdateRecordTab({ patientId, onSaved }) {
   const [diagnosis, setDiagnosis] = useState("");
   const [remarks, setRemarks] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
+  const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post("/medical-history", { patientId, diagnosis, remarks });
+      const form = new FormData();
+      form.append("patientId", patientId);
+      form.append("diagnosis", diagnosis);
+      form.append("remarks", remarks);
+      images.forEach((file) => form.append("images", file));
+      await api.post("/medical-history", form, { headers: { "Content-Type": "multipart/form-data" } });
       if (appointmentDate) {
         await api.post("/appointments", { patientId, date: appointmentDate, notes: remarks });
       }
       setDiagnosis("");
       setRemarks("");
       setAppointmentDate("");
+      setImages([]);
       onSaved();
       toast.success("Patient record updated.");
     } catch (err) {
@@ -366,6 +386,23 @@ function UpdateRecordTab({ patientId, onSaved }) {
             onChange={(e) => setAppointmentDate(e.target.value)}
             className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
+            Attach Photos (optional, e.g. injuries, wounds, rashes)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setImages(Array.from(e.target.files))}
+            className="text-sm"
+          />
+          {images.length > 0 && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {images.length} photo{images.length > 1 ? "s" : ""} selected
+            </p>
+          )}
         </div>
         <button
           disabled={saving}

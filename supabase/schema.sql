@@ -45,6 +45,7 @@ create table if not exists doctors (
   name text not null,
   email text not null,
   department text not null default 'General',
+  avatar_url text,
   created_at timestamptz not null default now()
 );
 
@@ -73,6 +74,7 @@ create table if not exists patients (
   emergency_contact_phone text not null default '',
   card_uid text unique,
   registered_by text,
+  avatar_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz
 );
@@ -90,6 +92,7 @@ create table if not exists medical_history (
   physician text not null,
   physician_id uuid,
   remarks text not null default '',
+  image_urls text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 

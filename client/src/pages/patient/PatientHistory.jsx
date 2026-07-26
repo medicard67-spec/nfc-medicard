@@ -58,6 +58,15 @@ export default function PatientHistory() {
                 </div>
               </div>
               {r.remarks && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
+              {r.imageUrls?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {r.imageUrls.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
+                    </a>
+                  ))}
+                </div>
+              )}
             </Card>
           ))}
         </div>

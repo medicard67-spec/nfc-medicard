@@ -1,10 +1,14 @@
 import { Router } from "express";
-import { supabase } from "../lib/supabase.js";
+import multer from "multer";
+import { supabase, AVATARS_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { toPatientJson } from "./users.js";
 import { logAudit } from "../lib/audit.js";
+import { uploadBuffer } from "../lib/upload.js";
+import { getClientOrigin } from "../lib/env.js";
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function canAccessPatient(req, patientId) {
   return req.user.role === "admin" || req.user.role === "doctor" || req.user.uid === patientId;
@@ -22,9 +26,11 @@ async function createPatientAccount({ email, password, name, ic, dob, age, gende
 
   // admin.createUser() does not itself send an email; trigger Supabase's
   // built-in "confirm signup" email so the patient must verify before login.
-  supabase.auth.resend({ type: "signup", email }).catch((err) => {
-    console.error("Failed to send verification email:", err.message);
-  });
+  supabase.auth
+    .resend({ type: "signup", email, options: { emailRedirectTo: getClientOrigin() } })
+    .catch((err) => {
+      console.error("Failed to send verification email:", err.message);
+    });
 
   const { error: profileError } = await supabase
     .from("profiles")
@@ -130,6 +136,31 @@ router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, re
     .single();
   if (error || !data) return res.status(404).json({ error: "Patient not found" });
   await logAudit(req.user, "patient.update", "patient", req.params.id, { fields: Object.keys(updates) });
+  res.json(toPatientJson(data));
+});
+
+// Upload/replace a patient's profile picture. Patients may upload their own;
+// admin/doctor may also set one on a patient's behalf.
+router.post("/:id/avatar", requireAuth, upload.single("file"), async (req, res) => {
+  if (!canAccessPatient(req, req.params.id)) {
+    return res.status(403).json({ error: "Insufficient permissions" });
+  }
+  if (!req.file) return res.status(400).json({ error: "file is required" });
+  if (!req.file.mimetype.startsWith("image/")) {
+    return res.status(400).json({ error: "File must be an image" });
+  }
+
+  const destPath = `${req.params.id}/avatar-${Date.now()}-${req.file.originalname}`;
+  const avatarUrl = await uploadBuffer(AVATARS_BUCKET, req.file.buffer, destPath, req.file.mimetype);
+
+  const { data, error } = await supabase
+    .from("patients")
+    .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .select()
+    .single();
+  if (error || !data) return res.status(404).json({ error: "Patient not found" });
+  await logAudit(req.user, "patient.avatar_update", "patient", req.params.id, {});
   res.json(toPatientJson(data));
 });
 

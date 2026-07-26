@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getClientOrigin } from "../lib/env.js";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get("/me", requireAuth, async (req, res) => {
     extra = data ? toPatientJson(data) : {};
   } else if (role === "doctor") {
     const { data } = await supabase.from("doctors").select("*").eq("id", uid).single();
-    extra = data ? { department: data.department } : {};
+    extra = data ? { department: data.department, avatarUrl: data.avatar_url } : {};
   }
 
   res.json({ ...req.user, ...extra });
@@ -39,9 +40,11 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
     return res.status(400).json({ error: createError.message });
   }
 
-  supabase.auth.resend({ type: "signup", email }).catch((err) => {
-    console.error("Failed to send verification email:", err.message);
-  });
+  supabase.auth
+    .resend({ type: "signup", email, options: { emailRedirectTo: getClientOrigin() } })
+    .catch((err) => {
+      console.error("Failed to send verification email:", err.message);
+    });
 
   const uid = created.user.id;
   const { error: profileError } = await supabase
@@ -68,7 +71,7 @@ router.get("/doctors", requireAuth, requireRole("admin", "doctor"), async (_req,
   const { data, error } = await supabase.from("doctors").select("*").order("name");
   if (error) return res.status(500).json({ error: error.message });
 
-  res.json(data.map((d) => ({ uid: d.id, name: d.name, email: d.email, department: d.department })));
+  res.json(data.map((d) => ({ uid: d.id, name: d.name, email: d.email, department: d.department, avatarUrl: d.avatar_url })));
 });
 
 export function toPatientJson(row) {
@@ -89,6 +92,7 @@ export function toPatientJson(row) {
     emergencyContactName: row.emergency_contact_name,
     emergencyContactPhone: row.emergency_contact_phone,
     cardUid: row.card_uid,
+    avatarUrl: row.avatar_url,
     createdAt: row.created_at,
   };
 }
