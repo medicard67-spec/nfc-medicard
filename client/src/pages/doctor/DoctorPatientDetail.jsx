@@ -53,7 +53,7 @@ export default function DoctorPatientDetail() {
           </div>
         </div>
         <button
-          onClick={() => exportPatientRecordPdf({ patient, history, labs, radiology })}
+          onClick={() => void exportPatientRecordPdf({ patient, history, labs, radiology })}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           📄 Export PDF

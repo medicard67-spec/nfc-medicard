@@ -1,9 +1,35 @@
 import { jsPDF } from "jspdf";
 
-export function exportPatientRecordPdf({ patient, history = [], labs = [], radiology = [] }) {
+async function loadImageAsDataUrl(url) {
+  const res = await fetch(url, { mode: "cors" });
+  if (!res.ok) throw new Error("Failed to fetch avatar image");
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function dataUrlFormat(dataUrl) {
+  const match = dataUrl.match(/^data:image\/(\w+);/);
+  const ext = (match ? match[1] : "png").toUpperCase();
+  return ext === "JPG" ? "JPEG" : ext;
+}
+
+export async function exportPatientRecordPdf({ patient, history = [], labs = [], radiology = [] }) {
   const doc = new jsPDF();
   const marginX = 14;
   let y = 18;
+
+  let avatarDataUrl = null;
+  if (patient.avatarUrl) {
+    avatarDataUrl = await loadImageAsDataUrl(patient.avatarUrl).catch((err) => {
+      console.error("Failed to load avatar for PDF export:", err);
+      return null;
+    });
+  }
 
   const brand = [41, 82, 219];
   const muted = [100, 116, 139];
@@ -43,6 +69,18 @@ export function exportPatientRecordPdf({ patient, history = [], labs = [], radio
   doc.setFontSize(11);
   doc.text("NFC MediCard — Patient Record Export", marginX, 8.5);
   y = 22;
+
+  if (avatarDataUrl) {
+    const size = 24;
+    const x = 196 - size;
+    try {
+      doc.addImage(avatarDataUrl, dataUrlFormat(avatarDataUrl), x, y, size, size);
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(x, y, size, size);
+    } catch (err) {
+      console.error("Failed to embed avatar in PDF:", err);
+    }
+  }
 
   heading(patient.name || "Unknown Patient", 16);
   doc.setDrawColor(226, 232, 240);

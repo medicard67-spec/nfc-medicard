@@ -52,7 +52,7 @@ export default function PatientProfile() {
         api.get("/lab-results", { params: { patientId: profile.uid } }).then((r) => r.data),
         api.get("/radiology", { params: { patientId: profile.uid } }).then((r) => r.data),
       ]);
-      exportPatientRecordPdf({ patient: profile, history, labs, radiology });
+      await exportPatientRecordPdf({ patient: profile, history, labs, radiology });
       toast.success("PDF downloaded.");
     } catch (err) {
       toast.error("Failed to generate PDF.");
