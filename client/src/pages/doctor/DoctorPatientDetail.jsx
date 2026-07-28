@@ -284,15 +284,26 @@ function RadiologyTab({ images, patientId, onUploaded }) {
               <option>X-ray</option>
               <option>MRI</option>
               <option>CT Scan</option>
+              <option>Wound Care</option>
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Anatomy</label>
-            <input value={anatomy} onChange={(e) => setAnatomy(e.target.value)} className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm" placeholder="e.g. Left forearm" />
+            <input
+              value={anatomy}
+              onChange={(e) => setAnatomy(e.target.value)}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+              placeholder="e.g. Left forearm"
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Classification</label>
-            <input value={classification} onChange={(e) => setClassification(e.target.value)} className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm" placeholder="e.g. Bone fracture" />
+            <input
+              value={classification}
+              onChange={(e) => setClassification(e.target.value)}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+              placeholder={type === "Wound Care" ? "e.g. Laceration, healing well" : "e.g. Bone fracture"}
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Image File</label>
@@ -305,7 +316,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
       </Card>
 
       {images.length === 0 ? (
-        <EmptyState icon="🩻" title="No imaging records yet" subtitle="Uploaded X-rays, MRIs, and CT scans will appear here." />
+        <EmptyState icon="🩻" title="No imaging records yet" subtitle="Uploaded X-rays, MRIs, CT scans, and wound care photos will appear here." />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img) => (
@@ -313,8 +324,13 @@ function RadiologyTab({ images, patientId, onUploaded }) {
               <a href={img.fileUrl} target="_blank" rel="noreferrer">
                 <img src={img.fileUrl} alt={img.type} className="mb-2 h-28 w-full rounded-lg object-cover" />
               </a>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{img.type}</p>
+              <p className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                {img.type === "Wound Care" && "🩹"} {img.type}
+              </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
+              {img.classification && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">{img.classification}</p>
+              )}
             </Card>
           ))}
         </div>
