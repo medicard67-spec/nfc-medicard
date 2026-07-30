@@ -19,7 +19,7 @@ export default function Login() {
     setFormError(null);
     setUnconfirmed(false);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       navigate(location.state?.from || "/", { replace: true });
     } catch (err) {
       if (err.message?.toLowerCase().includes("email not confirmed")) {
@@ -112,6 +112,9 @@ export default function Login() {
               <input
                 type="email"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
@@ -125,6 +128,9 @@ export default function Login() {
               <input
                 type="password"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
