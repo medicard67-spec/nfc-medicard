@@ -15,6 +15,9 @@ portals (Patient, Doctor, Admin) built on:
   lookup.
 - **Testing/CI:** Vitest + Supertest backend test suite, run automatically on every push via
   GitHub Actions (`.github/workflows/ci.yml`).
+- **Mobile:** the same web app packages into a native Android app via
+  [Capacitor](https://capacitorjs.com) — see [Packaging as an Android app](#packaging-as-an-android-app-capacitor)
+  below. iOS isn't supported from this setup (requires a Mac + Xcode).
 
 ## Prerequisites
 
@@ -174,9 +177,9 @@ Supabase Auth (sign-in), and calls the backend with the resulting access token i
 `requireRole`) enforces who can see and modify what. Key mutating actions (registrations, NFC
 scans, record/lab/imaging additions) are recorded to `audit_log` for accountability.
 
-## Deploying the app online (Vercel + Railway)
+## Deploying the app online (Vercel + Render)
 
-This deploys the frontend to **Vercel** (free) and the backend to **Railway** (free tier), both
+This deploys the frontend to **Vercel** (free) and the backend to **Render** (free tier), both
 connected to a GitHub repo so every push auto-deploys.
 
 ### 0. Push this project to GitHub
@@ -193,20 +196,22 @@ git branch -M main
 git push -u origin main
 ```
 
-### 1. Deploy the backend to Railway
+### 1. Deploy the backend to Render
 
-1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** →
-   select this repo.
-2. Railway will try to build from the repo root — set the **Root Directory** to `server` in the
-   service settings (Settings → Source → Root Directory).
-3. Under **Variables**, add:
+1. Go to [render.com](https://render.com) → **New** → **Web Service** → connect this repo.
+2. Set **Root Directory** to `server`.
+3. Build command `npm install`, start command `npm start` (or let Render auto-detect from
+   `package.json`).
+4. Under **Environment**, add:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `CLIENT_ORIGIN` — set this after step 2 below, to your Vercel URL (comma-separate if you add
-     a custom domain later, e.g. `https://app.vercel.app,https://yourdomain.com`)
-   - Railway sets `PORT` automatically — no need to add it.
-4. Deploy. Once live, copy the generated `https://<something>.up.railway.app` URL — that's your
-   `VITE_API_URL` base for the frontend (append `/api`).
+     more origins later, e.g. `https://app.vercel.app,https://yourdomain.com`)
+   - Render sets `PORT` automatically — no need to add it.
+5. Deploy. Render's free tier sleeps after ~15 minutes of inactivity and takes a few seconds to
+   wake back up on the next request. Once live, copy the generated
+   `https://<something>.onrender.com` URL — that's your `VITE_API_URL` base for the frontend
+   (append `/api`).
 
 ### 2. Deploy the frontend to Vercel
 
@@ -217,15 +222,54 @@ git push -u origin main
 4. Under **Environment Variables**, add:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_API_URL` — `https://<your-railway-app>.up.railway.app/api`
+   - `VITE_API_URL` — `https://<your-render-app>.onrender.com/api`
 5. Deploy. Copy the resulting `https://<something>.vercel.app` URL.
 
 ### 3. Close the loop
 
-Go back to Railway and set `CLIENT_ORIGIN` to the Vercel URL from step 2 (this is what CORS checks
+Go back to Render and set `CLIENT_ORIGIN` to the Vercel URL from step 2 (this is what CORS checks
 against), then redeploy the backend service so the change takes effect.
 
 Your site is now live at the Vercel URL — share that with anyone to let them use the app.
+
+## Packaging as an Android app (Capacitor)
+
+The same React codebase can be wrapped into a native Android app with
+[Capacitor](https://capacitorjs.com) — no rewrite, no separate mobile codebase. The website keeps
+working exactly as before; this just adds an installable `.apk` on top. (iOS isn't covered here —
+building an iOS app requires Xcode, which only runs on macOS.)
+
+Already set up in this repo:
+- `client/capacitor.config.json` — app id `com.medicard.nfc`, web dir `dist`.
+- `client/.env.production` — overrides `VITE_API_URL` to point at the deployed Render backend
+  (instead of `localhost`) whenever `npm run build` runs, so the packaged app talks to production.
+- `client/android/` — the generated native Android project (gitignored: `.gradle/`, `build/`,
+  `local.properties`, and any local JDK under `.tools/`).
+
+### Prerequisites
+
+- [Android Studio](https://developer.android.com/studio) (bundles its own JDK and Android SDK —
+  use this rather than a bare command-line JDK/Gradle setup, which is version-sensitive).
+
+### Build the APK
+
+```bash
+cd client
+npm run build        # bundles the app with the production API URL baked in
+npx cap sync android  # copies the fresh web build into the native project
+```
+Then open the `client/android` folder in Android Studio, let Gradle sync, and go to
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**. The resulting `.apk` can be sideloaded
+directly onto any Android device — no Play Store submission needed.
+
+### CORS note
+
+Capacitor's Android WebView serves the app from the origin `https://localhost`. Add that to the
+backend's `CLIENT_ORIGIN` environment variable on Render (comma-separated alongside the Vercel
+URL) so the packaged app's API calls aren't rejected by CORS:
+```
+https://nfc-medicard-5y8u.vercel.app,https://localhost
+```
 
 ## Known limitations / next steps
 
