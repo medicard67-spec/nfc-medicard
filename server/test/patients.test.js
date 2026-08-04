@@ -7,6 +7,7 @@ const mockSupabase = createSupabaseMock();
 
 vi.mock("../src/lib/supabase.js", () => ({
   supabase: mockSupabase,
+  AVATARS_BUCKET: "avatars",
 }));
 
 // Controllable "logged in as" user for each test; requireRole below is the
@@ -103,5 +104,55 @@ describe("POST /api/patients", () => {
     expect(mockSupabase.auth.admin.createUser).toHaveBeenCalledWith(
       expect.objectContaining({ email: "new@medicard.dev", password: "password123" })
     );
+  });
+});
+
+describe("POST /api/patients/:id/avatar", () => {
+  it("rejects a patient uploading an avatar for someone else", async () => {
+    currentUser = { uid: "patient1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
+
+    const res = await request(buildApp())
+      .post("/api/patients/someone-else/avatar")
+      .attach("file", Buffer.from("fake-image-bytes"), { filename: "photo.png", contentType: "image/png" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects a request with no file", async () => {
+    const res = await request(buildApp()).post("/api/patients/p1/avatar");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/file is required/i);
+  });
+
+  it("rejects a non-image file", async () => {
+    const res = await request(buildApp())
+      .post("/api/patients/p1/avatar")
+      .attach("file", Buffer.from("not an image"), { filename: "notes.txt", contentType: "text/plain" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/must be an image/i);
+  });
+
+  it("lets a patient upload their own avatar and returns the new avatarUrl", async () => {
+    currentUser = { uid: "p1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "", dob: null, age: null,
+          gender: "", blood_type: "", allergies: [], chronic_illnesses: [], height: null, weight: null,
+          phone: "", emergency_contact_name: "", emergency_contact_phone: "", card_uid: null,
+          avatar_url: "https://example.com/file", created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .post("/api/patients/p1/avatar")
+      .attach("file", Buffer.from("fake-image-bytes"), { filename: "photo.png", contentType: "image/png" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.avatarUrl).toBe("https://example.com/file");
   });
 });

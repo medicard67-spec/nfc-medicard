@@ -60,4 +60,36 @@ describe("GET /api/nfc/:cardUid", () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/not registered/i);
   });
+
+  it("records the scan method (qr) in the audit log", async () => {
+    const patientRow = {
+      id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "010203-14-1234",
+      card_uid: "04A3B2C1", created_at: new Date().toISOString(),
+    };
+    mockSupabase.from.mockReturnValueOnce(chain({ data: patientRow, error: null }));
+
+    const res = await request(buildApp()).get("/api/nfc/04A3B2C1").query({ method: "qr" });
+
+    expect(res.status).toBe(200);
+    const auditCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "audit_log");
+    expect(auditCallIndex).toBeGreaterThan(-1);
+    const auditChain = mockSupabase.from.mock.results[auditCallIndex].value;
+    expect(auditChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ details: expect.objectContaining({ method: "qr" }) })
+    );
+  });
+
+  it("falls back to 'manual' for an unrecognized or missing method", async () => {
+    const patientRow = { id: "p1", name: "Ahmad Faiz", card_uid: "04A3B2C1" };
+    mockSupabase.from.mockReturnValueOnce(chain({ data: patientRow, error: null }));
+
+    const res = await request(buildApp()).get("/api/nfc/04A3B2C1").query({ method: "bogus" });
+
+    expect(res.status).toBe(200);
+    const auditCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "audit_log");
+    const auditChain = mockSupabase.from.mock.results[auditCallIndex].value;
+    expect(auditChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ details: expect.objectContaining({ method: "manual" }) })
+    );
+  });
 });

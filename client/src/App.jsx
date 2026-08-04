@@ -1,32 +1,35 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PortalLayout from "./components/PortalLayout.jsx";
 import BackgroundImage from "./components/BackgroundImage.jsx";
+import { SkeletonList } from "./components/Skeleton.jsx";
 import Login from "./pages/Login.jsx";
 
-import PatientHome from "./pages/patient/PatientHome.jsx";
-import PatientHistory from "./pages/patient/PatientHistory.jsx";
-import PatientLabs from "./pages/patient/PatientLabs.jsx";
-import PatientRadiology from "./pages/patient/PatientRadiology.jsx";
-import PatientMessages from "./pages/patient/PatientMessages.jsx";
-import PatientProfile from "./pages/patient/PatientProfile.jsx";
-import PatientAppointments from "./pages/patient/PatientAppointments.jsx";
+const PatientHome = lazy(() => import("./pages/patient/PatientHome.jsx"));
+const PatientHistory = lazy(() => import("./pages/patient/PatientHistory.jsx"));
+const PatientLabs = lazy(() => import("./pages/patient/PatientLabs.jsx"));
+const PatientRadiology = lazy(() => import("./pages/patient/PatientRadiology.jsx"));
+const PatientMessages = lazy(() => import("./pages/patient/PatientMessages.jsx"));
+const PatientProfile = lazy(() => import("./pages/patient/PatientProfile.jsx"));
+const PatientAppointments = lazy(() => import("./pages/patient/PatientAppointments.jsx"));
 
-import DoctorDashboard from "./pages/doctor/DoctorDashboard.jsx";
-import DoctorScan from "./pages/doctor/DoctorScan.jsx";
-import DoctorDirectory from "./pages/doctor/DoctorDirectory.jsx";
-import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail.jsx";
-import DoctorAddPatient from "./pages/doctor/DoctorAddPatient.jsx";
-import DoctorAppointments from "./pages/doctor/DoctorAppointments.jsx";
+const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard.jsx"));
+const DoctorScan = lazy(() => import("./pages/doctor/DoctorScan.jsx"));
+const DoctorDirectory = lazy(() => import("./pages/doctor/DoctorDirectory.jsx"));
+const DoctorPatientDetail = lazy(() => import("./pages/doctor/DoctorPatientDetail.jsx"));
+const DoctorAddPatient = lazy(() => import("./pages/doctor/DoctorAddPatient.jsx"));
+const DoctorAppointments = lazy(() => import("./pages/doctor/DoctorAppointments.jsx"));
+const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile.jsx"));
 
-import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
-import AdminRegisterCard from "./pages/admin/AdminRegisterCard.jsx";
-import AdminPatients from "./pages/admin/AdminPatients.jsx";
-import AdminDoctorReports from "./pages/admin/AdminDoctorReports.jsx";
-import AdminAddPatient from "./pages/admin/AdminAddPatient.jsx";
-import AdminAuditLog from "./pages/admin/AdminAuditLog.jsx";
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
+const AdminRegisterCard = lazy(() => import("./pages/admin/AdminRegisterCard.jsx"));
+const AdminPatients = lazy(() => import("./pages/admin/AdminPatients.jsx"));
+const AdminDoctorReports = lazy(() => import("./pages/admin/AdminDoctorReports.jsx"));
+const AdminAddPatient = lazy(() => import("./pages/admin/AdminAddPatient.jsx"));
+const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog.jsx"));
 
 const doctorNav = [
   { to: "/doctor", label: "Dashboard", icon: "🏠", end: true },
@@ -34,6 +37,7 @@ const doctorNav = [
   { to: "/doctor/directory", label: "Patient Directory", icon: "📁" },
   { to: "/doctor/add-patient", label: "Register Patient", icon: "➕" },
   { to: "/doctor/appointments", label: "Appointments", icon: "📅" },
+  { to: "/doctor/profile", label: "Profile", icon: "👤" },
 ];
 
 const adminNav = [
@@ -49,6 +53,14 @@ function RoleRedirect() {
   const { role } = useAuth();
   if (!role) return <Navigate to="/login" replace />;
   return <Navigate to={`/${role}`} replace />;
+}
+
+function PageFallback() {
+  return (
+    <div className="p-4 md:p-6">
+      <SkeletonList rows={2} />
+    </div>
+  );
 }
 
 export default function App() {
@@ -67,62 +79,65 @@ export default function App() {
   return (
     <>
       <BackgroundImage />
-      <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<RoleRedirect />} />
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<RoleRedirect />} />
 
-      <Route
-        path="/patient"
-        element={
-          <ProtectedRoute roles={["patient"]}>
-            <PortalLayout navItems={patientNav} title="Patient Portal" />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<PatientHome />} />
-        <Route path="history" element={<PatientHistory />} />
-        <Route path="labs" element={<PatientLabs />} />
-        <Route path="radiology" element={<PatientRadiology />} />
-        <Route path="messages" element={<PatientMessages />} />
-        <Route path="appointments" element={<PatientAppointments />} />
-        <Route path="profile" element={<PatientProfile />} />
-      </Route>
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <PortalLayout navItems={patientNav} title="Patient Portal" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<PatientHome />} />
+          <Route path="history" element={<PatientHistory />} />
+          <Route path="labs" element={<PatientLabs />} />
+          <Route path="radiology" element={<PatientRadiology />} />
+          <Route path="messages" element={<PatientMessages />} />
+          <Route path="appointments" element={<PatientAppointments />} />
+          <Route path="profile" element={<PatientProfile />} />
+        </Route>
 
-      <Route
-        path="/doctor"
-        element={
-          <ProtectedRoute roles={["doctor"]}>
-            <PortalLayout navItems={doctorNav} title="Doctor Portal" />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DoctorDashboard />} />
-        <Route path="scan" element={<DoctorScan />} />
-        <Route path="directory" element={<DoctorDirectory />} />
-        <Route path="add-patient" element={<DoctorAddPatient />} />
-        <Route path="appointments" element={<DoctorAppointments />} />
-        <Route path="patient/:id" element={<DoctorPatientDetail />} />
-      </Route>
+        <Route
+          path="/doctor"
+          element={
+            <ProtectedRoute roles={["doctor"]}>
+              <PortalLayout navItems={doctorNav} title="Doctor Portal" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DoctorDashboard />} />
+          <Route path="scan" element={<DoctorScan />} />
+          <Route path="directory" element={<DoctorDirectory />} />
+          <Route path="add-patient" element={<DoctorAddPatient />} />
+          <Route path="appointments" element={<DoctorAppointments />} />
+          <Route path="profile" element={<DoctorProfile />} />
+          <Route path="patient/:id" element={<DoctorPatientDetail />} />
+        </Route>
 
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute roles={["admin"]}>
-            <PortalLayout navItems={adminNav} title="Admin Portal" />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboard />} />
-        <Route path="register-card" element={<AdminRegisterCard />} />
-        <Route path="add-patient" element={<AdminAddPatient />} />
-        <Route path="patients" element={<AdminPatients />} />
-        <Route path="patients/:id" element={<AdminPatients />} />
-        <Route path="doctor-reports" element={<AdminDoctorReports />} />
-        <Route path="audit-log" element={<AdminAuditLog />} />
-      </Route>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <PortalLayout navItems={adminNav} title="Admin Portal" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="register-card" element={<AdminRegisterCard />} />
+          <Route path="add-patient" element={<AdminAddPatient />} />
+          <Route path="patients" element={<AdminPatients />} />
+          <Route path="patients/:id" element={<AdminPatients />} />
+          <Route path="doctor-reports" element={<AdminDoctorReports />} />
+          <Route path="audit-log" element={<AdminAuditLog />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

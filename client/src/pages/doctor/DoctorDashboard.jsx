@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -7,63 +7,23 @@ import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
 
 export default function DoctorDashboard() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
   const { theme } = useTheme();
-  const toast = useToast();
   const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
   const [patientCount, setPatientCount] = useState(0);
   const [stats, setStats] = useState(null);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     api.get("/patients").then((res) => setPatientCount(res.data.length));
     api.get("/doctor/stats").then((res) => setStats(res.data));
   }, []);
 
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadingAvatar(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      await api.post("/doctor/avatar", form, { headers: { "Content-Type": "multipart/form-data" } });
-      await refreshProfile();
-      toast.success("Profile picture updated.");
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to update profile picture.");
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="group relative">
-          <Avatar name={profile?.name} url={profile?.avatarUrl} size="md" />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            aria-label="Change profile picture"
-            className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
-          >
-            {uploadingAvatar ? "…" : "📷"}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="hidden"
-          />
-        </div>
+        <Avatar name={profile?.name} url={profile?.avatarUrl} size="md" />
         <div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Welcome, {profile?.name}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{profile?.department} Department</p>
