@@ -11,7 +11,6 @@ export default function BackgroundImage() {
         style={{ backgroundImage: `url(${hospitalBg})` }}
       />
       <div className="absolute inset-0 bg-white/45 dark:bg-slate-950/60" />
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-600/10 via-fuchsia-500/5 to-accent-500/10" />
     </div>
   );
 }

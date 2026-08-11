@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage } from "lucide-react";
 import api from "../../lib/api.js";
 import EmergencyBanner from "../../components/EmergencyBanner.jsx";
 import Card from "../../components/Card.jsx";
@@ -56,7 +57,8 @@ export default function DoctorPatientDetail() {
           onClick={() => void exportPatientRecordPdf({ patient, history, labs, radiology })}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          📄 Export PDF
+          <FileText size={15} />
+          Export PDF
         </button>
       </div>
 
@@ -111,7 +113,7 @@ function HistoryTab({ history }) {
   );
 
   if (history.length === 0) {
-    return <EmptyState icon="📋" title="No history records" subtitle="Records added via Update Record will appear here." />;
+    return <EmptyState icon={ClipboardList} title="No history records" subtitle="Records added via Update Record will appear here." />;
   }
 
   return (
@@ -210,7 +212,7 @@ function LabsTab({ labs, patientId, onUploaded }) {
       </Card>
 
       {labs.length === 0 ? (
-        <EmptyState icon="🧪" title="No lab results yet" subtitle="Uploaded results will appear here." />
+        <EmptyState icon={FlaskConical} title="No lab results yet" subtitle="Uploaded results will appear here." />
       ) : (
         <div>
           <SearchBar value={search} onChange={setSearch} placeholder="Search test name..." />
@@ -316,7 +318,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
       </Card>
 
       {images.length === 0 ? (
-        <EmptyState icon="🩻" title="No imaging records yet" subtitle="Uploaded X-rays, MRIs, CT scans, and wound care photos will appear here." />
+        <EmptyState icon={ScanLine} title="No imaging records yet" subtitle="Uploaded X-rays, MRIs, CT scans, and wound care photos will appear here." />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img) => (
@@ -325,7 +327,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
                 <img src={img.fileUrl} alt={img.type} className="mb-2 h-28 w-full rounded-lg object-cover" />
               </a>
               <p className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                {img.type === "Wound Care" && "🩹"} {img.type}
+                {img.type === "Wound Care" && <Bandage size={13} />} {img.type}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
               {img.classification && (

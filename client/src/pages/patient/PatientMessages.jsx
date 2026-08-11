@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -69,7 +70,7 @@ export default function PatientMessages() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && messages.length === 0 && (
-        <EmptyState icon="💬" title="No messages yet" subtitle="Messages from your care team will show up here." />
+        <EmptyState icon={MessageCircle} title="No messages yet" subtitle="Messages from your care team will show up here." />
       )}
 
       <div className="space-y-3">

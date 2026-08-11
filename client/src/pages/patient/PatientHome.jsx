@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { ClipboardList, FlaskConical, ScanLine, MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import EmergencyBanner from "../../components/EmergencyBanner.jsx";
@@ -8,10 +9,10 @@ import Card from "../../components/Card.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
 
 const quickLinks = [
-  { to: "/patient/history", label: "Medical History", icon: "📋" },
-  { to: "/patient/labs", label: "Lab Results", icon: "🧪" },
-  { to: "/patient/radiology", label: "Imaging", icon: "🩻" },
-  { to: "/patient/messages", label: "Messages", icon: "💬" },
+  { to: "/patient/history", label: "Medical History", icon: ClipboardList },
+  { to: "/patient/labs", label: "Lab Results", icon: FlaskConical },
+  { to: "/patient/radiology", label: "Imaging", icon: ScanLine },
+  { to: "/patient/messages", label: "Messages", icon: MessageCircle },
 ];
 
 export default function PatientHome() {
@@ -67,7 +68,7 @@ export default function PatientHome() {
               to={q.to}
               className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900"
             >
-              <span className="text-2xl">{q.icon}</span>
+              <q.icon size={22} strokeWidth={1.75} className="text-brand-600 dark:text-brand-300" />
               {q.label}
             </Link>
           ))}

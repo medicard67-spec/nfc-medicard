@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Nfc } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -67,7 +68,7 @@ export default function DoctorDashboard() {
 
       <Card>
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <span className="text-4xl">📶</span>
+          <Nfc size={34} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Scan NFC Card</h2>
           <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
             Tap a patient's physical NFC card to instantly retrieve their medical history, lab

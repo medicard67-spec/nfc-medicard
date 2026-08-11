@@ -46,24 +46,27 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* Brand panel */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-700 via-fuchsia-600 to-accent-500 p-10 text-white lg:flex">
-        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-brand-400/30 blur-3xl" />
-
-        <div className="relative flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 font-bold ring-1 ring-white/20">
+      <div
+        className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-brand-800 p-10 text-white lg:flex"
+        style={{
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sm font-bold text-brand-800">
             N
           </div>
           <p className="text-sm font-semibold">NFC MediCard</p>
         </div>
 
-        <div className="relative space-y-6">
+        <div className="space-y-6">
           <h1 className="text-4xl font-bold leading-tight">
             One tap.
             <br />
             A patient's full history.
           </h1>
-          <p className="max-w-md text-brand-100">
+          <p className="max-w-md text-brand-200">
             Secure, role-based access for patients, doctors, and administrators — built around
             instant NFC card identification for faster, safer hospital registration.
           </p>
@@ -71,7 +74,7 @@ export default function Login() {
             {["Emergency profile", "Lab vault", "Radiology gallery", "NFC scan"].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium"
+                className="rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-brand-100"
               >
                 {tag}
               </span>
@@ -79,7 +82,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="relative text-xs text-brand-200">
+        <p className="text-xs text-brand-300">
           Diploma in Software Engineering &middot; German-Malaysian Institute
         </p>
       </div>
@@ -88,7 +91,7 @@ export default function Login() {
       <div className="flex w-full flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-700 text-xl font-bold text-white">
               N
             </div>
             <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">NFC MediCard</h1>
@@ -163,7 +166,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:from-brand-700 hover:to-brand-800 disabled:opacity-60"
+              className="w-full rounded-lg bg-brand-700 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-800 disabled:opacity-60"
             >
               {submitting ? "Signing in..." : "Sign In"}
             </button>

@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  UserPlus, Pencil, ImageIcon, Nfc, CreditCard, ClipboardList,
+  FlaskConical, ScanLine, QrCode, Keyboard, Shield, Circle,
+} from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -16,21 +20,18 @@ const ACTION_LABELS = {
 };
 
 const ACTION_ICONS = {
-  "patient.register": "🆕",
-  "patient.update": "✏️",
-  "patient.avatar_update": "🖼️",
-  "nfc.scan": "📶",
-  "nfc.register": "💳",
-  "medical_history.create": "📋",
-  "lab_result.create": "🧪",
-  "radiology.create": "🩻",
+  "patient.register": UserPlus,
+  "patient.update": Pencil,
+  "patient.avatar_update": ImageIcon,
+  "nfc.scan": Nfc,
+  "nfc.register": CreditCard,
+  "medical_history.create": ClipboardList,
+  "lab_result.create": FlaskConical,
+  "radiology.create": ScanLine,
 };
 
-const METHOD_LABELS = {
-  nfc: "📶 NFC tap",
-  qr: "🔳 QR scan",
-  manual: "⌨️ Manual entry",
-};
+const METHOD_ICONS = { nfc: Nfc, qr: QrCode, manual: Keyboard };
+const METHOD_LABELS = { nfc: "NFC tap", qr: "QR scan", manual: "Manual entry" };
 
 export default function AdminAuditLog() {
   const [entries, setEntries] = useState([]);
@@ -74,33 +75,44 @@ export default function AdminAuditLog() {
       {loading && <SkeletonList rows={4} />}
 
       {!loading && filtered.length === 0 && (
-        <EmptyState icon="🛡️" title="No audit entries yet" subtitle="Actions like registrations, scans, and record updates will appear here." />
+        <EmptyState icon={Shield} title="No audit entries yet" subtitle="Actions like registrations, scans, and record updates will appear here." />
       )}
 
       {!loading && filtered.length > 0 && (
         <Card className="p-0">
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((e) => (
-              <li key={e.id} className="flex items-start gap-3 px-4 py-3">
-                <span className="text-lg">{ACTION_ICONS[e.action] || "•"}</span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                    {ACTION_LABELS[e.action] || e.action}
+            {filtered.map((e) => {
+              const ActionIcon = ACTION_ICONS[e.action] || Circle;
+              const MethodIcon = e.details?.method ? METHOD_ICONS[e.details.method] : null;
+              return (
+                <li key={e.id} className="flex items-start gap-3 px-4 py-3">
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                    <ActionIcon size={15} strokeWidth={2} />
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {ACTION_LABELS[e.action] || e.action}
+                    </p>
+                    <p className="flex flex-wrap items-center gap-x-1 text-xs text-slate-500 dark:text-slate-400">
+                      <span>{e.actorName} ({e.actorRole})</span>
+                      {e.details?.name && <span>&middot; {e.details.name}</span>}
+                      {e.details?.diagnosis && <span>&middot; {e.details.diagnosis}</span>}
+                      {e.details?.testName && <span>&middot; {e.details.testName}</span>}
+                      {e.details?.cardUid && <span>&middot; card {e.details.cardUid}</span>}
+                      {e.details?.method && (
+                        <span className="inline-flex items-center gap-1">
+                          &middot; {MethodIcon && <MethodIcon size={12} />}
+                          {METHOD_LABELS[e.details.method] || e.details.method}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <p className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
+                    {new Date(e.createdAt).toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {e.actorName} ({e.actorRole})
-                    {e.details?.name && <> &middot; {e.details.name}</>}
-                    {e.details?.diagnosis && <> &middot; {e.details.diagnosis}</>}
-                    {e.details?.testName && <> &middot; {e.details.testName}</>}
-                    {e.details?.cardUid && <> &middot; card {e.details.cardUid}</>}
-                    {e.details?.method && <> &middot; {METHOD_LABELS[e.details.method] || e.details.method}</>}
-                  </p>
-                </div>
-                <p className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
-                  {new Date(e.createdAt).toLocaleString()}
-                </p>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}

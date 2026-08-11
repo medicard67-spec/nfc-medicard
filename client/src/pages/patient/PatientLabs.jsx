@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { FlaskConical } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -31,7 +32,7 @@ export default function PatientLabs() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && results.length === 0 && (
-        <EmptyState icon="🧪" title="No lab results yet" subtitle="Results uploaded by your doctor will appear here." />
+        <EmptyState icon={FlaskConical} title="No lab results yet" subtitle="Results uploaded by your doctor will appear here." />
       )}
 
       {!loading && results.length > 0 && (

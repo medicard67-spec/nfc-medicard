@@ -1,5 +1,10 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Home, Nfc, FolderOpen, UserPlus, Calendar, User,
+  ClipboardList, FlaskConical, ScanLine, MessageCircle,
+  Stethoscope, Shield,
+} from "lucide-react";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -32,21 +37,21 @@ const AdminAddPatient = lazy(() => import("./pages/admin/AdminAddPatient.jsx"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog.jsx"));
 
 const doctorNav = [
-  { to: "/doctor", label: "Dashboard", icon: "🏠", end: true },
-  { to: "/doctor/scan", label: "Scan NFC Card", icon: "📶" },
-  { to: "/doctor/directory", label: "Patient Directory", icon: "📁" },
-  { to: "/doctor/add-patient", label: "Register Patient", icon: "➕" },
-  { to: "/doctor/appointments", label: "Appointments", icon: "📅" },
-  { to: "/doctor/profile", label: "Profile", icon: "👤" },
+  { to: "/doctor", label: "Dashboard", icon: Home, end: true },
+  { to: "/doctor/scan", label: "Scan NFC Card", icon: Nfc },
+  { to: "/doctor/directory", label: "Patient Directory", icon: FolderOpen },
+  { to: "/doctor/add-patient", label: "Register Patient", icon: UserPlus },
+  { to: "/doctor/appointments", label: "Appointments", icon: Calendar },
+  { to: "/doctor/profile", label: "Profile", icon: User },
 ];
 
 const adminNav = [
-  { to: "/admin", label: "Dashboard", icon: "🏠", end: true },
-  { to: "/admin/register-card", label: "Register New Card", icon: "📶" },
-  { to: "/admin/add-patient", label: "Add Patient", icon: "➕" },
-  { to: "/admin/patients", label: "Patients Data Entry", icon: "🗂️" },
-  { to: "/admin/doctor-reports", label: "Doctor's Reports", icon: "🩺" },
-  { to: "/admin/audit-log", label: "Audit Log", icon: "🛡️" },
+  { to: "/admin", label: "Dashboard", icon: Home, end: true },
+  { to: "/admin/register-card", label: "Register New Card", icon: Nfc },
+  { to: "/admin/add-patient", label: "Add Patient", icon: UserPlus },
+  { to: "/admin/patients", label: "Patients Data Entry", icon: FolderOpen },
+  { to: "/admin/doctor-reports", label: "Doctor's Reports", icon: Stethoscope },
+  { to: "/admin/audit-log", label: "Audit Log", icon: Shield },
 ];
 
 function RoleRedirect() {
@@ -67,13 +72,13 @@ export default function App() {
   const { count: unreadCount } = useUnread();
 
   const patientNav = [
-    { to: "/patient", label: "Home", icon: "🏠", end: true },
-    { to: "/patient/history", label: "Medical History", icon: "📋" },
-    { to: "/patient/labs", label: "Lab Results", icon: "🧪" },
-    { to: "/patient/radiology", label: "Imaging", icon: "🩻" },
-    { to: "/patient/messages", label: "Messages", icon: "💬", badge: unreadCount },
-    { to: "/patient/appointments", label: "Appointments", icon: "📅" },
-    { to: "/patient/profile", label: "Profile", icon: "👤" },
+    { to: "/patient", label: "Home", icon: Home, end: true },
+    { to: "/patient/history", label: "Medical History", icon: ClipboardList },
+    { to: "/patient/labs", label: "Lab Results", icon: FlaskConical },
+    { to: "/patient/radiology", label: "Imaging", icon: ScanLine },
+    { to: "/patient/messages", label: "Messages", icon: MessageCircle, badge: unreadCount },
+    { to: "/patient/appointments", label: "Appointments", icon: Calendar },
+    { to: "/patient/profile", label: "Profile", icon: User },
   ];
 
   return (

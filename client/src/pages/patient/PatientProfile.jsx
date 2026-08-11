@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { FileText, Camera } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -70,7 +71,8 @@ export default function PatientProfile() {
           disabled={exporting}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          {exporting ? "Preparing..." : "📄 Export as PDF"}
+          <FileText size={15} />
+          {exporting ? "Preparing..." : "Export as PDF"}
         </button>
       </div>
 
@@ -85,7 +87,7 @@ export default function PatientProfile() {
               aria-label="Change profile picture"
               className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
             >
-              {uploadingAvatar ? "…" : "📷"}
+              {uploadingAvatar ? "…" : <Camera size={12} />}
             </button>
             <input
               ref={fileInputRef}

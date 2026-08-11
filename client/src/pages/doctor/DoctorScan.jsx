@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Nfc, QrCode, Keyboard } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
@@ -65,7 +66,7 @@ export default function DoctorScan() {
       {isWebNfcSupported() && (
         <Card>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <span className={`text-5xl ${nfcScanning ? "animate-pulse" : ""}`}>📶</span>
+            <Nfc size={44} strokeWidth={1.5} className={`text-brand-600 dark:text-brand-300 ${nfcScanning ? "animate-pulse" : ""}`} />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {nfcScanning
                 ? "Waiting for a tap — hold the patient's card against the back of your device."
@@ -85,7 +86,7 @@ export default function DoctorScan() {
 
       <Card>
         <div className="flex flex-col items-center gap-4 py-6 text-center">
-          <span className="text-5xl">🔳</span>
+          <QrCode size={44} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No NFC on this device? Scan the QR code printed on the patient's card instead — works
             with any phone camera.
@@ -123,7 +124,7 @@ export default function DoctorScan() {
       {showManual && (
         <Card>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <span className="text-5xl">⌨️</span>
+            <Keyboard size={44} strokeWidth={1.5} className="text-slate-400 dark:text-slate-500" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Enter the card's UID manually — the same lookup a real hardware or QR scan would
               trigger.

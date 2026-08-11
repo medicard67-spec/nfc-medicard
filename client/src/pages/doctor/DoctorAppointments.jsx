@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Calendar } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import MonthCalendar from "../../components/MonthCalendar.jsx";
@@ -25,7 +26,7 @@ export default function DoctorAppointments() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && appointments.length === 0 && (
-        <EmptyState icon="📅" title="No appointments scheduled" subtitle="Appointments you schedule from a patient's record will appear here." />
+        <EmptyState icon={Calendar} title="No appointments scheduled" subtitle="Appointments you schedule from a patient's record will appear here." />
       )}
 
       {!loading && appointments.length > 0 && (

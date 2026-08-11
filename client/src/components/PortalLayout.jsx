@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Menu, Moon, Sun } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -20,9 +21,7 @@ export default function PortalLayout({ navItems, title }) {
           aria-label="Open menu"
           className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <Menu size={20} strokeWidth={2} />
         </button>
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
@@ -46,13 +45,13 @@ export default function PortalLayout({ navItems, title }) {
           mobileOpen ? "translate-x-0" : ""
         }`}
       >
-        <div className="flex items-center gap-2.5 border-b border-slate-200 bg-gradient-to-br from-brand-600 via-fuchsia-600 to-accent-500 px-5 py-5 dark:border-slate-800">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 font-bold text-white ring-1 ring-white/20">
+        <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-700 px-5 py-5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 font-bold text-white ring-1 ring-white/15">
             N
           </div>
           <div>
             <p className="text-sm font-semibold leading-tight text-white">NFC MediCard</p>
-            <p className="text-xs text-brand-100">{title}</p>
+            <p className="text-xs text-brand-200">{title}</p>
           </div>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -69,8 +68,8 @@ export default function PortalLayout({ navItems, title }) {
                 }`
               }
             >
-              <span className="flex items-center gap-2">
-                <span>{item.icon}</span>
+              <span className="flex items-center gap-2.5">
+                <item.icon size={17} strokeWidth={2} />
                 {item.label}
               </span>
               {item.badge > 0 && (
@@ -89,7 +88,7 @@ export default function PortalLayout({ navItems, title }) {
               aria-label="Toggle dark mode"
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             >
-              {theme === "dark" ? "☀️" : "🌙"}
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
           <button

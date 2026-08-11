@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Calendar } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -26,7 +27,7 @@ export default function PatientAppointments() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && appointments.length === 0 && (
-        <EmptyState icon="📅" title="No appointments scheduled" subtitle="Appointments your doctor schedules will appear here." />
+        <EmptyState icon={Calendar} title="No appointments scheduled" subtitle="Appointments your doctor schedules will appear here." />
       )}
 
       {!loading && appointments.length > 0 && (

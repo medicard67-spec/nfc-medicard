@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Nfc, Keyboard } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
@@ -76,7 +77,7 @@ export default function AdminRegisterCard() {
         {isWebNfcSupported() && (
           <Card>
             <div className="flex flex-col items-center gap-4 py-6 text-center">
-              <span className={`text-5xl ${nfcScanning ? "animate-pulse" : ""}`}>📶</span>
+              <Nfc size={44} strokeWidth={1.5} className={`text-brand-600 dark:text-brand-300 ${nfcScanning ? "animate-pulse" : ""}`} />
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {nfcScanning
                   ? "Waiting for a tap — hold the unassigned card against the back of your device."
@@ -103,7 +104,7 @@ export default function AdminRegisterCard() {
         {showManual && (
           <Card>
             <div className="flex flex-col items-center gap-4 py-6 text-center">
-              <span className="text-5xl">⌨️</span>
+              <Keyboard size={44} strokeWidth={1.5} className="text-slate-400 dark:text-slate-500" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isWebNfcSupported()
                   ? "Enter the unassigned card's UID manually if a physical tap isn't available."

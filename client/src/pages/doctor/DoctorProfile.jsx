@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Camera } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -55,7 +56,7 @@ export default function DoctorProfile() {
               aria-label="Change profile picture"
               className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
             >
-              {uploadingAvatar ? "…" : "📷"}
+              {uploadingAvatar ? "…" : <Camera size={12} />}
             </button>
             <input
               ref={fileInputRef}

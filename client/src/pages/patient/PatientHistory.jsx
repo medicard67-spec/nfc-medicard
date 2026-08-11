@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ClipboardList } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -36,7 +37,7 @@ export default function PatientHistory() {
       {loading && <SkeletonList rows={3} />}
 
       {!loading && records.length === 0 && (
-        <EmptyState icon="📋" title="No medical history yet" subtitle="Records added by your doctor will show up here." />
+        <EmptyState icon={ClipboardList} title="No medical history yet" subtitle="Records added by your doctor will show up here." />
       )}
 
       {!loading && records.length > 0 && (

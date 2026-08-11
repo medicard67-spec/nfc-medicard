@@ -1,3 +1,5 @@
+import { TriangleAlert } from "lucide-react";
+
 export default function EmergencyBanner({ patient }) {
   if (!patient) return null;
   const allergies = patient.allergies?.length ? patient.allergies.join(", ") : "None recorded";
@@ -6,9 +8,9 @@ export default function EmergencyBanner({ patient }) {
     : "None recorded";
 
   return (
-    <div className="relative overflow-hidden rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-rose-50 p-4 shadow-soft dark:border-red-900/60 dark:from-red-950/40 dark:to-rose-950/40">
+    <div className="relative overflow-hidden rounded-xl border-2 border-red-200 bg-red-50 p-4 shadow-soft dark:border-red-900/60 dark:bg-red-950/40">
       <div className="mb-2 flex items-center gap-1.5">
-        <span className="text-sm">🚨</span>
+        <TriangleAlert size={14} className="text-red-600 dark:text-red-400" />
         <p className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400">
           Emergency Profile
         </p>

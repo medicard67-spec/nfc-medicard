@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ScanLine, Bandage } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -25,7 +26,7 @@ export default function PatientRadiology() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && images.length === 0 && (
-        <EmptyState icon="🩻" title="No imaging records yet" subtitle="X-rays, MRIs, CT scans, and wound care photos uploaded by your doctor will appear here." />
+        <EmptyState icon={ScanLine} title="No imaging records yet" subtitle="X-rays, MRIs, CT scans, and wound care photos uploaded by your doctor will appear here." />
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -35,7 +36,7 @@ export default function PatientRadiology() {
               <img src={img.fileUrl} alt={img.type} className="mb-2 h-28 w-full rounded-lg object-cover" />
             </a>
             <p className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {img.type === "Wound Care" && "🩹"} {img.type}
+              {img.type === "Wound Care" && <Bandage size={13} />} {img.type}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
             {img.classification && (
