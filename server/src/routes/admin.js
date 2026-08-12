@@ -87,7 +87,7 @@ router.get("/reports", async (_req, res) => {
   }));
 
   res.json({
-    doctors: doctorsRes.data.map((d) => ({ uid: d.id, name: d.name, email: d.email, department: d.department })),
+    doctors: doctorsRes.data.map((d) => ({ uid: d.id, name: d.name, email: d.email, department: d.department, hospital: d.hospital })),
     reports,
   });
 });

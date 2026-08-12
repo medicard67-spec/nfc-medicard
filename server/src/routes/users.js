@@ -2,6 +2,7 @@ import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { getClientOrigin } from "../lib/env.js";
+import { MALAYSIA_HOSPITALS } from "../lib/malaysiaHospitals.js";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get("/me", requireAuth, async (req, res) => {
     extra = data ? toPatientJson(data) : {};
   } else if (role === "doctor") {
     const { data } = await supabase.from("doctors").select("*").eq("id", uid).single();
-    extra = data ? { department: data.department, avatarUrl: data.avatar_url } : {};
+    extra = data ? { department: data.department, hospital: data.hospital, avatarUrl: data.avatar_url } : {};
   }
 
   res.json({ ...req.user, ...extra });
@@ -23,12 +24,15 @@ router.get("/me", requireAuth, async (req, res) => {
 
 // Admin-only: create a doctor or admin account.
 router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
-  const { email, password, name, role, department } = req.body;
+  const { email, password, name, role, department, hospital } = req.body;
   if (!email || !password || !name || !role) {
     return res.status(400).json({ error: "email, password, name, role are required" });
   }
   if (!["doctor", "admin"].includes(role)) {
     return res.status(400).json({ error: "role must be 'doctor' or 'admin'" });
+  }
+  if (role === "doctor" && !MALAYSIA_HOSPITALS.includes(hospital)) {
+    return res.status(400).json({ error: "hospital must be one of the listed Malaysian hospitals" });
   }
 
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
@@ -57,7 +61,7 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
   if (role === "doctor") {
     const { error: doctorError } = await supabase
       .from("doctors")
-      .insert({ id: uid, name, email, department: department || "General" });
+      .insert({ id: uid, name, email, department: department || "General", hospital });
     if (doctorError) {
       return res.status(400).json({ error: doctorError.message });
     }
@@ -71,7 +75,12 @@ router.get("/doctors", requireAuth, requireRole("admin", "doctor"), async (_req,
   const { data, error } = await supabase.from("doctors").select("*").order("name");
   if (error) return res.status(500).json({ error: error.message });
 
-  res.json(data.map((d) => ({ uid: d.id, name: d.name, email: d.email, department: d.department, avatarUrl: d.avatar_url })));
+  res.json(
+    data.map((d) => ({
+      uid: d.id, name: d.name, email: d.email, department: d.department,
+      hospital: d.hospital, avatarUrl: d.avatar_url,
+    }))
+  );
 });
 
 export function toPatientJson(row) {

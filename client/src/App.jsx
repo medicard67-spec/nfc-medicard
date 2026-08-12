@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import {
   Home, Nfc, FolderOpen, UserPlus, Calendar, User,
   ClipboardList, FlaskConical, ScanLine, MessageCircle,
-  Stethoscope, Shield,
+  Stethoscope, Shield, Hospital,
 } from "lucide-react";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
@@ -34,6 +34,7 @@ const AdminRegisterCard = lazy(() => import("./pages/admin/AdminRegisterCard.jsx
 const AdminPatients = lazy(() => import("./pages/admin/AdminPatients.jsx"));
 const AdminDoctorReports = lazy(() => import("./pages/admin/AdminDoctorReports.jsx"));
 const AdminAddPatient = lazy(() => import("./pages/admin/AdminAddPatient.jsx"));
+const AdminAddDoctor = lazy(() => import("./pages/admin/AdminAddDoctor.jsx"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog.jsx"));
 
 const doctorNav = [
@@ -49,6 +50,7 @@ const adminNav = [
   { to: "/admin", label: "Dashboard", icon: Home, end: true },
   { to: "/admin/register-card", label: "Register New Card", icon: Nfc },
   { to: "/admin/add-patient", label: "Add Patient", icon: UserPlus },
+  { to: "/admin/add-doctor", label: "Add Doctor", icon: Hospital },
   { to: "/admin/patients", label: "Patients Data Entry", icon: FolderOpen },
   { to: "/admin/doctor-reports", label: "Doctor's Reports", icon: Stethoscope },
   { to: "/admin/audit-log", label: "Audit Log", icon: Shield },
@@ -134,6 +136,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="register-card" element={<AdminRegisterCard />} />
           <Route path="add-patient" element={<AdminAddPatient />} />
+          <Route path="add-doctor" element={<AdminAddDoctor />} />
           <Route path="patients" element={<AdminPatients />} />
           <Route path="patients/:id" element={<AdminPatients />} />
           <Route path="doctor-reports" element={<AdminDoctorReports />} />

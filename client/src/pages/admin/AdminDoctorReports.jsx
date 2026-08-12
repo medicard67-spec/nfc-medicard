@@ -45,6 +45,9 @@ export default function AdminDoctorReports() {
                 >
                   <p className="font-medium">{d.name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{d.department}</p>
+                  {d.hospital && (
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{d.hospital}</p>
+                  )}
                 </button>
               </li>
             ))}

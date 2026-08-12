@@ -32,6 +32,7 @@ async function createAccount({ email, password, name, role, extra = {} }) {
       name,
       email,
       department: extra.department || "General",
+      hospital: extra.hospital || "",
     });
   }
 
@@ -53,7 +54,7 @@ async function main() {
     password: "password123",
     name: "Dr. Sarah Jenkins",
     role: "doctor",
-    extra: { department: "Cardiology" },
+    extra: { department: "Cardiology", hospital: "Hospital Kuala Lumpur (HKL)" },
   });
 
   const doctor2Id = await createAccount({
@@ -61,7 +62,7 @@ async function main() {
     password: "password123",
     name: "Dr. Robert Chan",
     role: "doctor",
-    extra: { department: "Endocrinology" },
+    extra: { department: "Endocrinology", hospital: "Gleneagles Kuala Lumpur" },
   });
 
   const patient1Id = await createAccount({

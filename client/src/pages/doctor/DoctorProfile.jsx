@@ -75,6 +75,7 @@ export default function DoctorProfile() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Email" value={profile.email} />
           <Field label="Department" value={profile.department} />
+          <Field label="Hospital" value={profile.hospital} />
           <Field label="Role" value="Doctor" />
         </div>
       </Card>

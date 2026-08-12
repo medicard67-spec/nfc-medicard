@@ -45,6 +45,7 @@ create table if not exists doctors (
   name text not null,
   email text not null,
   department text not null default 'General',
+  hospital text not null default '',
   avatar_url text,
   created_at timestamptz not null default now()
 );
