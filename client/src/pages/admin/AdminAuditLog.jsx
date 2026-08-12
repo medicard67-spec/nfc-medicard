@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   UserPlus, Pencil, ImageIcon, Nfc, CreditCard, ClipboardList,
-  FlaskConical, ScanLine, QrCode, Keyboard, Shield, Circle,
+  FlaskConical, ScanLine, QrCode, Keyboard, Shield, Circle, Hospital,
 } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -95,6 +95,11 @@ export default function AdminAuditLog() {
                     </p>
                     <p className="flex flex-wrap items-center gap-x-1 text-xs text-slate-500 dark:text-slate-400">
                       <span>{e.actorName} ({e.actorRole})</span>
+                      {e.details?.hospital && (
+                        <span className="inline-flex items-center gap-1">
+                          &middot; <Hospital size={12} /> {e.details.hospital}
+                        </span>
+                      )}
                       {e.details?.name && <span>&middot; {e.details.name}</span>}
                       {e.details?.diagnosis && <span>&middot; {e.details.diagnosis}</span>}
                       {e.details?.testName && <span>&middot; {e.details.testName}</span>}

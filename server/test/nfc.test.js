@@ -92,4 +92,23 @@ describe("GET /api/nfc/:cardUid", () => {
       expect.objectContaining({ details: expect.objectContaining({ method: "manual" }) })
     );
   });
+
+  it("tags the scanning doctor's hospital onto the audit entry", async () => {
+    const patientRow = { id: "p1", name: "Ahmad Faiz", card_uid: "04A3B2C1" };
+    mockSupabase.from.mockReturnValueOnce(chain({ data: patientRow, error: null })); // patients lookup
+    mockSupabase.from.mockReturnValueOnce(
+      chain({ data: { hospital: "Hospital Kuala Lumpur (HKL)" }, error: null })
+    ); // doctors hospital lookup inside logAudit
+
+    const res = await request(buildApp()).get("/api/nfc/04A3B2C1").query({ method: "nfc" });
+
+    expect(res.status).toBe(200);
+    const auditCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "audit_log");
+    const auditChain = mockSupabase.from.mock.results[auditCallIndex].value;
+    expect(auditChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.objectContaining({ method: "nfc", hospital: "Hospital Kuala Lumpur (HKL)" }),
+      })
+    );
+  });
 });
