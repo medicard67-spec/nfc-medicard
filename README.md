@@ -271,6 +271,22 @@ URL) so the packaged app's API calls aren't rejected by CORS:
 https://nfc-medicard-5y8u.vercel.app,https://localhost
 ```
 
+## Offline demo mode (presentation backup)
+
+For presenting somewhere with unreliable or no internet, there's a fully self-contained offline
+build — no Supabase, no Render, no Vercel, nothing outside your own laptop:
+
+```bash
+cd client && npm run build:offline   # builds client/dist-offline against a local API
+cd ../server && npm run offline      # serves the app + a canned in-memory dataset on one port
+```
+Open **http://localhost:4444** — same demo accounts as above (`admin@medicard.dev`,
+`doctor@medicard.dev`, `patient@medicard.dev` / `password123`, card UID `04A3B2C1`). You can
+disconnect Wi-Fi entirely and it keeps working: `server/offline-server.js` is a single Express
+process serving both the built frontend and an in-memory stand-in for the API, seeded with the
+same demo data as `npm run seed`. It's for a local demo only — the auth "token" it issues has no
+real security, so never deploy this file or expose it beyond your own machine.
+
 ## Known limitations / next steps
 
 - Web NFC scanning only works on Android Chrome/Edge over HTTPS (or localhost) — iOS and desktop

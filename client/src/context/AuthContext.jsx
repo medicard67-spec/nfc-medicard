@@ -56,6 +56,15 @@ export function AuthProvider({ children }) {
       }
       throw signInError;
     }
+    // Login.jsx navigates to "/" right after this resolves, and "/" decides
+    // where to send the user based on `role` (derived from `profile`). The
+    // onAuthStateChange listener also kicks off loadProfile(), but that's a
+    // separate, unawaited fetch — normally it finishes before signIn's own
+    // network round trip does, but nothing here actually guarantees the
+    // ordering. Awaiting it explicitly closes that race so "/" always sees
+    // an up-to-date role, rather than bouncing back to /login because
+    // profile hadn't loaded yet.
+    await loadProfile();
   };
 
   const resendVerificationEmail = async (email) => {
