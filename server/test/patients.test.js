@@ -107,6 +107,68 @@ describe("POST /api/patients", () => {
   });
 });
 
+describe("POST /api/patients/:id/card", () => {
+  beforeEach(() => {
+    currentUser = { uid: "admin1", role: "admin", name: "System Administrator", email: "admin@medicard.dev" };
+  });
+
+  it("rejects a doctor (admin-only action)", async () => {
+    currentUser = { uid: "doctor1", role: "doctor", name: "Dr. Sarah Jenkins", email: "doctor@medicard.dev" };
+
+    const res = await request(buildApp()).post("/api/patients/p1/card").send({ cardUid: "AABBCCDD" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects when cardUid is missing", async () => {
+    const res = await request(buildApp()).post("/api/patients/p1/card").send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cardUid is required/i);
+  });
+
+  it("rejects when the patient already has a card", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz", card_uid: "04A3B2C1" }, error: null }));
+
+    const res = await request(buildApp()).post("/api/patients/p1/card").send({ cardUid: "AABBCCDD" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already has a card/i);
+  });
+
+  it("rejects when the card UID is already used by another patient", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz", card_uid: null }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p2" }, error: null }));
+
+    const res = await request(buildApp()).post("/api/patients/p1/card").send({ cardUid: "AABBCCDD" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already registered/i);
+  });
+
+  it("binds the card to an existing patient with no account changes", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz", card_uid: null }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "", dob: null, age: null,
+          gender: "", blood_type: "", allergies: [], chronic_illnesses: [], height: null, weight: null,
+          phone: "", emergency_contact_name: "", emergency_contact_phone: "", card_uid: "AABBCCDD",
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp()).post("/api/patients/p1/card").send({ cardUid: "AABBCCDD" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.cardUid).toBe("AABBCCDD");
+    expect(mockSupabase.auth.admin.createUser).not.toHaveBeenCalled();
+  });
+});
+
 describe("POST /api/patients/:id/avatar", () => {
   it("rejects a patient uploading an avatar for someone else", async () => {
     currentUser = { uid: "patient1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };

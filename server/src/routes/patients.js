@@ -139,6 +139,32 @@ router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, re
   res.json(toPatientJson(data));
 });
 
+// Bind an unused card UID to an EXISTING patient who doesn't have one yet.
+// "Register New Card" (POST /nfc/register) only ever creates a brand-new
+// account, so a patient added earlier without a card (e.g. via "Add
+// Patient") has no way to receive one later without this.
+router.post("/:id/card", requireAuth, requireRole("admin"), async (req, res) => {
+  const { cardUid } = req.body;
+  if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
+
+  const { data: patient } = await supabase.from("patients").select("id, name, card_uid").eq("id", req.params.id).maybeSingle();
+  if (!patient) return res.status(404).json({ error: "Patient not found" });
+  if (patient.card_uid) return res.status(409).json({ error: "This patient already has a card assigned." });
+
+  const { data: existingCard } = await supabase.from("patients").select("id").eq("card_uid", cardUid).maybeSingle();
+  if (existingCard) return res.status(409).json({ error: "This card UID is already registered." });
+
+  const { data, error } = await supabase
+    .from("patients")
+    .update({ card_uid: cardUid, updated_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .select()
+    .single();
+  if (error || !data) return res.status(404).json({ error: "Patient not found" });
+  await logAudit(req.user, "nfc.register", "patient", data.id, { cardUid, name: data.name, existingPatient: true });
+  res.json(toPatientJson(data));
+});
+
 // Upload/replace a patient's profile picture. Patients may upload their own;
 // admin/doctor may also set one on a patient's behalf.
 router.post("/:id/avatar", requireAuth, upload.single("file"), async (req, res) => {
