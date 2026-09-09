@@ -51,6 +51,38 @@ describe("GET /api/nfc/:cardUid", () => {
     expect(res.body.cardUid).toBe("04A3B2C1");
   });
 
+  it("returns only the vital emergency summary, not the full chart (email, IC excluded)", async () => {
+    const patientRow = {
+      id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "010203-14-1234",
+      dob: "2001-02-03", age: 25, gender: "Male", blood_type: "O+",
+      allergies: ["Penicillin"], chronic_illnesses: [], height: 172, weight: 68,
+      phone: "013-1234567", emergency_contact_name: "Wife", emergency_contact_phone: "013-9999999",
+      card_uid: "04A3B2C1", created_at: new Date().toISOString(),
+    };
+    mockSupabase.from.mockReturnValueOnce(chain({ data: patientRow, error: null }));
+
+    const res = await request(buildApp()).get("/api/nfc/04A3B2C1");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      uid: "p1",
+      cardUid: "04A3B2C1",
+      name: "Ahmad Faiz",
+      avatarUrl: undefined,
+      age: 25,
+      gender: "Male",
+      bloodType: "O+",
+      allergies: ["Penicillin"],
+      chronicIllnesses: [],
+      emergencyContactName: "Wife",
+      emergencyContactPhone: "013-9999999",
+    });
+    expect(res.body.email).toBeUndefined();
+    expect(res.body.ic).toBeUndefined();
+    expect(res.body.dob).toBeUndefined();
+    expect(res.body.phone).toBeUndefined();
+  });
+
   it("returns 404 for an unregistered card", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
 
