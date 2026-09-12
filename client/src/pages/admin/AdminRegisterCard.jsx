@@ -23,7 +23,9 @@ export default function AdminRegisterCard() {
   const [success, setSuccess] = useState(null);
   const [justAssigned, setJustAssigned] = useState(false);
   const [nfcScanning, setNfcScanning] = useState(false);
-  const [showManual, setShowManual] = useState(!isWebNfcSupported());
+  // Always available, not just as a fallback when Web NFC is unsupported —
+  // useful for typing a known UID directly, or for a USB HID card reader.
+  const [showManual, setShowManual] = useState(true);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);

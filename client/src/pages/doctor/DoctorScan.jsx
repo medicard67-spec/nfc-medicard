@@ -12,7 +12,9 @@ export default function DoctorScan() {
   const [error, setError] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [nfcScanning, setNfcScanning] = useState(false);
-  const [showManual, setShowManual] = useState(!isWebNfcSupported());
+  // Always available, not just as a fallback when Web NFC is unsupported —
+  // useful for typing a known UID directly, or for a USB HID card reader.
+  const [showManual, setShowManual] = useState(true);
   const [showQr, setShowQr] = useState(false);
   const abortRef = useRef(null);
   const manualInputRef = useRef(null);
