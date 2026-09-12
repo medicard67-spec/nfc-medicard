@@ -29,8 +29,18 @@ export default function AdminRegisterCard() {
   const [searching, setSearching] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const abortRef = useRef(null);
+  const manualInputRef = useRef(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Keeps the manual UID field focused so a USB HID card reader (which just
+  // "types" the UID into whatever's focused, like a keyboard) can scan cards
+  // back-to-back at a registration desk without anyone touching the mouse.
+  useEffect(() => {
+    if (step === 1 && showManual) {
+      manualInputRef.current?.focus();
+    }
+  }, [step, showManual]);
 
   const handleScan = (e) => {
     e.preventDefault();
@@ -155,10 +165,11 @@ export default function AdminRegisterCard() {
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isWebNfcSupported()
                   ? "Enter the unassigned card's UID manually if a physical tap isn't available."
-                  : "No physical NFC reader detected on this device/browser. Enter the unassigned card's UID manually to simulate scanning it in."}
+                  : "Type the UID to simulate a scan, or tap a card on a connected USB card reader — this field stays focused so a desk reader can scan cards one after another."}
               </p>
               <form onSubmit={handleScan} className="w-full space-y-3">
                 <input
+                  ref={manualInputRef}
                   value={cardUid}
                   onChange={(e) => setCardUid(e.target.value)}
                   placeholder="e.g. 09F1A2B3"

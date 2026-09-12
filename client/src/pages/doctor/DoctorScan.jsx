@@ -15,10 +15,19 @@ export default function DoctorScan() {
   const [showManual, setShowManual] = useState(!isWebNfcSupported());
   const [showQr, setShowQr] = useState(false);
   const abortRef = useRef(null);
+  const manualInputRef = useRef(null);
   const navigate = useNavigate();
   const toast = useToast();
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Keeps the manual UID field focused so a USB HID card reader (which just
+  // "types" the UID into whatever's focused, like a keyboard) works without
+  // anyone touching the mouse — including refocusing after a failed lookup
+  // so the next tap is ready to go immediately.
+  useEffect(() => {
+    if (showManual) manualInputRef.current?.focus();
+  }, [showManual, error]);
 
   const lookupCard = async (uid, method) => {
     setError(null);
@@ -28,6 +37,7 @@ export default function DoctorScan() {
       navigate("/doctor/emergency", { state: data });
     } catch (err) {
       setError(err.response?.data?.error || "Failed to read card.");
+      setCardUid("");
     } finally {
       setScanning(false);
     }
@@ -126,11 +136,12 @@ export default function DoctorScan() {
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <Keyboard size={44} strokeWidth={1.5} className="text-slate-400 dark:text-slate-500" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Enter the card's UID manually — the same lookup a real hardware or QR scan would
-              trigger.
+              Type the UID to simulate a scan, or tap a card on a connected USB card reader — this
+              field stays focused so a desk reader can look patients up one after another.
             </p>
             <form onSubmit={handleManualScan} className="w-full space-y-3">
               <input
+                ref={manualInputRef}
                 value={cardUid}
                 onChange={(e) => setCardUid(e.target.value)}
                 placeholder="e.g. 04A3B2C1"
