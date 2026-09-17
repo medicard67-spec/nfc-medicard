@@ -88,7 +88,7 @@ async function main() {
     phone: "012-3456789",
     emergency_contact_name: "Rahman Bin Ismail",
     emergency_contact_phone: "013-9876543",
-    card_uid: "04A3B2C1",
+    card_uid: "0443FADB3D0289",
   });
 
   const patient2Id = await createAccount({
@@ -172,7 +172,7 @@ async function main() {
   console.log("  Admin:    admin@medicard.dev");
   console.log("  Doctor:   doctor@medicard.dev   (Dr. Sarah Jenkins - Cardiology)");
   console.log("  Doctor:   doctor2@medicard.dev  (Dr. Robert Chan - Endocrinology)");
-  console.log("  Patient:  patient@medicard.dev  (card UID: 04A3B2C1)");
+  console.log("  Patient:  patient@medicard.dev  (card UID: 0443FADB3D0289)");
   console.log("  Patient:  patient2@medicard.dev (card UID: 07D8E9F0)");
   process.exit(0);
 }

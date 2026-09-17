@@ -86,7 +86,7 @@ This creates demo accounts and sample clinical data directly in your Supabase pr
 | Admin   | admin@medicard.dev      |                                  |
 | Doctor  | doctor@medicard.dev     | Dr. Sarah Jenkins — Cardiology  |
 | Doctor  | doctor2@medicard.dev    | Dr. Robert Chan — Endocrinology |
-| Patient | patient@medicard.dev    | Card UID: `04A3B2C1`            |
+| Patient | patient@medicard.dev    | Card UID: `0443FADB3D0289`     |
 | Patient | patient2@medicard.dev   | Card UID: `07D8E9F0`            |
 
 ## 5. Run the app (2 terminals)
@@ -109,7 +109,7 @@ Runs on http://localhost:5173. Log in with any of the demo accounts above.
   pages detect Web NFC support automatically and show a **"Tap NFC Card"** button — tap a real
   card and it looks the patient up (or starts registration) by the card's actual hardware UID.
 - **Everywhere else** (desktop, iOS): falls back to manual entry —
-  - **Doctor → Scan NFC Card**: enter `04A3B2C1` to pull up the seeded patient's full record.
+  - **Doctor → Scan NFC Card**: enter `0443FADB3D0289` to pull up the seeded patient's full record.
   - **Admin → Register New Card**: enter any new UID (e.g. `AABBCCDD`) to register a brand-new
     patient and bind it to that "card".
 - **Admin/Doctor → Add Patient / Register Patient**: register a patient with no card at all — a
@@ -281,7 +281,7 @@ cd client && npm run build:offline   # builds client/dist-offline against a loca
 cd ../server && npm run offline      # serves the app + a canned in-memory dataset on one port
 ```
 Open **http://localhost:4444** — same demo accounts as above (`admin@medicard.dev`,
-`doctor@medicard.dev`, `patient@medicard.dev` / `password123`, card UID `04A3B2C1`). You can
+`doctor@medicard.dev`, `patient@medicard.dev` / `password123`, card UID `0443FADB3D0289`). You can
 disconnect Wi-Fi entirely and it keeps working: `server/offline-server.js` is a single Express
 process serving both the built frontend and an in-memory stand-in for the API, seeded with the
 same demo data as `npm run seed`. It's for a local demo only — the auth "token" it issues has no
