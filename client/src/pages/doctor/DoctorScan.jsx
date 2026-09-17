@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Nfc, QrCode, Keyboard } from "lucide-react";
+import { Nfc, QrCode, Keyboard, Usb } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
+import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
 
@@ -12,6 +13,7 @@ export default function DoctorScan() {
   const [error, setError] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [nfcScanning, setNfcScanning] = useState(false);
+  const [deskScanning, setDeskScanning] = useState(false);
   // Always available, not just as a fallback when Web NFC is unsupported —
   // useful for typing a known UID directly, or for a USB HID card reader.
   const [showManual, setShowManual] = useState(true);
@@ -71,6 +73,19 @@ export default function DoctorScan() {
     lookupCard(text, "qr");
   };
 
+  const startDeskScan = async () => {
+    setError(null);
+    setDeskScanning(true);
+    try {
+      const uid = await readCardUid();
+      setDeskScanning(false);
+      await lookupCard(uid, "nfc");
+    } catch (err) {
+      setDeskScanning(false);
+      setError(err.message || "Desk reader scan failed.");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-md space-y-4">
       <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Scan NFC Card</h1>
@@ -92,6 +107,26 @@ export default function DoctorScan() {
               {nfcScanning ? "Scanning..." : scanning ? "Looking up patient..." : "Tap NFC Card"}
             </button>
             {error && <p className="text-sm text-red-600">{error}</p>}
+          </div>
+        </Card>
+      )}
+
+      {isDeskReaderSupported() && (
+        <Card>
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <Usb size={44} strokeWidth={1.5} className={`text-brand-600 dark:text-brand-300 ${deskScanning ? "animate-pulse" : ""}`} />
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {deskScanning
+                ? "Waiting for a tap on the desk reader..."
+                : "Connected a USB NFC reader? Tap the button, then hold the patient's card on it. Close the reader's own software first."}
+            </p>
+            <button
+              onClick={startDeskScan}
+              disabled={deskScanning || scanning}
+              className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              {deskScanning ? "Waiting for tap..." : "Scan with Desk Reader"}
+            </button>
           </div>
         </Card>
       )}

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Nfc, Keyboard, Search, UserPlus } from "lucide-react";
+import { Nfc, Keyboard, Search, UserPlus, Usb, QrCode } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
+import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrCodeCard from "../../components/QrCodeCard.jsx";
+import QrScannerView from "../../components/QrScannerView.jsx";
 
 const emptyForm = {
   name: "", email: "", password: "", ic: "", dob: "", age: "", gender: "Male",
@@ -23,6 +25,8 @@ export default function AdminRegisterCard() {
   const [success, setSuccess] = useState(null);
   const [justAssigned, setJustAssigned] = useState(false);
   const [nfcScanning, setNfcScanning] = useState(false);
+  const [deskScanning, setDeskScanning] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   // Always available, not just as a fallback when Web NFC is unsupported —
   // useful for typing a known UID directly, or for a USB HID card reader.
   const [showManual, setShowManual] = useState(true);
@@ -50,6 +54,12 @@ export default function AdminRegisterCard() {
     setStep(2);
   };
 
+  const handleQrDecode = (text) => {
+    setShowQr(false);
+    setCardUid(text);
+    setStep(2);
+  };
+
   const startNfcScan = async () => {
     setError(null);
     setNfcScanning(true);
@@ -64,6 +74,20 @@ export default function AdminRegisterCard() {
       setError(err.message || "NFC scan failed or was cancelled.");
     } finally {
       setNfcScanning(false);
+    }
+  };
+
+  const startDeskScan = async () => {
+    setError(null);
+    setDeskScanning(true);
+    try {
+      const uid = await readCardUid();
+      setCardUid(uid);
+      setStep(2);
+    } catch (err) {
+      setError(err.message || "Desk reader scan failed.");
+    } finally {
+      setDeskScanning(false);
     }
   };
 
@@ -159,6 +183,54 @@ export default function AdminRegisterCard() {
             </div>
           </Card>
         )}
+
+        {isDeskReaderSupported() && (
+          <Card>
+            <div className="flex flex-col items-center gap-4 py-6 text-center">
+              <Usb size={44} strokeWidth={1.5} className={`text-brand-600 dark:text-brand-300 ${deskScanning ? "animate-pulse" : ""}`} />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {deskScanning
+                  ? "Waiting for a tap on the desk reader..."
+                  : "Connected a USB NFC reader? Tap the button, then hold the new card on it. Close the reader's own software first."}
+              </p>
+              <button
+                onClick={startDeskScan}
+                disabled={deskScanning}
+                className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                {deskScanning ? "Waiting for tap..." : "Scan with Desk Reader"}
+              </button>
+            </div>
+          </Card>
+        )}
+
+        <Card>
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <QrCode size={44} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Scan a printed QR code (e.g. from a previously issued card) with your device's camera
+              instead of tapping or typing.
+            </p>
+            {showQr ? (
+              <div className="w-full space-y-3">
+                <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || "Camera error.")} />
+                <button
+                  onClick={() => setShowQr(false)}
+                  className="w-full rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowQr(true)}
+                className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                Scan QR Code
+              </button>
+            )}
+          </div>
+        </Card>
 
         {showManual && (
           <Card>
