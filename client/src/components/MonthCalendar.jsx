@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -6,12 +7,19 @@ function toDateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function MonthCalendar({ events, renderEvent, emptyLabel = "No appointments on this day." }) {
+export default function MonthCalendar({ events, renderEvent, emptyLabel = "No appointments on this day.", focusDate }) {
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [selected, setSelected] = useState(() => toDateKey(new Date()));
+
+  useEffect(() => {
+    if (!focusDate) return;
+    const d = new Date(focusDate + "T00:00:00");
+    setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+    setSelected(focusDate);
+  }, [focusDate]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map();
@@ -46,16 +54,18 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-          className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          aria-label="Previous month"
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
-          ← Prev
+          <ChevronLeft size={18} />
         </button>
         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{monthLabel}</p>
         <button
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-          className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          aria-label="Next month"
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
-          Next →
+          <ChevronRight size={18} />
         </button>
       </div>
 
@@ -77,19 +87,24 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
             <button
               key={key}
               onClick={() => setSelected(key)}
-              className={`flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition ${
+              className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-full text-sm font-medium transition ${
                 isSelected
-                  ? "bg-brand-600 text-white"
+                  ? "bg-brand-600 text-white shadow-soft"
                   : isToday
-                  ? "bg-brand-50 text-brand-700 dark:bg-brand-900 dark:text-brand-200"
+                  ? "bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-300 dark:bg-brand-900 dark:text-brand-200 dark:ring-brand-700"
                   : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               {d.getDate()}
               {dayEvents.length > 0 && (
-                <span
-                  className={`mt-0.5 h-1.5 w-1.5 rounded-full ${isSelected ? "bg-white" : "bg-accent-500"}`}
-                />
+                <span className="flex items-center gap-0.5">
+                  {dayEvents.slice(0, 3).map((_, di) => (
+                    <span
+                      key={di}
+                      className={`h-1 w-1 rounded-full ${isSelected ? "bg-white" : "bg-accent-500"}`}
+                    />
+                  ))}
+                </span>
               )}
             </button>
           );
@@ -103,7 +118,11 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
         {selectedEvents.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-slate-500">{emptyLabel}</p>
         ) : (
-          selectedEvents.map((e, i) => <div key={i}>{renderEvent(e)}</div>)
+          <div className="space-y-2">
+            {selectedEvents.map((e, i) => (
+              <div key={i}>{renderEvent(e)}</div>
+            ))}
+          </div>
         )}
       </div>
     </div>
