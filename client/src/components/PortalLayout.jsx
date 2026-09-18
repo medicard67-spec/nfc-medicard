@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Menu, Moon, Sun, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
+import logo from "../assets/logo.png";
 
 export default function PortalLayout({ navItems, title }) {
   const { profile, logout } = useAuth();
@@ -24,9 +25,7 @@ export default function PortalLayout({ navItems, title }) {
           <Menu size={20} strokeWidth={2} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
-            N
-          </div>
+          <img src={logo} alt="NFC MediCard" className="h-7 w-7 object-contain" />
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">NFC MediCard</p>
         </div>
         <div className="w-9" />
@@ -50,8 +49,8 @@ export default function PortalLayout({ navItems, title }) {
         }`}
       >
         <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-700 px-5 py-5 md:justify-center md:px-0 lg:justify-start lg:px-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 font-bold text-white ring-1 ring-white/15">
-            N
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white p-1">
+            <img src={logo} alt="NFC MediCard" className="h-full w-full object-contain" />
           </div>
           <div className="md:hidden lg:block">
             <p className="text-sm font-semibold leading-tight text-white">NFC MediCard</p>

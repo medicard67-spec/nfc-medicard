@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Shield, Stethoscope, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundImage from "../components/BackgroundImage.jsx";
+import logo from "../assets/logo.png";
 
 const DEMO_ACCOUNTS = [
   { role: "Admin", email: "admin@medicard.dev", icon: Shield },
@@ -69,8 +70,8 @@ export default function Login() {
         }}
       >
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sm font-bold text-brand-800">
-            N
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white p-1">
+            <img src={logo} alt="NFC MediCard" className="h-full w-full object-contain" />
           </div>
           <p className="text-sm font-semibold">NFC MediCard</p>
         </div>
@@ -106,8 +107,8 @@ export default function Login() {
       <div className="flex w-full flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-700 text-xl font-bold text-white">
-              N
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white p-1.5 shadow-soft ring-1 ring-slate-200 dark:ring-slate-800">
+              <img src={logo} alt="NFC MediCard" className="h-full w-full object-contain" />
             </div>
             <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">NFC MediCard</h1>
           </div>
