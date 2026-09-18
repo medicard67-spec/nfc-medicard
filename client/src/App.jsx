@@ -27,7 +27,6 @@ const DoctorPatientDetail = lazy(() => import("./pages/doctor/DoctorPatientDetai
 const DoctorAddPatient = lazy(() => import("./pages/doctor/DoctorAddPatient.jsx"));
 const DoctorAppointments = lazy(() => import("./pages/doctor/DoctorAppointments.jsx"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile.jsx"));
-const DoctorEmergencyProfile = lazy(() => import("./pages/doctor/DoctorEmergencyProfile.jsx"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
 const AdminCheckIn = lazy(() => import("./pages/admin/AdminCheckIn.jsx"));
@@ -119,7 +118,6 @@ export default function App() {
         >
           <Route index element={<DoctorDashboard />} />
           <Route path="scan" element={<DoctorScan />} />
-          <Route path="emergency" element={<DoctorEmergencyProfile />} />
           <Route path="directory" element={<DoctorDirectory />} />
           <Route path="add-patient" element={<DoctorAddPatient />} />
           <Route path="appointments" element={<DoctorAppointments />} />

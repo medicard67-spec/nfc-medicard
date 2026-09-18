@@ -39,7 +39,7 @@ export default function DoctorScan() {
     setScanning(true);
     try {
       const { data } = await api.get(`/nfc/${uid.trim()}`, { params: { method } });
-      navigate("/doctor/emergency", { state: data });
+      navigate(`/doctor/patient/${data.uid}`);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to read card.");
       setCardUid("");

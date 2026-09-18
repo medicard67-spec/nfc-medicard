@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage } from "lucide-react";
+import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone } from "lucide-react";
 import api from "../../lib/api.js";
-import EmergencyBanner from "../../components/EmergencyBanner.jsx";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -10,7 +9,7 @@ import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 
-const TABS = ["History", "Lab Results", "Imaging", "Update Record", "Message"];
+const TABS = ["Emergency", "History", "Lab Results", "Imaging", "Update Record", "Message"];
 
 export default function DoctorPatientDetail() {
   const { id } = useParams();
@@ -18,7 +17,7 @@ export default function DoctorPatientDetail() {
   const [history, setHistory] = useState([]);
   const [labs, setLabs] = useState([]);
   const [radiology, setRadiology] = useState([]);
-  const [tab, setTab] = useState("History");
+  const [tab, setTab] = useState("Emergency");
   const [loading, setLoading] = useState(true);
 
   const load = () => {
@@ -32,6 +31,7 @@ export default function DoctorPatientDetail() {
   };
 
   useEffect(load, [id]);
+  useEffect(() => setTab("Emergency"), [id]);
 
   if (loading || !patient) {
     return (
@@ -62,29 +62,80 @@ export default function DoctorPatientDetail() {
         </button>
       </div>
 
-      <EmergencyBanner patient={patient} />
-
       <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-medium ${
+            className={`flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-sm font-medium ${
               tab === t
                 ? "border-b-2 border-brand-600 dark:border-brand-400 text-brand-700 dark:text-brand-300"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
             }`}
           >
+            {t === "Emergency" && <TriangleAlert size={14} className={tab === t ? "text-red-600 dark:text-red-400" : ""} />}
             {t}
           </button>
         ))}
       </div>
 
+      {tab === "Emergency" && <EmergencyTab patient={patient} />}
       {tab === "History" && <HistoryTab history={history} />}
       {tab === "Lab Results" && <LabsTab labs={labs} patientId={id} onUploaded={load} />}
       {tab === "Imaging" && <RadiologyTab images={radiology} patientId={id} onUploaded={load} />}
       {tab === "Update Record" && <UpdateRecordTab patientId={id} onSaved={load} />}
       {tab === "Message" && <MessageTab patientId={id} />}
+    </div>
+  );
+}
+
+function EmergencyTab({ patient }) {
+  const allergies = patient.allergies?.length ? patient.allergies.join(", ") : "None recorded";
+  const chronic = patient.chronicIllnesses?.length ? patient.chronicIllnesses.join(", ") : "None recorded";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+        <TriangleAlert size={16} />
+        <p className="text-xs font-bold uppercase tracking-wide">Emergency Access · Read-Only</p>
+      </div>
+
+      <Card className="border-2 border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/40">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs text-red-500 dark:text-red-400/80">Blood Type</p>
+            <p className="text-2xl font-bold text-red-700 dark:text-red-300">{patient.bloodType || "Unknown"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-red-500 dark:text-red-400/80">Severe Allergies</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">{allergies}</p>
+          </div>
+          <div className="sm:col-span-2">
+            <p className="text-xs text-red-500 dark:text-red-400/80">Chronic Illnesses</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">{chronic}</p>
+          </div>
+        </div>
+
+        {(patient.emergencyContactName || patient.emergencyContactPhone) && (
+          <div className="mt-4 flex items-center justify-between rounded-lg border border-red-200 bg-white/60 px-3 py-2 dark:border-red-900/60 dark:bg-red-950/20">
+            <div>
+              <p className="text-xs text-red-500 dark:text-red-400/80">Emergency Contact</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {patient.emergencyContactName || "Not provided"}
+              </p>
+            </div>
+            {patient.emergencyContactPhone && (
+              <a
+                href={`tel:${patient.emergencyContactPhone}`}
+                className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                <Phone size={14} />
+                {patient.emergencyContactPhone}
+              </a>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
