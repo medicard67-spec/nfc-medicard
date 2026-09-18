@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { ClipboardList, FlaskConical, ScanLine, MessageCircle } from "lucide-react";
+import { ClipboardList, FlaskConical, ScanLine, MessageCircle, DoorOpen } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import EmergencyBanner from "../../components/EmergencyBanner.jsx";
@@ -34,10 +34,12 @@ export default function PatientHome() {
     itemStyle: { color: dark ? "#cbd5e1" : "#475569", padding: 0 },
   };
   const [vitals, setVitals] = useState([]);
+  const [ticket, setTicket] = useState(null);
 
   useEffect(() => {
     if (!profile?.uid) return;
     api.get(`/patients/${profile.uid}/vitals`).then((res) => setVitals(res.data.reverse()));
+    api.get("/queue/mine").then((res) => setTicket(res.data));
   }, [profile?.uid]);
 
   const avgHeartRate = vitals.length
@@ -50,6 +52,20 @@ export default function PatientHome() {
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Welcome, {profile?.name}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">Here's your health overview.</p>
       </div>
+
+      {ticket && (
+        <div className="flex items-center justify-between rounded-xl border-2 border-brand-200 bg-brand-50 p-4 dark:border-brand-800 dark:bg-brand-900/40">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-brand-600 dark:text-brand-300">
+              You're checked in
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-200">
+              <DoorOpen size={15} /> Please proceed to {ticket.room}
+            </p>
+          </div>
+          <p className="text-3xl font-bold text-brand-700 dark:text-brand-300">#{ticket.number}</p>
+        </div>
+      )}
 
       <EmergencyBanner patient={profile} />
 

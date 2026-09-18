@@ -14,6 +14,7 @@ import appointmentsRoutes from "./routes/appointments.js";
 import adminRoutes from "./routes/admin.js";
 import doctorRoutes from "./routes/doctor.js";
 import auditRoutes from "./routes/audit.js";
+import queueRoutes from "./routes/queue.js";
 
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled rejection:", err);
@@ -53,6 +54,7 @@ app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/queue", queueRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

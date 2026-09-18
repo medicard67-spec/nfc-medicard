@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Shield, Stethoscope, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundImage from "../components/BackgroundImage.jsx";
+
+const DEMO_ACCOUNTS = [
+  { role: "Admin", email: "admin@medicard.dev", icon: Shield },
+  { role: "Doctor", email: "doctor@medicard.dev", icon: Stethoscope },
+  { role: "Patient", email: "patient@medicard.dev", icon: User },
+];
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,6 +20,12 @@ export default function Login() {
   const { login, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const fillDemo = (demoEmail) => {
+    setEmail(demoEmail);
+    setPassword("password123");
+    setFormError(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -174,13 +187,26 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Plain text, no card framing — this is a footnote for evaluators,
-              not a second form competing with the real sign-in card above it. */}
-          <div className="mt-6 border-t border-slate-200 pt-4 text-xs leading-relaxed text-slate-400 dark:border-slate-800 dark:text-slate-500">
-            <span className="font-medium text-slate-500 dark:text-slate-400">Demo accounts</span>
-            {" — admin@medicard.dev · doctor@medicard.dev · patient@medicard.dev"}
-            <br />
-            Password for all: password123
+          {/* Functional, not just informational — clicking a role fills the
+              form instead of making the evaluator copy-type an email. Small
+              chips read as a utility, not a second card competing with the
+              sign-in form above it. */}
+          <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800">
+            <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
+              Try a demo account
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {DEMO_ACCOUNTS.map(({ role, email: demoEmail, icon: Icon }) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => fillDemo(demoEmail)}
+                  className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-200"
+                >
+                  <Icon size={13} /> {role}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   UserPlus, Pencil, ImageIcon, Nfc, CreditCard, ClipboardList,
   FlaskConical, ScanLine, QrCode, Keyboard, Shield, Circle, Hospital,
-  Search, X, ChevronLeft, ChevronRight,
+  Search, X, ChevronLeft, ChevronRight, DoorOpen,
 } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -20,6 +20,7 @@ const ACTION_LABELS = {
   "medical_history.create": "Added medical history record",
   "lab_result.create": "Added lab result",
   "radiology.create": "Uploaded imaging record",
+  "queue.checkin": "Checked in at registration desk",
 };
 
 const ACTION_ICONS = {
@@ -31,6 +32,7 @@ const ACTION_ICONS = {
   "medical_history.create": ClipboardList,
   "lab_result.create": FlaskConical,
   "radiology.create": ScanLine,
+  "queue.checkin": DoorOpen,
 };
 
 const METHOD_ICONS = { nfc: Nfc, qr: QrCode, manual: Keyboard };
@@ -50,6 +52,7 @@ function matchesSearch(e, term) {
     e.details?.diagnosis,
     e.details?.testName,
     e.details?.cardUid,
+    e.details?.room,
     e.details?.method && (METHOD_LABELS[e.details.method] || e.details.method),
   ]
     .filter(Boolean)
@@ -194,6 +197,12 @@ export default function AdminAuditLog() {
                         </span>
                       )}
                       {e.details?.name && <span>&middot; {e.details.name}</span>}
+                      {e.details?.room && (
+                        <span className="inline-flex items-center gap-1">
+                          &middot; <DoorOpen size={12} /> {e.details.room}
+                          {e.details?.number != null && ` (#${e.details.number})`}
+                        </span>
+                      )}
                       {e.details?.diagnosis && <span>&middot; {e.details.diagnosis}</span>}
                       {e.details?.testName && <span>&middot; {e.details.testName}</span>}
                       {e.details?.cardUid && <span>&middot; card {e.details.cardUid}</span>}
