@@ -11,7 +11,7 @@ import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 
 const TABS = ["Emergency", "History", "Lab Results", "Imaging", "Update Record", "Message"];
 
-export default function DoctorPatientDetail() {
+export default function PatientDetail() {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
   const [history, setHistory] = useState([]);

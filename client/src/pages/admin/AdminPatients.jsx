@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 
@@ -92,11 +93,18 @@ export default function AdminPatients() {
                 ) : (
                   <>
                     <td className="px-4 py-2 text-xs text-slate-400 dark:text-slate-500">{p.uid.slice(0, 8)}</td>
-                    <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{p.name}</td>
+                    <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">
+                      <Link to={`/admin/patients/${p.uid}`} className="hover:text-brand-600 dark:hover:text-brand-400 hover:underline">
+                        {p.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-2">{p.age}</td>
                     <td className="px-4 py-2">{p.gender}</td>
                     <td className="px-4 py-2">{(p.chronicIllnesses || []).join(", ") || "—"}</td>
                     <td className="px-4 py-2 text-right">
+                      <Link to={`/admin/patients/${p.uid}`} className="mr-3 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
+                        View
+                      </Link>
                       <button onClick={() => startEdit(p)} className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">
                         Edit
                       </button>

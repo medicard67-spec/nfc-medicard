@@ -23,7 +23,6 @@ const PatientAppointments = lazy(() => import("./pages/patient/PatientAppointmen
 const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard.jsx"));
 const DoctorScan = lazy(() => import("./pages/doctor/DoctorScan.jsx"));
 const DoctorDirectory = lazy(() => import("./pages/doctor/DoctorDirectory.jsx"));
-const DoctorPatientDetail = lazy(() => import("./pages/doctor/DoctorPatientDetail.jsx"));
 const DoctorAddPatient = lazy(() => import("./pages/doctor/DoctorAddPatient.jsx"));
 const DoctorAppointments = lazy(() => import("./pages/doctor/DoctorAppointments.jsx"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile.jsx"));
@@ -36,6 +35,8 @@ const AdminDoctorReports = lazy(() => import("./pages/admin/AdminDoctorReports.j
 const AdminAddPatient = lazy(() => import("./pages/admin/AdminAddPatient.jsx"));
 const AdminAddDoctor = lazy(() => import("./pages/admin/AdminAddDoctor.jsx"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog.jsx"));
+
+const PatientDetail = lazy(() => import("./pages/shared/PatientDetail.jsx"));
 
 const doctorNav = [
   { to: "/doctor", label: "Dashboard", icon: Home, end: true },
@@ -122,7 +123,7 @@ export default function App() {
           <Route path="add-patient" element={<DoctorAddPatient />} />
           <Route path="appointments" element={<DoctorAppointments />} />
           <Route path="profile" element={<DoctorProfile />} />
-          <Route path="patient/:id" element={<DoctorPatientDetail />} />
+          <Route path="patient/:id" element={<PatientDetail />} />
         </Route>
 
         <Route
@@ -139,7 +140,7 @@ export default function App() {
           <Route path="add-patient" element={<AdminAddPatient />} />
           <Route path="add-doctor" element={<AdminAddDoctor />} />
           <Route path="patients" element={<AdminPatients />} />
-          <Route path="patients/:id" element={<AdminPatients />} />
+          <Route path="patients/:id" element={<PatientDetail />} />
           <Route path="doctor-reports" element={<AdminDoctorReports />} />
           <Route path="audit-log" element={<AdminAuditLog />} />
         </Route>
