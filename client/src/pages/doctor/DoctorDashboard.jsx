@@ -12,7 +12,22 @@ import { useTheme } from "../../context/ThemeContext.jsx";
 export default function DoctorDashboard() {
   const { profile } = useAuth();
   const { theme } = useTheme();
-  const lineColor = theme === "dark" ? "#5eead4" : "#0d9488";
+  const dark = theme === "dark";
+  const lineColor = dark ? "#5eead4" : "#0d9488";
+  const gridColor = dark ? "#1e293b" : "#e2e8f0";
+  const tickColor = dark ? "#94a3b8" : "#64748b";
+  const tooltipStyle = {
+    contentStyle: {
+      background: dark ? "#0f172a" : "#ffffff",
+      border: `1px solid ${dark ? "#1e293b" : "#e2e8f0"}`,
+      borderRadius: 10,
+      boxShadow: "0 4px 16px -4px rgb(15 23 42 / 0.15)",
+      fontSize: 13,
+      padding: "8px 12px",
+    },
+    labelStyle: { color: dark ? "#e2e8f0" : "#1e293b", fontWeight: 600, marginBottom: 2 },
+    itemStyle: { color: dark ? "#cbd5e1" : "#475569", padding: 0 },
+  };
   const [patientCount, setPatientCount] = useState(0);
   const [stats, setStats] = useState(null);
 
@@ -44,11 +59,11 @@ export default function DoctorDashboard() {
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={stats.weeklyActivity}>
-              <CartesianGrid strokeDasharray="3 3" className="dark:opacity-20" />
-              <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="records" stroke={lineColor} strokeWidth={2} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              <XAxis dataKey="week" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
+              <Tooltip formatter={(value) => [value, "Records"]} {...tooltipStyle} />
+              <Line type="monotone" dataKey="records" stroke={lineColor} strokeWidth={2} dot={{ r: 3, fill: lineColor }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -74,10 +89,11 @@ export default function DoctorDashboard() {
   );
 }
 
-// Deliberately lighter than the standard Card — see AdminDashboard.jsx.
+// Lighter than the standard Card, but still bg-white — see AdminDashboard.jsx
+// for why a tinted-grey version isn't the right amount of "lighter."
 function StatTile({ label, value }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-5 dark:bg-slate-900/60">
+    <div className="rounded-xl bg-white p-5 shadow-soft dark:bg-slate-900">
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
       <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{value}</p>
     </div>

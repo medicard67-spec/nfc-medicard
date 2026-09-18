@@ -174,14 +174,13 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 rounded-lg bg-slate-50 p-3 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-            <p className="mb-1 font-semibold text-slate-600 dark:text-slate-300">
-              Demo accounts (after seeding):
-            </p>
-            <p>Admin: admin@medicard.dev</p>
-            <p>Doctor: doctor@medicard.dev</p>
-            <p>Patient: patient@medicard.dev</p>
-            <p>Password for all: password123</p>
+          {/* Plain text, no card framing — this is a footnote for evaluators,
+              not a second form competing with the real sign-in card above it. */}
+          <div className="mt-6 border-t border-slate-200 pt-4 text-xs leading-relaxed text-slate-400 dark:border-slate-800 dark:text-slate-500">
+            <span className="font-medium text-slate-500 dark:text-slate-400">Demo accounts</span>
+            {" — admin@medicard.dev · doctor@medicard.dev · patient@medicard.dev"}
+            <br />
+            Password for all: password123
           </div>
         </div>
       </div>

@@ -18,6 +18,18 @@ export default function AdminDashboard() {
   const gridColor = dark ? "#1e293b" : "#e2e8f0";
   const tickColor = dark ? "#94a3b8" : "#64748b";
   const genderColors = dark ? GENDER_COLORS_DARK : GENDER_COLORS_LIGHT;
+  const tooltipStyle = {
+    contentStyle: {
+      background: dark ? "#0f172a" : "#ffffff",
+      border: `1px solid ${dark ? "#1e293b" : "#e2e8f0"}`,
+      borderRadius: 10,
+      boxShadow: "0 4px 16px -4px rgb(15 23 42 / 0.15)",
+      fontSize: 13,
+      padding: "8px 12px",
+    },
+    labelStyle: { color: dark ? "#e2e8f0" : "#1e293b", fontWeight: 600, marginBottom: 2 },
+    itemStyle: { color: dark ? "#cbd5e1" : "#475569", padding: 0 },
+  };
 
   useEffect(() => {
     api.get("/admin/stats").then((res) => setStats(res.data));
@@ -44,7 +56,7 @@ export default function AdminDashboard() {
             <BarChart data={genderData} layout="vertical" margin={{ left: 8, right: 24 }}>
               <XAxis type="number" hide allowDecimals={false} />
               <YAxis type="category" dataKey="name" width={64} tick={{ fill: tickColor, fontSize: 13 }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: dark ? "#1e293b" : "#f1f5f9" }} />
+              <Tooltip cursor={{ fill: dark ? "#1e293b" : "#f1f5f9" }} formatter={(value) => [value, "Patients"]} {...tooltipStyle} />
               <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
                 {genderData.map((_, i) => (
                   <Cell key={i} fill={genderColors[i % genderColors.length]} />
@@ -61,7 +73,7 @@ export default function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
               <XAxis dataKey="month" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
-              <Tooltip />
+              <Tooltip formatter={(value) => [value, "Records"]} labelFormatter={(month) => month} {...tooltipStyle} />
               <Line type="monotone" dataKey="visits" stroke={lineColor} strokeWidth={2} dot={{ r: 3, fill: lineColor }} />
             </LineChart>
           </ResponsiveContainer>
@@ -71,14 +83,16 @@ export default function AdminDashboard() {
   );
 }
 
-// Deliberately lighter than the standard Card — a stat tile is one of four
-// sitting in a row, not a standalone panel, so it skips the border/shadow
-// Card carries by default and uses a quiet tint instead. Keeps the Emergency
-// Profile banner as the one thing on the app that still visually outranks
-// everything around it.
+// Lighter than the standard Card — no border, a softer shadow — since a stat
+// tile is one of four sitting in a row, not a standalone panel. Still bg-white
+// against the page's bg-slate-100 ground, so it reads as a distinct tile
+// rather than disappearing into the page (an earlier bg-slate-50 version did
+// exactly that — one shade off slate-100 is barely perceptible). Keeps the
+// Emergency Profile banner as the one thing that visually outranks everything
+// around it.
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-5 dark:bg-slate-900/60">
+    <div className="rounded-xl bg-white p-5 shadow-soft dark:bg-slate-900">
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
       <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{value}</p>
     </div>

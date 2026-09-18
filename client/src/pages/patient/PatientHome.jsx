@@ -18,7 +18,21 @@ const quickLinks = [
 export default function PatientHome() {
   const { profile } = useAuth();
   const { theme } = useTheme();
-  const lineColor = theme === "dark" ? "#5eead4" : "#0d9488";
+  const dark = theme === "dark";
+  const lineColor = dark ? "#5eead4" : "#0d9488";
+  const tickColor = dark ? "#94a3b8" : "#64748b";
+  const tooltipStyle = {
+    contentStyle: {
+      background: dark ? "#0f172a" : "#ffffff",
+      border: `1px solid ${dark ? "#1e293b" : "#e2e8f0"}`,
+      borderRadius: 10,
+      boxShadow: "0 4px 16px -4px rgb(15 23 42 / 0.15)",
+      fontSize: 13,
+      padding: "8px 12px",
+    },
+    labelStyle: { display: "none" },
+    itemStyle: { color: dark ? "#cbd5e1" : "#475569", padding: 0 },
+  };
   const [vitals, setVitals] = useState([]);
 
   useEffect(() => {
@@ -51,9 +65,9 @@ export default function PatientHome() {
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={vitals}>
                 <XAxis dataKey="id" hide />
-                <YAxis width={30} />
-                <Tooltip />
-                <Line type="monotone" dataKey="heartRate" stroke={lineColor} strokeWidth={2} dot={false} />
+                <YAxis width={30} tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={(value) => [`${value} bpm`, ""]} {...tooltipStyle} />
+                <Line type="monotone" dataKey="heartRate" stroke={lineColor} strokeWidth={2} dot={{ r: 3, fill: lineColor }} />
               </LineChart>
             </ResponsiveContainer>
           )}
