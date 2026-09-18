@@ -18,7 +18,7 @@ const quickLinks = [
 export default function PatientHome() {
   const { profile } = useAuth();
   const { theme } = useTheme();
-  const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
+  const lineColor = theme === "dark" ? "#5eead4" : "#0d9488";
   const [vitals, setVitals] = useState([]);
 
   useEffect(() => {

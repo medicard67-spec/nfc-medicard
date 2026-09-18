@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Moon, Sun, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -40,16 +40,20 @@ export default function PortalLayout({ navItems, title }) {
         />
       )}
 
+      {/* Below md: full-width slide-in drawer. md–lg: 64px icon rail — narrow
+          enough to still leave real content width on a tablet or a laptop
+          window that isn't maximized, without losing navigation entirely
+          the way a fully-hidden sidebar would. lg+: full 256px sidebar. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-shrink-0 -translate-x-full flex-col border-r border-slate-200 bg-white/85 backdrop-blur-md transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 dark:border-slate-800 dark:bg-slate-900/85 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-shrink-0 -translate-x-full flex-col border-r border-slate-200 bg-white/95 backdrop-blur-md transition-transform duration-200 md:sticky md:top-0 md:h-screen md:w-16 md:translate-x-0 lg:w-64 dark:border-slate-800 dark:bg-slate-900/95 ${
           mobileOpen ? "translate-x-0" : ""
         }`}
       >
-        <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-700 px-5 py-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 font-bold text-white ring-1 ring-white/15">
+        <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-700 px-5 py-5 md:justify-center md:px-0 lg:justify-start lg:px-5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 font-bold text-white ring-1 ring-white/15">
             N
           </div>
-          <div>
+          <div className="md:hidden lg:block">
             <p className="text-sm font-semibold leading-tight text-white">NFC MediCard</p>
             <p className="text-xs text-brand-200">{title}</p>
           </div>
@@ -60,8 +64,9 @@ export default function PortalLayout({ navItems, title }) {
               key={item.to}
               to={item.to}
               end={item.end}
+              title={item.label}
               className={({ isActive }) =>
-                `flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition md:justify-center lg:justify-between ${
                   isActive
                     ? "bg-brand-50 text-brand-700 dark:bg-brand-800 dark:text-brand-100"
                     : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -69,11 +74,11 @@ export default function PortalLayout({ navItems, title }) {
               }
             >
               <span className="flex items-center gap-2.5">
-                <item.icon size={17} strokeWidth={2} />
-                {item.label}
+                <item.icon size={17} strokeWidth={2} className="flex-shrink-0" />
+                <span className="md:hidden lg:inline">{item.label}</span>
               </span>
               {item.badge > 0 && (
-                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white md:hidden lg:flex">
                   {item.badge > 9 ? "9+" : item.badge}
                 </span>
               )}
@@ -81,8 +86,8 @@ export default function PortalLayout({ navItems, title }) {
           ))}
         </nav>
         <div className="border-t border-slate-200 p-3 dark:border-slate-800">
-          <div className="mb-1 flex items-center justify-between px-1">
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{profile?.email}</p>
+          <div className="mb-1 flex items-center justify-between px-1 md:justify-center lg:justify-between">
+            <p className="truncate text-xs text-slate-500 md:hidden lg:block dark:text-slate-400">{profile?.email}</p>
             <button
               onClick={toggleTheme}
               aria-label="Toggle dark mode"
@@ -93,9 +98,11 @@ export default function PortalLayout({ navItems, title }) {
           </div>
           <button
             onClick={logout}
-            className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+            title="Log out"
+            className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 md:justify-center lg:justify-start dark:text-red-400 dark:hover:bg-red-950/50"
           >
-            Log out
+            <LogOut size={16} className="hidden md:inline lg:hidden" />
+            <span className="md:hidden lg:inline">Log out</span>
           </button>
         </div>
       </aside>

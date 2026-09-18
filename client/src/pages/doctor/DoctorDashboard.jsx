@@ -12,7 +12,7 @@ import { useTheme } from "../../context/ThemeContext.jsx";
 export default function DoctorDashboard() {
   const { profile } = useAuth();
   const { theme } = useTheme();
-  const lineColor = theme === "dark" ? "#c4b5fd" : "#7c3aed";
+  const lineColor = theme === "dark" ? "#5eead4" : "#0d9488";
   const [patientCount, setPatientCount] = useState(0);
   const [stats, setStats] = useState(null);
 
@@ -32,22 +32,10 @@ export default function DoctorDashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Total Registered Patients</p>
-          <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{patientCount}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Patients You've Treated</p>
-          <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{stats?.myPatientCount ?? "—"}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Records Logged (You)</p>
-          <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{stats?.totalRecordsLogged ?? "—"}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Upcoming Appointments</p>
-          <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{stats?.upcomingAppointments ?? "—"}</p>
-        </Card>
+        <StatTile label="Total Registered Patients" value={patientCount} />
+        <StatTile label="Patients You've Treated" value={stats?.myPatientCount ?? "—"} />
+        <StatTile label="Records Logged (You)" value={stats?.totalRecordsLogged ?? "—"} />
+        <StatTile label="Upcoming Appointments" value={stats?.upcomingAppointments ?? "—"} />
       </div>
 
       <Card title="Your Weekly Activity (records logged)">
@@ -82,6 +70,16 @@ export default function DoctorDashboard() {
           </Link>
         </div>
       </Card>
+    </div>
+  );
+}
+
+// Deliberately lighter than the standard Card — see AdminDashboard.jsx.
+function StatTile({ label, value }) {
+  return (
+    <div className="rounded-xl bg-slate-50 p-5 dark:bg-slate-900/60">
+      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{value}</p>
     </div>
   );
 }

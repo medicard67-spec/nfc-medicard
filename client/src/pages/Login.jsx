@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import BackgroundImage from "../components/BackgroundImage.jsx";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -45,6 +46,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen">
+      <BackgroundImage />
       {/* Brand panel */}
       <div
         className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-brand-800 p-10 text-white lg:flex"

@@ -16,6 +16,26 @@ html.dark body {
   @apply bg-slate-950 text-slate-100;
 }
 
+/* One consistent keyboard-focus ring, everywhere — buttons, links, and nav
+   items previously fell back to the inconsistent browser default. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px theme("colors.white"), 0 0 0 4px theme("colors.brand.500");
+}
+html.dark a:focus-visible,
+html.dark button:focus-visible,
+html.dark input:focus-visible,
+html.dark select:focus-visible,
+html.dark textarea:focus-visible,
+html.dark [tabindex]:focus-visible {
+  box-shadow: 0 0 0 2px theme("colors.slate.950"), 0 0 0 4px theme("colors.brand.400");
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

@@ -9,7 +9,6 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PortalLayout from "./components/PortalLayout.jsx";
-import BackgroundImage from "./components/BackgroundImage.jsx";
 import { SkeletonList } from "./components/Skeleton.jsx";
 import Login from "./pages/Login.jsx";
 
@@ -86,7 +85,6 @@ export default function App() {
 
   return (
     <>
-      <BackgroundImage />
       <Suspense fallback={<PageFallback />}>
         <Routes>
         <Route path="/login" element={<Login />} />
