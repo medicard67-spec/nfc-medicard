@@ -57,10 +57,13 @@ async function getDevice() {
   return device;
 }
 
-// Sends the read command and resolves with the next card UID reported by
-// the device, or rejects on timeout/error. Place a card on the reader
-// before or shortly after calling this.
-export function readCardUid({ timeoutMs = 8000 } = {}) {
+// Resolves with the next card UID reported by the device, or rejects on
+// timeout/error. You can call this before placing the card — it polls the
+// reader on an interval (matching how the official software's own
+// background loop behaves) rather than asking exactly once, so there's a
+// real window to tap the card instead of needing to already have it seated
+// at the single instant the old one-shot version queried.
+export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 300 } = {}) {
   if (!isDeskReaderSupported()) {
     return Promise.reject(new Error("This browser doesn't support WebHID (use desktop Chrome or Edge)."));
   }
@@ -68,30 +71,47 @@ export function readCardUid({ timeoutMs = 8000 } = {}) {
   return getDevice().then(
     (device) =>
       new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
+        let settled = false;
+
+        const cleanup = () => {
+          clearTimeout(timeoutTimer);
+          clearInterval(pollTimer);
           device.removeEventListener("inputreport", onReport);
-          reject(new Error("Timed out waiting for a card. Make sure it's on the reader."));
-        }, timeoutMs);
+        };
+        const succeed = (uid) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(uid);
+        };
+        const fail = (err) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(err);
+        };
 
         function onReport(event) {
           const uid = parseCardReport(event.data);
-          if (uid) {
-            clearTimeout(timer);
-            device.removeEventListener("inputreport", onReport);
-            resolve(uid);
+          if (uid) succeed(uid);
+        }
+        device.addEventListener("inputreport", onReport);
+
+        async function pollOnce() {
+          try {
+            await device.sendReport(0, PING_REPORT);
+            await device.sendReport(0, QUERY_REPORT);
+          } catch (err) {
+            fail(err);
           }
         }
 
-        device.addEventListener("inputreport", onReport);
-
-        device
-          .sendReport(0, PING_REPORT)
-          .then(() => device.sendReport(0, QUERY_REPORT))
-          .catch((err) => {
-            clearTimeout(timer);
-            device.removeEventListener("inputreport", onReport);
-            reject(err);
-          });
+        pollOnce();
+        const pollTimer = setInterval(pollOnce, pollIntervalMs);
+        const timeoutTimer = setTimeout(
+          () => fail(new Error("Timed out waiting for a card. Make sure it's on the reader.")),
+          timeoutMs
+        );
       })
   );
 }
