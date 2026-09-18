@@ -115,14 +115,23 @@ router.get("/:id", requireAuth, async (req, res) => {
   res.json(toPatientJson(data));
 });
 
-// Update a patient's profile (admin or doctor).
-router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
-  const allowedMap = {
-    name: "name", ic: "ic", dob: "dob", age: "age", gender: "gender", bloodType: "blood_type",
-    allergies: "allergies", chronicIllnesses: "chronic_illnesses", height: "height",
-    weight: "weight", phone: "phone", emergencyContactName: "emergency_contact_name",
-    emergencyContactPhone: "emergency_contact_phone",
-  };
+// Update a patient's profile. Admins/doctors can edit the full clinical
+// record; a patient may only update their own contact details, not
+// anything clinical or identity-related (name, IC, blood type, etc.).
+router.patch("/:id", requireAuth, async (req, res) => {
+  const isSelf = req.user.role === "patient" && req.user.uid === req.params.id;
+  if (!isSelf && req.user.role !== "admin" && req.user.role !== "doctor") {
+    return res.status(403).json({ error: "Insufficient permissions" });
+  }
+
+  const allowedMap = isSelf
+    ? { phone: "phone", emergencyContactName: "emergency_contact_name", emergencyContactPhone: "emergency_contact_phone" }
+    : {
+        name: "name", ic: "ic", dob: "dob", age: "age", gender: "gender", bloodType: "blood_type",
+        allergies: "allergies", chronicIllnesses: "chronic_illnesses", height: "height",
+        weight: "weight", phone: "phone", emergencyContactName: "emergency_contact_name",
+        emergencyContactPhone: "emergency_contact_phone",
+      };
   const updates = { updated_at: new Date().toISOString() };
   for (const [key, column] of Object.entries(allowedMap)) {
     if (key in req.body) updates[column] = req.body[key];

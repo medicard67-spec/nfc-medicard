@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FileText, Camera } from "lucide-react";
+import { FileText, Camera, Pencil, Check, X, Copy, Droplet, TriangleAlert, HeartPulse } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -21,6 +21,9 @@ export default function PatientProfile() {
   const toast = useToast();
   const [exporting, setExporting] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState(null);
+  const [savingContact, setSavingContact] = useState(false);
   const fileInputRef = useRef(null);
 
   if (!profile) return null;
@@ -62,6 +65,46 @@ export default function PatientProfile() {
     }
   };
 
+  const startEditContact = () => {
+    setContactForm({
+      phone: profile.phone || "",
+      emergencyContactName: profile.emergencyContactName || "",
+      emergencyContactPhone: profile.emergencyContactPhone || "",
+    });
+    setEditingContact(true);
+  };
+
+  const saveContact = async (e) => {
+    e.preventDefault();
+    setSavingContact(true);
+    try {
+      await api.patch(`/patients/${profile.uid}`, contactForm);
+      await refreshProfile();
+      setEditingContact(false);
+      toast.success("Contact details updated.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to update contact details.");
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
+  const copyCardUid = async () => {
+    if (!profile.cardUid) return;
+    try {
+      await navigator.clipboard.writeText(profile.cardUid);
+      toast.success("Card UID copied.");
+    } catch {
+      toast.error("Couldn't copy to clipboard.");
+    }
+  };
+
+  const allergies = profile.allergies?.length ? profile.allergies.join(", ") : "None recorded";
+  const chronic = profile.chronicIllnesses?.length ? profile.chronicIllnesses.join(", ") : "None recorded";
+  const memberSince = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long" })
+    : null;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -77,49 +120,154 @@ export default function PatientProfile() {
       </div>
 
       <Card>
-        <div className="mb-4 flex items-center gap-4">
-          <div className="group relative">
-            <Avatar name={profile.name} url={profile.avatarUrl} size="md" />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingAvatar}
-              aria-label="Change profile picture"
-              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
-            >
-              {uploadingAvatar ? "…" : <Camera size={12} />}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="group relative">
+              <Avatar name={profile.name} url={profile.avatarUrl} size="lg" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                aria-label="Change profile picture"
+                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
+              >
+                {uploadingAvatar ? "…" : <Camera size={13} />}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{profile.name}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {profile.gender}
+                {profile.age ? `, ${profile.age} yrs` : ""}
+              </p>
+              {memberSince && (
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Patient since {memberSince}</p>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{profile.name}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">IC: {profile.ic}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Blood Type: {profile.bloodType}</p>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="Date of Birth" value={profile.dob} />
-          <Field label="Age" value={profile.age} />
-          <Field label="Gender" value={profile.gender} />
-          <Field label="Height (cm)" value={profile.height} />
-          <Field label="Weight (kg)" value={profile.weight} />
-          <Field label="Card UID" value={profile.cardUid} />
+          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+            <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-sm font-bold text-red-700 dark:bg-red-950/50 dark:text-red-300">
+              <Droplet size={14} />
+              {profile.bloodType || "Unknown"}
+            </span>
+            {profile.cardUid && (
+              <button
+                onClick={copyCardUid}
+                className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-mono text-slate-500 hover:border-brand-300 hover:text-brand-700 dark:border-slate-700 dark:text-slate-400 dark:hover:text-brand-300"
+                title="Copy card UID"
+              >
+                {profile.cardUid}
+                <Copy size={12} />
+              </button>
+            )}
+          </div>
         </div>
       </Card>
 
-      <Card title="Contact">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="Phone" value={profile.phone} />
-          <Field label="Emergency Contact" value={profile.emergencyContactName} />
-          <Field label="Emergency Phone" value={profile.emergencyContactPhone} />
+      <Card title="Medical Information">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+              <TriangleAlert size={12} /> Severe Allergies
+            </p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{allergies}</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+              <HeartPulse size={12} /> Chronic Illnesses
+            </p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{chronic}</p>
+          </div>
+          <Field label="Height / Weight" value={profile.height || profile.weight ? `${profile.height || "—"} cm · ${profile.weight || "—"} kg` : null} />
         </div>
+        <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+          Medical details are kept accurate by your doctor or hospital admin and can't be edited here.
+        </p>
+      </Card>
+
+      <Card title="Personal Information">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Field label="IC Number" value={profile.ic} />
+          <Field label="Date of Birth" value={profile.dob} />
+          <Field label="Gender" value={profile.gender} />
+          <Field label="Email" value={profile.email} />
+        </div>
+      </Card>
+
+      <Card
+        title="Contact"
+        action={
+          !editingContact && (
+            <button
+              onClick={startEditContact}
+              className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              <Pencil size={12} /> Edit
+            </button>
+          )
+        }
+      >
+        {editingContact ? (
+          <form onSubmit={saveContact} className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Phone</label>
+                <input
+                  value={contactForm.phone}
+                  onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Emergency Contact</label>
+                <input
+                  value={contactForm.emergencyContactName}
+                  onChange={(e) => setContactForm({ ...contactForm, emergencyContactName: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Emergency Phone</label>
+                <input
+                  value={contactForm.emergencyContactPhone}
+                  onChange={(e) => setContactForm({ ...contactForm, emergencyContactPhone: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={savingContact}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                <Check size={14} /> {savingContact ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingContact(false)}
+                disabled={savingContact}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <X size={14} /> Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <Field label="Phone" value={profile.phone} />
+            <Field label="Emergency Contact" value={profile.emergencyContactName} />
+            <Field label="Emergency Phone" value={profile.emergencyContactPhone} />
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -169,6 +169,62 @@ describe("POST /api/patients/:id/card", () => {
   });
 });
 
+describe("PATCH /api/patients/:id", () => {
+  it("rejects a patient editing someone else's profile", async () => {
+    currentUser = { uid: "patient1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
+
+    const res = await request(buildApp())
+      .patch("/api/patients/someone-else")
+      .send({ phone: "0123456789" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("lets a patient update their own contact details only, ignoring clinical fields", async () => {
+    currentUser = { uid: "p1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "", dob: null, age: null,
+          gender: "", blood_type: "O+", allergies: [], chronic_illnesses: [], height: null, weight: null,
+          phone: "0123456789", emergency_contact_name: "Mum", emergency_contact_phone: "0199999999",
+          card_uid: null, created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .patch("/api/patients/p1")
+      .send({ phone: "0123456789", bloodType: "Z-", name: "Hacked Name" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.phone).toBe("0123456789");
+    const updateCall = mockSupabase.from.mock.results[0].value.update.mock.calls[0][0];
+    expect(updateCall).not.toHaveProperty("blood_type");
+    expect(updateCall).not.toHaveProperty("name");
+  });
+
+  it("still lets a doctor update clinical fields", async () => {
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "p1", name: "Ahmad Faiz", email: "patient@medicard.dev", ic: "", dob: null, age: null,
+          gender: "", blood_type: "A+", allergies: [], chronic_illnesses: [], height: null, weight: null,
+          phone: "", emergency_contact_name: "", emergency_contact_phone: "", card_uid: null,
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp()).patch("/api/patients/p1").send({ bloodType: "A+" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.bloodType).toBe("A+");
+  });
+});
+
 describe("POST /api/patients/:id/avatar", () => {
   it("rejects a patient uploading an avatar for someone else", async () => {
     currentUser = { uid: "patient1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
