@@ -59,11 +59,12 @@ async function getDevice() {
 
 // Resolves with the next card UID reported by the device, or rejects on
 // timeout/error. You can call this before placing the card — it polls the
-// reader on an interval (matching how the official software's own
-// background loop behaves) rather than asking exactly once, so there's a
-// real window to tap the card instead of needing to already have it seated
-// at the single instant the old one-shot version queried.
-export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 300 } = {}) {
+// reader on an interval rather than asking exactly once, so there's a real
+// window to tap the card instead of needing to already have it seated at a
+// single instant. 60ms is aggressive but well inside what a full-speed USB
+// HID interrupt endpoint (1-10ms hardware polling) can keep up with — most
+// of the old 300ms interval was pure waiting, not device response time.
+export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 60 } = {}) {
   if (!isDeskReaderSupported()) {
     return Promise.reject(new Error("This browser doesn't support WebHID (use desktop Chrome or Edge)."));
   }
@@ -97,12 +98,17 @@ export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 300 } = {}) {
         }
         device.addEventListener("inputreport", onReport);
 
+        let inFlight = false;
         async function pollOnce() {
+          if (inFlight) return; // a 60ms interval can outpace a slow USB round trip — skip, don't queue
+          inFlight = true;
           try {
             await device.sendReport(0, PING_REPORT);
             await device.sendReport(0, QUERY_REPORT);
           } catch (err) {
             fail(err);
+          } finally {
+            inFlight = false;
           }
         }
 
