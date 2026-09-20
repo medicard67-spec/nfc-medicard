@@ -20,6 +20,7 @@ drop table if exists appointments cascade;
 drop table if exists messages cascade;
 drop table if exists radiology cascade;
 drop table if exists lab_results cascade;
+drop table if exists medications cascade;
 drop table if exists medical_history cascade;
 drop table if exists patients cascade;
 drop table if exists doctors cascade;
@@ -100,6 +101,27 @@ create table if not exists medical_history (
 
 alter table medical_history enable row level security;
 create index if not exists medical_history_patient_id_idx on medical_history(patient_id);
+
+-- ---------------------------------------------------------------------------
+-- medications: prescriptions a patient is currently taking or has taken.
+-- A null end_date means it's still current; setting one marks it past.
+-- ---------------------------------------------------------------------------
+create table if not exists medications (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients(id) on delete cascade,
+  name text not null,
+  dosage text not null,
+  frequency text not null default '',
+  start_date date not null default current_date,
+  end_date date,
+  prescribed_by text not null,
+  prescribed_by_id uuid,
+  notes text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table medications enable row level security;
+create index if not exists medications_patient_id_idx on medications(patient_id);
 
 -- ---------------------------------------------------------------------------
 -- lab_results: diagnostic/lab test records, optional attached file.

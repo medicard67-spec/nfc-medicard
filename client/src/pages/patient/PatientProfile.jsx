@@ -51,12 +51,13 @@ export default function PatientProfile() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const [history, labs, radiology] = await Promise.all([
+      const [history, medications, labs, radiology] = await Promise.all([
         api.get("/medical-history", { params: { patientId: profile.uid } }).then((r) => r.data),
+        api.get("/medications", { params: { patientId: profile.uid } }).then((r) => r.data),
         api.get("/lab-results", { params: { patientId: profile.uid } }).then((r) => r.data),
         api.get("/radiology", { params: { patientId: profile.uid } }).then((r) => r.data),
       ]);
-      await exportPatientRecordPdf({ patient: profile, history, labs, radiology });
+      await exportPatientRecordPdf({ patient: profile, history, medications, labs, radiology });
       toast.success("PDF downloaded.");
     } catch (err) {
       toast.error("Failed to generate PDF.");

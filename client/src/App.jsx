@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import {
   Home, Nfc, FolderOpen, UserPlus, Calendar, User,
   ClipboardList, FlaskConical, ScanLine, MessageCircle,
-  Stethoscope, Shield, Hospital, ClipboardCheck,
+  Stethoscope, Shield, Hospital, ClipboardCheck, Pill,
 } from "lucide-react";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
@@ -14,6 +14,7 @@ import Login from "./pages/Login.jsx";
 
 const PatientHome = lazy(() => import("./pages/patient/PatientHome.jsx"));
 const PatientHistory = lazy(() => import("./pages/patient/PatientHistory.jsx"));
+const PatientMedications = lazy(() => import("./pages/patient/PatientMedications.jsx"));
 const PatientLabs = lazy(() => import("./pages/patient/PatientLabs.jsx"));
 const PatientRadiology = lazy(() => import("./pages/patient/PatientRadiology.jsx"));
 const PatientMessages = lazy(() => import("./pages/patient/PatientMessages.jsx"));
@@ -78,6 +79,7 @@ export default function App() {
   const patientNav = [
     { to: "/patient", label: "Home", icon: Home, end: true },
     { to: "/patient/history", label: "Medical History", icon: ClipboardList },
+    { to: "/patient/medications", label: "Medications", icon: Pill },
     { to: "/patient/labs", label: "Lab Results", icon: FlaskConical },
     { to: "/patient/radiology", label: "Imaging", icon: ScanLine },
     { to: "/patient/messages", label: "Messages", icon: MessageCircle, badge: unreadCount },
@@ -102,6 +104,7 @@ export default function App() {
         >
           <Route index element={<PatientHome />} />
           <Route path="history" element={<PatientHistory />} />
+          <Route path="medications" element={<PatientMedications />} />
           <Route path="labs" element={<PatientLabs />} />
           <Route path="radiology" element={<PatientRadiology />} />
           <Route path="messages" element={<PatientMessages />} />

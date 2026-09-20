@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone } from "lucide-react";
+import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
@@ -9,12 +9,13 @@ import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 
-const TABS = ["Emergency", "History", "Lab Results", "Imaging", "Update Record", "Message"];
+const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "Update Record", "Message"];
 
 export default function PatientDetail() {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
   const [history, setHistory] = useState([]);
+  const [medications, setMedications] = useState([]);
   const [labs, setLabs] = useState([]);
   const [radiology, setRadiology] = useState([]);
   const [tab, setTab] = useState("Emergency");
@@ -23,6 +24,7 @@ export default function PatientDetail() {
   const load = () => {
     api.get(`/patients/${id}`).then((res) => setPatient(res.data));
     api.get("/medical-history", { params: { patientId: id } }).then((res) => setHistory(res.data));
+    api.get("/medications", { params: { patientId: id } }).then((res) => setMedications(res.data));
     api.get("/lab-results", { params: { patientId: id } }).then((res) => setLabs(res.data));
     api
       .get("/radiology", { params: { patientId: id } })
@@ -54,7 +56,7 @@ export default function PatientDetail() {
           </div>
         </div>
         <button
-          onClick={() => void exportPatientRecordPdf({ patient, history, labs, radiology })}
+          onClick={() => void exportPatientRecordPdf({ patient, history, medications, labs, radiology })}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <FileText size={15} />
@@ -74,6 +76,7 @@ export default function PatientDetail() {
             }`}
           >
             {t === "Emergency" && <TriangleAlert size={14} className={tab === t ? "text-red-600 dark:text-red-400" : ""} />}
+            {t === "Medications" && <Pill size={14} />}
             {t}
           </button>
         ))}
@@ -81,6 +84,7 @@ export default function PatientDetail() {
 
       {tab === "Emergency" && <EmergencyTab patient={patient} />}
       {tab === "History" && <HistoryTab history={history} />}
+      {tab === "Medications" && <MedicationsTab medications={medications} patientId={id} onSaved={load} />}
       {tab === "Lab Results" && <LabsTab labs={labs} patientId={id} onUploaded={load} />}
       {tab === "Imaging" && <RadiologyTab images={radiology} patientId={id} onUploaded={load} />}
       {tab === "Update Record" && <UpdateRecordTab patientId={id} onSaved={load} />}
@@ -193,6 +197,174 @@ function HistoryTab({ history }) {
           <p className="text-sm text-slate-400 dark:text-slate-500">No records match "{search}".</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function MedicationsTab({ medications, patientId, onSaved }) {
+  const toast = useToast();
+  const [name, setName] = useState("");
+  const [dosage, setDosage] = useState("");
+  const [frequency, setFrequency] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [stoppingId, setStoppingId] = useState(null);
+
+  const today = todayKey();
+  const current = medications.filter((m) => !m.endDate || m.endDate >= today);
+  const past = medications.filter((m) => m.endDate && m.endDate < today);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.post("/medications", { patientId, name, dosage, frequency, startDate: startDate || undefined });
+      setName("");
+      setDosage("");
+      setFrequency("");
+      setStartDate("");
+      onSaved();
+      toast.success("Medication added.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to add medication.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const discontinue = async (id) => {
+    setStoppingId(id);
+    try {
+      await api.patch(`/medications/${id}/discontinue`);
+      onSaved();
+      toast.success("Medication marked as stopped.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to update medication.");
+    } finally {
+      setStoppingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card title="Add Medication">
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Medicine Name</label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Amoxicillin"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Dosage</label>
+            <input
+              required
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="e.g. 500 mg"
+              className="w-28 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Frequency (optional)</label>
+            <input
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              placeholder="e.g. Twice daily"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            <Pill size={15} /> {saving ? "Adding..." : "Add"}
+          </button>
+        </form>
+      </Card>
+
+      {medications.length === 0 ? (
+        <EmptyState icon={Pill} title="No medications recorded" subtitle="Medicines added here will show as current until an end date is set." />
+      ) : (
+        <>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Current ({current.length})
+            </p>
+            {current.length === 0 ? (
+              <p className="text-sm text-slate-400 dark:text-slate-500">No medications currently being taken.</p>
+            ) : (
+              <div className="space-y-2">
+                {current.map((m) => (
+                  <Card key={m.id} className="border-l-4 border-l-brand-500">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-800 dark:text-slate-100">
+                          {m.name} <span className="font-normal text-slate-500 dark:text-slate-400">&middot; {m.dosage}</span>
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {m.frequency && <>{m.frequency} &middot; </>}
+                          Since {formatDate(m.startDate)} &middot; {m.prescribedBy}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => discontinue(m.id)}
+                        disabled={stoppingId === m.id}
+                        className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        <X size={12} /> {stoppingId === m.id ? "Stopping..." : "Stop"}
+                      </button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {past.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                Past ({past.length})
+              </p>
+              <div className="space-y-2">
+                {past.map((m) => (
+                  <Card key={m.id} className="opacity-70">
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">
+                      {m.name} <span className="font-normal text-slate-500 dark:text-slate-400">&middot; {m.dosage}</span>
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {m.frequency && <>{m.frequency} &middot; </>}
+                      {formatDate(m.startDate)} &ndash; {formatDate(m.endDate)} &middot; {m.prescribedBy}
+                    </p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

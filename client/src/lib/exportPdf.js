@@ -18,7 +18,7 @@ function dataUrlFormat(dataUrl) {
   return ext === "JPG" ? "JPEG" : ext;
 }
 
-export async function exportPatientRecordPdf({ patient, history = [], labs = [], radiology = [] }) {
+export async function exportPatientRecordPdf({ patient, history = [], medications = [], labs = [], radiology = [] }) {
   const doc = new jsPDF();
   const marginX = 14;
   let y = 18;
@@ -125,6 +125,26 @@ export async function exportPatientRecordPdf({ patient, history = [], labs = [],
         y += wrapped.length * 4.5;
       }
       y += 3;
+    });
+  }
+
+  ensureSpace(30);
+  heading("Medications");
+  if (medications.length === 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    doc.text("No records.", marginX, y);
+    y += 8;
+  } else {
+    medications.forEach((m) => {
+      ensureSpace(10);
+      const status = m.endDate ? `stopped ${m.endDate}` : "current";
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...dark);
+      doc.text(`${m.name} — ${m.dosage}${m.frequency ? `, ${m.frequency}` : ""}  (${status})`, marginX, y);
+      y += 6;
     });
   }
 
