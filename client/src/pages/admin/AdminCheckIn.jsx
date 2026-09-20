@@ -3,7 +3,7 @@ import { Nfc, Usb, QrCode, ArrowRight, ClipboardList, DoorOpen, RotateCcw } from
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
-import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
+import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
 import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
@@ -28,7 +28,7 @@ export default function AdminCheckIn() {
   const abortRef = useRef(null);
   const manualInputRef = useRef(null);
 
-  const nfcSupported = isWebNfcSupported();
+  const nfcSupported = isNfcSupported();
   const deskSupported = isDeskReaderSupported();
   const waiting = nfcScanning || deskScanning;
 

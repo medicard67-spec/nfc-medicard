@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Nfc, Search, UserPlus, Usb, QrCode, ArrowRight } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
-import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
+import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
 import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrCodeCard from "../../components/QrCodeCard.jsx";
@@ -148,7 +148,7 @@ export default function AdminRegisterCard() {
   };
 
   if (step === 1) {
-    const nfcSupported = isWebNfcSupported();
+    const nfcSupported = isNfcSupported();
     const deskSupported = isDeskReaderSupported();
     const waiting = nfcScanning || deskScanning;
 

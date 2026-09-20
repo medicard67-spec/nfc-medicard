@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Nfc, QrCode, Usb, ArrowRight } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
-import { isWebNfcSupported, scanOnce } from "../../lib/webNfc.js";
+import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
 import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
@@ -20,7 +20,7 @@ export default function DoctorScan() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const nfcSupported = isWebNfcSupported();
+  const nfcSupported = isNfcSupported();
   const deskSupported = isDeskReaderSupported();
   const waiting = nfcScanning || deskScanning;
 
