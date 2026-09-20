@@ -220,8 +220,8 @@ function MedicationsTab({ medications, patientId, onSaved }) {
   const [stoppingId, setStoppingId] = useState(null);
 
   const today = todayKey();
-  const current = medications.filter((m) => !m.endDate || m.endDate >= today);
-  const past = medications.filter((m) => m.endDate && m.endDate < today);
+  const current = medications.filter((m) => !m.endDate || m.endDate > today);
+  const past = medications.filter((m) => m.endDate && m.endDate <= today);
 
   const submit = async (e) => {
     e.preventDefault();

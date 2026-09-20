@@ -29,8 +29,8 @@ export default function PatientMedications() {
   }, [profile?.uid]);
 
   const today = todayKey();
-  const current = medications.filter((m) => !m.endDate || m.endDate >= today);
-  const past = medications.filter((m) => m.endDate && m.endDate < today);
+  const current = medications.filter((m) => !m.endDate || m.endDate > today);
+  const past = medications.filter((m) => m.endDate && m.endDate <= today);
 
   return (
     <div className="space-y-4">
