@@ -38,14 +38,14 @@ beforeEach(() => {
 });
 
 describe("GET /api/medical-history", () => {
-  it("includes imageUrls on each returned record", async () => {
+  it("includes imageUrls and physicianDepartment on each returned record", async () => {
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: [
           {
             id: "h1", patient_id: "p1", diagnosis: "Laceration", date: "2026-01-01",
-            physician: "Dr. Sarah Jenkins", physician_id: "doctor1", remarks: "",
-            image_urls: ["https://example.com/a.png", "https://example.com/b.png"],
+            physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+            remarks: "", image_urls: ["https://example.com/a.png", "https://example.com/b.png"],
             created_at: new Date().toISOString(),
           },
         ],
@@ -57,6 +57,16 @@ describe("GET /api/medical-history", () => {
 
     expect(res.status).toBe(200);
     expect(res.body[0].imageUrls).toEqual(["https://example.com/a.png", "https://example.com/b.png"]);
+    expect(res.body[0].physicianDepartment).toBe("Orthopedics");
+  });
+
+  it("sorts by when the record was published (created_at), not the clinical date", async () => {
+    const listChain = chain({ data: [], error: null });
+    mockSupabase.from.mockReturnValueOnce(listChain);
+
+    await request(buildApp()).get("/api/medical-history").query({ patientId: "p1" });
+
+    expect(listChain.order).toHaveBeenCalledWith("created_at", { ascending: false });
   });
 });
 
@@ -80,12 +90,13 @@ describe("POST /api/medical-history", () => {
   });
 
   it("creates a record with no images (backward compatible)", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {
           id: "h1", patient_id: "p1", diagnosis: "Routine check", date: "2026-01-01",
-          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", remarks: "",
-          image_urls: [], created_at: new Date().toISOString(),
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "", image_urls: [], created_at: new Date().toISOString(),
         },
         error: null,
       })
@@ -98,14 +109,17 @@ describe("POST /api/medical-history", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.imageUrls).toEqual([]);
+    expect(res.body.physicianDepartment).toBe("Orthopedics");
   });
 
   it("uploads attached images and stores their URLs", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {
           id: "h1", patient_id: "p1", diagnosis: "Laceration - left forearm", date: "2026-01-01",
-          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", remarks: "Healing well",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "Healing well",
           image_urls: ["https://example.com/file", "https://example.com/file"],
           created_at: new Date().toISOString(),
         },
@@ -129,6 +143,84 @@ describe("POST /api/medical-history", () => {
     expect(insertChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ image_urls: expect.arrayContaining([expect.any(String)]) })
     );
+  });
+
+  it("rejects referring to a doctor id that doesn't exist", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+
+    const res = await request(buildApp())
+      .post("/api/medical-history")
+      .field("patientId", "p1")
+      .field("diagnosis", "Routine check")
+      .field("referredToDoctorId", "missing-doctor");
+
+    expect(res.status).toBe(400);
+  });
+
+  it("referring to a specific doctor stores their name and department, ignoring any department field", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(
+      chain({ data: { id: "doctor2", name: "Dr. Robert Chan", department: "Cardiology" }, error: null })
+    );
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "h1", patient_id: "p1", diagnosis: "Chest pain", date: "2026-01-01",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "", image_urls: [],
+          referred_to_doctor_id: "doctor2", referred_to_doctor_name: "Dr. Robert Chan",
+          referred_to_doctor_department: "Cardiology", referred_to_department: null,
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .post("/api/medical-history")
+      .field("patientId", "p1")
+      .field("diagnosis", "Chest pain")
+      .field("referredToDoctorId", "doctor2")
+      .field("referredToDepartment", "Neurology");
+
+    expect(res.status).toBe(201);
+    expect(res.body.referredToDoctorName).toBe("Dr. Robert Chan");
+    expect(res.body.referredToDoctorDepartment).toBe("Cardiology");
+    expect(res.body.referredToDepartment).toBeNull();
+
+    const insertCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "medical_history");
+    const insertChain = mockSupabase.from.mock.results[insertCallIndex].value;
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ referred_to_doctor_id: "doctor2", referred_to_department: null })
+    );
+  });
+
+  it("referring to a department (no specific doctor) stores it plainly", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "h1", patient_id: "p1", diagnosis: "Numbness", date: "2026-01-01",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "", image_urls: [],
+          referred_to_doctor_id: null, referred_to_doctor_name: null, referred_to_doctor_department: null,
+          referred_to_department: "Neurology",
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .post("/api/medical-history")
+      .field("patientId", "p1")
+      .field("diagnosis", "Numbness")
+      .field("referredToDepartment", "Neurology");
+
+    expect(res.status).toBe(201);
+    expect(res.body.referredToDepartment).toBe("Neurology");
+    expect(res.body.referredToDoctorId).toBeNull();
   });
 });
 

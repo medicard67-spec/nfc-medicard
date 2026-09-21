@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check } from "lucide-react";
+import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check, Users, Share2 } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
@@ -168,12 +168,41 @@ function HistoryTab({ history, onSaved }) {
     [history, search]
   );
 
+  // Every doctor who has either written a record or been referred to, for a
+  // quick "who's involved in this patient's care" overview.
+  const doctorsInvolved = useMemo(() => {
+    const map = new Map();
+    history.forEach((r) => {
+      if (r.physician) map.set(r.physician, r.physicianDepartment || "General");
+      if (r.referredToDoctorName) map.set(r.referredToDoctorName, r.referredToDoctorDepartment || "General");
+    });
+    return Array.from(map, ([name, department]) => ({ name, department }));
+  }, [history]);
+
   if (history.length === 0) {
     return <EmptyState icon={ClipboardList} title="No history records" subtitle="Records added via Update Record will appear here." />;
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      {doctorsInvolved.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <Users size={13} /> Doctors Involved
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {doctorsInvolved.map((d) => (
+              <span
+                key={d.name}
+                className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-soft dark:bg-slate-800 dark:text-slate-200"
+              >
+                {d.name} <span className="text-slate-400 dark:text-slate-500">&middot; {d.department}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <SearchBar value={search} onChange={setSearch} placeholder="Search diagnosis or physician..." />
       <div className="space-y-3">
         {filtered.map((r) =>
@@ -200,7 +229,17 @@ function HistoryTab({ history, onSaved }) {
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {r.date} &middot; {r.physician}
+                {r.physicianDepartment && <> &middot; {r.physicianDepartment}</>}
               </p>
+              {(r.referredToDoctorName || r.referredToDepartment) && (
+                <p className="mt-1 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
+                  <Share2 size={12} />
+                  Referred to{" "}
+                  {r.referredToDoctorName
+                    ? `${r.referredToDoctorName} (${r.referredToDoctorDepartment})`
+                    : `${r.referredToDepartment} department`}
+                </p>
+              )}
               {r.remarks && (
                 <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>
               )}
@@ -669,6 +708,20 @@ function UpdateRecordTab({ patientId, onSaved }) {
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  const [doctors, setDoctors] = useState([]);
+  const [referMode, setReferMode] = useState("none");
+  const [referDoctorId, setReferDoctorId] = useState("");
+  const [referDepartment, setReferDepartment] = useState("");
+
+  useEffect(() => {
+    api.get("/users/doctors").then((res) => setDoctors(res.data));
+  }, []);
+
+  const departments = useMemo(
+    () => Array.from(new Set(doctors.map((d) => d.department).filter(Boolean))).sort(),
+    [doctors]
+  );
+
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -678,6 +731,8 @@ function UpdateRecordTab({ patientId, onSaved }) {
       form.append("diagnosis", diagnosis);
       form.append("remarks", remarks);
       images.forEach((file) => form.append("images", file));
+      if (referMode === "doctor" && referDoctorId) form.append("referredToDoctorId", referDoctorId);
+      if (referMode === "department" && referDepartment) form.append("referredToDepartment", referDepartment);
       await api.post("/medical-history", form, { headers: { "Content-Type": "multipart/form-data" } });
       if (appointmentDate) {
         await api.post("/appointments", { patientId, date: appointmentDate, notes: remarks });
@@ -686,6 +741,9 @@ function UpdateRecordTab({ patientId, onSaved }) {
       setRemarks("");
       setAppointmentDate("");
       setImages([]);
+      setReferMode("none");
+      setReferDoctorId("");
+      setReferDepartment("");
       onSaved();
       toast.success("Patient record updated.");
     } catch (err) {
@@ -740,6 +798,65 @@ function UpdateRecordTab({ patientId, onSaved }) {
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {images.length} photo{images.length > 1 ? "s" : ""} selected
             </p>
+          )}
+        </div>
+        <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+          <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+            <Share2 size={13} /> Send to Another Doctor (optional)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: "none", label: "Don't send" },
+              { value: "doctor", label: "By Doctor" },
+              { value: "department", label: "By Department" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setReferMode(opt.value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  referMode === opt.value
+                    ? "bg-brand-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {referMode === "doctor" && (
+            <select
+              required
+              value={referDoctorId}
+              onChange={(e) => setReferDoctorId(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              <option value="" disabled>
+                Select a doctor...
+              </option>
+              {doctors.map((d) => (
+                <option key={d.uid} value={d.uid}>
+                  {d.name} &middot; {d.department}
+                </option>
+              ))}
+            </select>
+          )}
+          {referMode === "department" && (
+            <select
+              required
+              value={referDepartment}
+              onChange={(e) => setReferDepartment(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              <option value="" disabled>
+                Select a department...
+              </option>
+              {departments.map((dep) => (
+                <option key={dep} value={dep}>
+                  {dep}
+                </option>
+              ))}
+            </select>
           )}
         </div>
         <button

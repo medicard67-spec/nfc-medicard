@@ -94,8 +94,13 @@ create table if not exists medical_history (
   date date not null default current_date,
   physician text not null,
   physician_id uuid,
+  physician_department text not null default 'General',
   remarks text not null default '',
   image_urls text[] not null default '{}',
+  referred_to_doctor_id uuid,
+  referred_to_doctor_name text,
+  referred_to_doctor_department text,
+  referred_to_department text,
   created_at timestamptz not null default now()
 );
 

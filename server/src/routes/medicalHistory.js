@@ -20,8 +20,13 @@ function toJson(row) {
     date: row.date,
     physician: row.physician,
     physicianId: row.physician_id,
+    physicianDepartment: row.physician_department,
     remarks: row.remarks,
     imageUrls: row.image_urls || [],
+    referredToDoctorId: row.referred_to_doctor_id,
+    referredToDoctorName: row.referred_to_doctor_name,
+    referredToDoctorDepartment: row.referred_to_doctor_department,
+    referredToDepartment: row.referred_to_department,
     createdAt: row.created_at,
   };
 }
@@ -33,11 +38,13 @@ router.get("/", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Insufficient permissions" });
   }
 
+  // Sorted by when the record was actually published (created), not the
+  // editable clinical "date" field, which a doctor can backdate.
   const { data, error } = await supabase
     .from("medical_history")
     .select("*")
     .eq("patient_id", patientId)
-    .order("date", { ascending: false });
+    .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data.map(toJson));
 });
@@ -48,9 +55,26 @@ router.post(
   requireRole("admin", "doctor"),
   upload.array("images", 6),
   async (req, res) => {
-    const { patientId, diagnosis, date, remarks } = req.body;
+    const { patientId, diagnosis, date, remarks, referredToDoctorId, referredToDepartment } = req.body;
     if (!patientId || !diagnosis) {
       return res.status(400).json({ error: "patientId and diagnosis are required" });
+    }
+
+    const { data: submittingDoctor } = await supabase
+      .from("doctors")
+      .select("department")
+      .eq("id", req.user.uid)
+      .maybeSingle();
+
+    let referredDoctor = null;
+    if (referredToDoctorId) {
+      const { data } = await supabase
+        .from("doctors")
+        .select("id, name, department")
+        .eq("id", referredToDoctorId)
+        .maybeSingle();
+      if (!data) return res.status(400).json({ error: "referredToDoctorId does not match a known doctor" });
+      referredDoctor = data;
     }
 
     const files = req.files || [];
@@ -68,13 +92,22 @@ router.post(
         date: date || new Date().toISOString().slice(0, 10),
         physician: req.user.name || req.user.email,
         physician_id: req.user.uid,
+        physician_department: submittingDoctor?.department || "General",
         remarks: remarks || "",
         image_urls: imageUrls,
+        referred_to_doctor_id: referredDoctor?.id || null,
+        referred_to_doctor_name: referredDoctor?.name || null,
+        referred_to_doctor_department: referredDoctor?.department || null,
+        referred_to_department: referredDoctor ? null : referredToDepartment || null,
       })
       .select()
       .single();
     if (error) return res.status(400).json({ error: error.message });
-    await logAudit(req.user, "medical_history.create", "patient", patientId, { diagnosis, images: imageUrls.length });
+    await logAudit(req.user, "medical_history.create", "patient", patientId, {
+      diagnosis,
+      images: imageUrls.length,
+      referredTo: referredDoctor?.name || referredToDepartment || undefined,
+    });
     res.status(201).json(toJson(data));
   }
 );
