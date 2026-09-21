@@ -131,3 +131,59 @@ describe("POST /api/medical-history", () => {
     );
   });
 });
+
+describe("PATCH /api/medical-history/:id", () => {
+  it("rejects a patient trying to edit a record", async () => {
+    currentUser = { uid: "p1", role: "patient", name: "Ahmad Faiz", email: "patient@medicard.dev" };
+
+    const res = await request(buildApp())
+      .patch("/api/medical-history/h1")
+      .send({ diagnosis: "Self-edit" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects an empty edit with no fields", async () => {
+    const res = await request(buildApp()).patch("/api/medical-history/h1").send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when the record doesn't exist", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+
+    const res = await request(buildApp()).patch("/api/medical-history/missing").send({ diagnosis: "X" });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("updates diagnosis, date, and remarks, preserving remarks exactly as sent", async () => {
+    const multilineRemarks = "Line one.\n\nLine two with   spacing preserved.";
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "h1", patient_id: "p1", diagnosis: "Updated diagnosis", date: "2026-02-02",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", remarks: multilineRemarks,
+          image_urls: [], created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .patch("/api/medical-history/h1")
+      .send({ diagnosis: "Updated diagnosis", date: "2026-02-02", remarks: multilineRemarks });
+
+    expect(res.status).toBe(200);
+    expect(res.body.diagnosis).toBe("Updated diagnosis");
+    expect(res.body.remarks).toBe(multilineRemarks);
+
+    const updateCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "medical_history");
+    const updateChain = mockSupabase.from.mock.results[updateCallIndex].value;
+    expect(updateChain.update).toHaveBeenCalledWith({
+      diagnosis: "Updated diagnosis",
+      date: "2026-02-02",
+      remarks: multilineRemarks,
+    });
+  });
+});

@@ -79,4 +79,25 @@ router.post(
   }
 );
 
+router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
+  const allowedMap = { diagnosis: "diagnosis", date: "date", remarks: "remarks" };
+  const updates = {};
+  for (const [key, column] of Object.entries(allowedMap)) {
+    if (key in req.body) updates[column] = req.body[key];
+  }
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: "No editable fields provided" });
+  }
+
+  const { data, error } = await supabase
+    .from("medical_history")
+    .update(updates)
+    .eq("id", req.params.id)
+    .select()
+    .single();
+  if (error || !data) return res.status(404).json({ error: "Record not found" });
+  await logAudit(req.user, "medical_history.update", "patient", data.patient_id, { fields: Object.keys(updates) });
+  res.json(toJson(data));
+});
+
 export default router;

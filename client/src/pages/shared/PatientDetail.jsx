@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X } from "lucide-react";
+import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
@@ -83,7 +83,7 @@ export default function PatientDetail() {
       </div>
 
       {tab === "Emergency" && <EmergencyTab patient={patient} />}
-      {tab === "History" && <HistoryTab history={history} />}
+      {tab === "History" && <HistoryTab history={history} onSaved={load} />}
       {tab === "Medications" && <MedicationsTab medications={medications} patientId={id} onSaved={load} />}
       {tab === "Lab Results" && <LabsTab labs={labs} patientId={id} onUploaded={load} />}
       {tab === "Imaging" && <RadiologyTab images={radiology} patientId={id} onUploaded={load} />}
@@ -155,8 +155,9 @@ function SearchBar({ value, onChange, placeholder }) {
   );
 }
 
-function HistoryTab({ history }) {
+function HistoryTab({ history, onSaved }) {
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const filtered = useMemo(
     () =>
       history.filter(
@@ -175,29 +176,125 @@ function HistoryTab({ history }) {
     <div>
       <SearchBar value={search} onChange={setSearch} placeholder="Search diagnosis or physician..." />
       <div className="space-y-3">
-        {filtered.map((r) => (
-          <Card key={r.id}>
-            <p className="font-semibold text-slate-800 dark:text-slate-100">{r.diagnosis}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {r.date} &middot; {r.physician}
-            </p>
-            {r.remarks && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
-            {r.imageUrls?.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {r.imageUrls.map((url) => (
-                  <a key={url} href={url} target="_blank" rel="noreferrer">
-                    <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
-                  </a>
-                ))}
+        {filtered.map((r) =>
+          editingId === r.id ? (
+            <HistoryRecordEditForm
+              key={r.id}
+              record={r}
+              onCancel={() => setEditingId(null)}
+              onSaved={() => {
+                setEditingId(null);
+                onSaved();
+              }}
+            />
+          ) : (
+            <Card key={r.id}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-slate-800 dark:text-slate-100">{r.diagnosis}</p>
+                <button
+                  onClick={() => setEditingId(r.id)}
+                  className="flex flex-shrink-0 items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
               </div>
-            )}
-          </Card>
-        ))}
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {r.date} &middot; {r.physician}
+              </p>
+              {r.remarks && (
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>
+              )}
+              {r.imageUrls?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {r.imageUrls.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )
+        )}
         {filtered.length === 0 && (
           <p className="text-sm text-slate-400 dark:text-slate-500">No records match "{search}".</p>
         )}
       </div>
     </div>
+  );
+}
+
+function HistoryRecordEditForm({ record, onCancel, onSaved }) {
+  const toast = useToast();
+  const [diagnosis, setDiagnosis] = useState(record.diagnosis);
+  const [date, setDate] = useState(record.date);
+  const [remarks, setRemarks] = useState(record.remarks || "");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.patch(`/medical-history/${record.id}`, { diagnosis, date, remarks });
+      toast.success("Record updated.");
+      onSaved();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to update record.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <form onSubmit={submit} className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Diagnosis</label>
+          <input
+            required
+            value={diagnosis}
+            onChange={(e) => setDiagnosis(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Date</label>
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Clinical Remarks</label>
+          <textarea
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            rows={4}
+            className="w-full whitespace-pre-wrap rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            <Check size={14} /> {saving ? "Saving..." : "Save"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <X size={14} /> Cancel
+          </button>
+        </div>
+      </form>
+    </Card>
   );
 }
 

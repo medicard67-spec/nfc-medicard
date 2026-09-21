@@ -58,7 +58,7 @@ export default function PatientHistory() {
                   </p>
                 </div>
               </div>
-              {r.remarks && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
+              {r.remarks && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
               {r.imageUrls?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {r.imageUrls.map((url) => (
