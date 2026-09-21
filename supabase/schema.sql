@@ -141,6 +141,7 @@ create table if not exists medications (
   name text not null,
   dosage text not null,
   frequency text not null default '',
+  renewal_frequency text not null default 'none' check (renewal_frequency in ('none', 'weekly', 'monthly', 'quarterly', 'yearly')),
   start_date date not null default current_date,
   end_date date,
   prescribed_by text not null,

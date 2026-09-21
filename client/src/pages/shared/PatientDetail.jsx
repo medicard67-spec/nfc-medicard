@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check,
-  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut,
+  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw,
 } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -12,6 +12,7 @@ import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
+import { RENEWAL_FREQUENCIES, RENEWAL_FREQUENCY_LABELS } from "../../lib/medicationRenewal.js";
 
 const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "Update Record", "Message"];
 
@@ -40,6 +41,13 @@ export default function PatientDetail() {
 
   useEffect(load, [id]);
   useEffect(() => setTab("Emergency"), [id]);
+
+  const medicationsNeedRenewal = medications.some((m) => {
+    if (!m.endDate || m.renewalFrequency === "none") return false;
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    return m.endDate <= todayKey;
+  });
 
   if (loading || !patient) {
     return (
@@ -71,21 +79,29 @@ export default function PatientDetail() {
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-sm font-medium ${
-              tab === t
-                ? "border-b-2 border-brand-600 dark:border-brand-400 text-brand-700 dark:text-brand-300"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
-            }`}
-          >
-            {t === "Emergency" && <TriangleAlert size={14} className={tab === t ? "text-red-600 dark:text-red-400" : ""} />}
-            {t === "Medications" && <Pill size={14} />}
-            {t}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const medicationsAlert = t === "Medications" && medicationsNeedRenewal;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-sm font-medium ${
+                medicationsAlert
+                  ? tab === t
+                    ? "border-b-2 border-red-600 text-red-700 dark:border-red-400 dark:text-red-300"
+                    : "text-red-600 hover:text-red-700 dark:text-red-400"
+                  : tab === t
+                  ? "border-b-2 border-brand-600 dark:border-brand-400 text-brand-700 dark:text-brand-300"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+              }`}
+            >
+              {t === "Emergency" && <TriangleAlert size={14} className={tab === t ? "text-red-600 dark:text-red-400" : ""} />}
+              {t === "Medications" && <Pill size={14} />}
+              {t}
+              {medicationsAlert && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "Emergency" && <EmergencyTab patient={patient} />}
@@ -474,28 +490,41 @@ function formatDate(dateStr) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function medicationDateLine(m) {
+  if (m.renewalFrequency && m.renewalFrequency !== "none") {
+    const label = RENEWAL_FREQUENCY_LABELS[m.renewalFrequency] || m.renewalFrequency;
+    return `${formatDate(m.startDate)} – ${formatDate(m.endDate)} · renews ${label.toLowerCase()}`;
+  }
+  return `Since ${formatDate(m.startDate)}`;
+}
+
 function MedicationsTab({ medications, patientId, onSaved }) {
   const toast = useToast();
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [renewalFrequency, setRenewalFrequency] = useState("none");
   const [saving, setSaving] = useState(false);
-  const [stoppingId, setStoppingId] = useState(null);
+  const [renewingId, setRenewingId] = useState(null);
 
   const today = todayKey();
+  const needsRenewal = medications.filter((m) => m.renewalFrequency !== "none" && m.endDate && m.endDate <= today);
   const current = medications.filter((m) => !m.endDate || m.endDate > today);
-  const past = medications.filter((m) => m.endDate && m.endDate <= today);
+  const past = medications.filter((m) => m.endDate && m.endDate <= today && m.renewalFrequency === "none");
 
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post("/medications", { patientId, name, dosage, frequency, startDate: startDate || undefined });
+      await api.post("/medications", {
+        patientId, name, dosage, frequency, renewalFrequency, startDate: startDate || undefined,
+      });
       setName("");
       setDosage("");
       setFrequency("");
       setStartDate("");
+      setRenewalFrequency("none");
       onSaved();
       toast.success("Medication added.");
     } catch (err) {
@@ -505,16 +534,16 @@ function MedicationsTab({ medications, patientId, onSaved }) {
     }
   };
 
-  const discontinue = async (id) => {
-    setStoppingId(id);
+  const renew = async (id) => {
+    setRenewingId(id);
     try {
-      await api.patch(`/medications/${id}/discontinue`);
+      await api.patch(`/medications/${id}/renew`);
       onSaved();
-      toast.success("Medication marked as stopped.");
+      toast.success("Medication renewed.");
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to update medication.");
+      toast.error(err.response?.data?.error || "Failed to renew medication.");
     } finally {
-      setStoppingId(null);
+      setRenewingId(null);
     }
   };
 
@@ -560,6 +589,20 @@ function MedicationsTab({ medications, patientId, onSaved }) {
               className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Renews</label>
+            <select
+              value={renewalFrequency}
+              onChange={(e) => setRenewalFrequency(e.target.value)}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            >
+              {RENEWAL_FREQUENCIES.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             disabled={saving}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
@@ -570,9 +613,41 @@ function MedicationsTab({ medications, patientId, onSaved }) {
       </Card>
 
       {medications.length === 0 ? (
-        <EmptyState icon={Pill} title="No medications recorded" subtitle="Medicines added here will show as current until an end date is set." />
+        <EmptyState icon={Pill} title="No medications recorded" subtitle="Medicines added here will show as current until they're due for renewal." />
       ) : (
         <>
+          {needsRenewal.length > 0 && (
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
+                <TriangleAlert size={13} /> Needs Renewal ({needsRenewal.length})
+              </p>
+              <div className="space-y-2">
+                {needsRenewal.map((m) => (
+                  <Card key={m.id} className="border-2 border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-red-800 dark:text-red-200">
+                          {m.name} <span className="font-normal text-red-600 dark:text-red-400">&middot; {m.dosage}</span>
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {m.frequency && <>{m.frequency} &middot; </>}
+                          {medicationDateLine(m)} &middot; expired &middot; {m.prescribedBy}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => renew(m.id)}
+                        disabled={renewingId === m.id}
+                        className="flex flex-shrink-0 items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                      >
+                        <RefreshCw size={12} /> {renewingId === m.id ? "Renewing..." : "Renew"}
+                      </button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
               Current ({current.length})
@@ -583,24 +658,13 @@ function MedicationsTab({ medications, patientId, onSaved }) {
               <div className="space-y-2">
                 {current.map((m) => (
                   <Card key={m.id} className="border-l-4 border-l-brand-500">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-slate-800 dark:text-slate-100">
-                          {m.name} <span className="font-normal text-slate-500 dark:text-slate-400">&middot; {m.dosage}</span>
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {m.frequency && <>{m.frequency} &middot; </>}
-                          Since {formatDate(m.startDate)} &middot; {m.prescribedBy}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => discontinue(m.id)}
-                        disabled={stoppingId === m.id}
-                        className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                      >
-                        <X size={12} /> {stoppingId === m.id ? "Stopping..." : "Stop"}
-                      </button>
-                    </div>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      {m.name} <span className="font-normal text-slate-500 dark:text-slate-400">&middot; {m.dosage}</span>
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {m.frequency && <>{m.frequency} &middot; </>}
+                      {medicationDateLine(m)} &middot; {m.prescribedBy}
+                    </p>
                   </Card>
                 ))}
               </div>
