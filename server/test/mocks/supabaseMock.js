@@ -7,7 +7,7 @@ import { vi } from "vitest";
 export function chain(result) {
   const obj = {};
   const methods = [
-    "select", "insert", "update", "delete", "upsert", "eq", "neq", "or",
+    "select", "insert", "update", "delete", "upsert", "eq", "neq", "or", "is",
     "gt", "gte", "lt", "lte", "ilike", "order", "limit", "single", "maybeSingle",
   ];
   methods.forEach((m) => {

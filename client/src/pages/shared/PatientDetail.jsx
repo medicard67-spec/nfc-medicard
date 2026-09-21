@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check, Users, Share2 } from "lucide-react";
+import {
+  FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check,
+  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut,
+} from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
@@ -19,6 +22,7 @@ export default function PatientDetail() {
   const [medications, setMedications] = useState([]);
   const [labs, setLabs] = useState([]);
   const [radiology, setRadiology] = useState([]);
+  const [admissions, setAdmissions] = useState([]);
   const [tab, setTab] = useState("Emergency");
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +31,7 @@ export default function PatientDetail() {
     api.get("/medical-history", { params: { patientId: id } }).then((res) => setHistory(res.data));
     api.get("/medications", { params: { patientId: id } }).then((res) => setMedications(res.data));
     api.get("/lab-results", { params: { patientId: id } }).then((res) => setLabs(res.data));
+    api.get("/admissions", { params: { patientId: id } }).then((res) => setAdmissions(res.data));
     api
       .get("/radiology", { params: { patientId: id } })
       .then((res) => setRadiology(res.data))
@@ -84,11 +89,13 @@ export default function PatientDetail() {
       </div>
 
       {tab === "Emergency" && <EmergencyTab patient={patient} />}
-      {tab === "History" && <HistoryTab history={history} onSaved={load} />}
+      {tab === "History" && <HistoryTab history={history} admissions={admissions} onSaved={load} />}
       {tab === "Medications" && <MedicationsTab medications={medications} patientId={id} onSaved={load} />}
       {tab === "Lab Results" && <LabsTab labs={labs} patientId={id} onUploaded={load} />}
       {tab === "Imaging" && <RadiologyTab images={radiology} patientId={id} onUploaded={load} />}
-      {tab === "Update Record" && <UpdateRecordTab patientId={id} onSaved={load} />}
+      {tab === "Update Record" && (
+        <UpdateRecordTab patientId={id} admissions={admissions} onSaved={load} />
+      )}
       {tab === "Message" && <MessageTab patientId={id} />}
     </div>
   );
@@ -156,7 +163,7 @@ function SearchBar({ value, onChange, placeholder }) {
   );
 }
 
-function HistoryTab({ history, onSaved }) {
+function HistoryTab({ history, admissions, onSaved }) {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const filtered = useMemo(
@@ -186,6 +193,31 @@ function HistoryTab({ history, onSaved }) {
     return Array.from(map, ([name, department]) => ({ name, department }));
   }, [history]);
 
+  // Records written during an open/closed admission (a hospital stay) are
+  // collected into one group in the timeline instead of showing every
+  // update made during that stay individually.
+  const timeline = useMemo(() => {
+    const byAdmission = new Map();
+    const standalone = [];
+    filtered.forEach((r) => {
+      if (r.admissionId) {
+        if (!byAdmission.has(r.admissionId)) byAdmission.set(r.admissionId, []);
+        byAdmission.get(r.admissionId).push(r);
+      } else {
+        standalone.push(r);
+      }
+    });
+    const admissionItems = Array.from(byAdmission, ([admissionId, records]) => ({
+      type: "admission",
+      key: admissionId,
+      admission: admissions.find((a) => a.id === admissionId),
+      records,
+      sortAt: records[0].createdAt,
+    }));
+    const standaloneItems = standalone.map((r) => ({ type: "record", key: r.id, record: r, sortAt: r.createdAt }));
+    return [...admissionItems, ...standaloneItems].sort((a, b) => new Date(b.sortAt) - new Date(a.sortAt));
+  }, [filtered, admissions]);
+
   if (history.length === 0) {
     return <EmptyState icon={ClipboardList} title="No history records" subtitle="Records added via Update Record will appear here." />;
   }
@@ -212,60 +244,28 @@ function HistoryTab({ history, onSaved }) {
 
       <SearchBar value={search} onChange={setSearch} placeholder="Search diagnosis or physician..." />
       <div className="space-y-3">
-        {filtered.map((r) =>
-          editingId === r.id ? (
-            <HistoryRecordEditForm
-              key={r.id}
-              record={r}
+        {timeline.map((item) =>
+          item.type === "admission" ? (
+            <AdmissionGroup
+              key={item.key}
+              admission={item.admission}
+              records={item.records}
+              editingId={editingId}
+              setEditingId={setEditingId}
+              onSaved={onSaved}
+            />
+          ) : (
+            <HistoryRecordCard
+              key={item.key}
+              record={item.record}
+              isEditing={editingId === item.record.id}
+              onEdit={() => setEditingId(item.record.id)}
               onCancel={() => setEditingId(null)}
               onSaved={() => {
                 setEditingId(null);
                 onSaved();
               }}
             />
-          ) : (
-            <Card key={r.id}>
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-semibold text-slate-800 dark:text-slate-100">{r.diagnosis}</p>
-                <button
-                  onClick={() => setEditingId(r.id)}
-                  className="flex flex-shrink-0 items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
-                >
-                  <Pencil size={12} /> Edit
-                </button>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {r.date} &middot; {r.physician}
-                {r.physicianDepartment && <> &middot; {r.physicianDepartment}</>}
-              </p>
-              {(r.referredToDoctorName || r.referredToDepartment) && (
-                <p className="mt-1 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
-                  <Share2 size={12} />
-                  Referred to{" "}
-                  {[
-                    r.referredToDoctorName &&
-                      (r.referredToDoctorDepartment
-                        ? `${r.referredToDoctorName} (${r.referredToDoctorDepartment})`
-                        : r.referredToDoctorName),
-                    r.referredToDepartment && `${r.referredToDepartment} department`,
-                  ]
-                    .filter(Boolean)
-                    .join(" & ")}
-                </p>
-              )}
-              {r.remarks && (
-                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>
-              )}
-              {r.imageUrls?.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {r.imageUrls.map((url) => (
-                    <a key={url} href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
-                    </a>
-                  ))}
-                </div>
-              )}
-            </Card>
           )
         )}
         {filtered.length === 0 && (
@@ -273,6 +273,121 @@ function HistoryTab({ history, onSaved }) {
         )}
       </div>
     </div>
+  );
+}
+
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function AdmissionGroup({ admission, records, editingId, setEditingId, onSaved }) {
+  const [expanded, setExpanded] = useState(false);
+  const ongoing = admission && !admission.dischargedAt;
+
+  return (
+    <Card className={`p-0 ${ongoing ? "border-2 border-brand-300 dark:border-brand-700" : ""}`}>
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+            <BedDouble size={16} />
+          </span>
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Admission{admission?.ward && ` · ${admission.ward}`}
+              {ongoing && (
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                  Ongoing
+                </span>
+              )}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {admission ? formatDateTime(admission.admittedAt) : "—"}
+              {" – "}
+              {admission?.dischargedAt ? formatDateTime(admission.dischargedAt) : "present"}
+              {" · "}
+              {records.length} record{records.length > 1 ? "s" : ""}
+              {admission?.admittedBy && <> &middot; Admitted by {admission.admittedBy}</>}
+            </p>
+          </div>
+        </div>
+        {expanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+      </button>
+      {expanded && (
+        <div className="space-y-3 border-t border-slate-200 p-4 dark:border-slate-800">
+          {admission?.reason && (
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              <span className="font-medium text-slate-700 dark:text-slate-200">Reason for admission:</span> {admission.reason}
+            </p>
+          )}
+          {records.map((r) => (
+            <HistoryRecordCard
+              key={r.id}
+              record={r}
+              isEditing={editingId === r.id}
+              onEdit={() => setEditingId(r.id)}
+              onCancel={() => setEditingId(null)}
+              onSaved={() => {
+                setEditingId(null);
+                onSaved();
+              }}
+              nested
+            />
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function HistoryRecordCard({ record: r, isEditing, onEdit, onCancel, onSaved, nested }) {
+  if (isEditing) {
+    return <HistoryRecordEditForm record={r} onCancel={onCancel} onSaved={onSaved} />;
+  }
+
+  return (
+    <Card className={nested ? "border border-slate-200 dark:border-slate-800" : ""}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-semibold text-slate-800 dark:text-slate-100">{r.diagnosis}</p>
+        <button
+          onClick={onEdit}
+          className="flex flex-shrink-0 items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
+        >
+          <Pencil size={12} /> Edit
+        </button>
+      </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        {r.date} &middot; {r.physician}
+        {r.physicianDepartment && <> &middot; {r.physicianDepartment}</>}
+      </p>
+      {(r.referredToDoctorName || r.referredToDepartment) && (
+        <p className="mt-1 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
+          <Share2 size={12} />
+          Referred to{" "}
+          {[
+            r.referredToDoctorName &&
+              (r.referredToDoctorDepartment
+                ? `${r.referredToDoctorName} (${r.referredToDoctorDepartment})`
+                : r.referredToDoctorName),
+            r.referredToDepartment && `${r.referredToDepartment} department`,
+          ]
+            .filter(Boolean)
+            .join(" & ")}
+        </p>
+      )}
+      {r.remarks && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{r.remarks}</p>}
+      {r.imageUrls?.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {r.imageUrls.map((url) => (
+            <a key={url} href={url} target="_blank" rel="noreferrer">
+              <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -713,7 +828,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
   );
 }
 
-function UpdateRecordTab({ patientId, onSaved }) {
+function UpdateRecordTab({ patientId, admissions, onSaved }) {
   const toast = useToast();
   const [diagnosis, setDiagnosis] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -728,6 +843,8 @@ function UpdateRecordTab({ patientId, onSaved }) {
   useEffect(() => {
     api.get("/users/doctors").then((res) => setDoctors(res.data));
   }, []);
+
+  const activeAdmission = admissions.find((a) => !a.dischargedAt);
 
   const departments = useMemo(
     () =>
@@ -766,7 +883,10 @@ function UpdateRecordTab({ patientId, onSaved }) {
   };
 
   return (
-    <Card title="Update Patient Record">
+    <div className="space-y-4">
+      <AdmissionPanel patientId={patientId} activeAdmission={activeAdmission} onChanged={onSaved} />
+
+      <Card title="Update Patient Record">
       <form onSubmit={submit} className="space-y-3">
         <div>
           <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Diagnosis / Treatment Result</label>
@@ -858,6 +978,137 @@ function UpdateRecordTab({ patientId, onSaved }) {
           {saving ? "Submitting..." : "Submit Update"}
         </button>
       </form>
+      </Card>
+    </div>
+  );
+}
+
+function AdmissionPanel({ patientId, activeAdmission, onChanged }) {
+  const toast = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [ward, setWard] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const admit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.post("/admissions", { patientId, ward, reason });
+      setShowForm(false);
+      setWard("");
+      setReason("");
+      onChanged();
+      toast.success("Patient admitted.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to admit patient.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const discharge = async () => {
+    setSaving(true);
+    try {
+      await api.patch(`/admissions/${activeAdmission.id}/discharge`);
+      onChanged();
+      toast.success("Patient discharged.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to discharge patient.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (activeAdmission) {
+    return (
+      <Card className="border-2 border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/30">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-brand-700 dark:bg-slate-800 dark:text-brand-300">
+              <BedDouble size={16} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Admitted{activeAdmission.ward && ` · ${activeAdmission.ward}`}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Since {formatDateTime(activeAdmission.admittedAt)} by {activeAdmission.admittedBy}
+                {activeAdmission.reason && <> &middot; {activeAdmission.reason}</>}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={discharge}
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            <LogOut size={14} /> {saving ? "Discharging..." : "Discharge Patient"}
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      {!showForm ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <BedDouble size={16} />
+            </span>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Not currently admitted</p>
+          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            <BedDouble size={14} /> Admit Patient
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={admit} className="space-y-3">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Admit Patient</p>
+          <div className="flex flex-wrap gap-3">
+            <div>
+              <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Ward / Room</label>
+              <input
+                value={ward}
+                onChange={(e) => setWard(e.target.value)}
+                placeholder="e.g. Ward 3A"
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Reason (optional)</label>
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. Observation post-surgery"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              <Check size={14} /> {saving ? "Admitting..." : "Confirm Admission"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              disabled={saving}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <X size={14} /> Cancel
+            </button>
+          </div>
+        </form>
+      )}
     </Card>
   );
 }

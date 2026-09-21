@@ -22,6 +22,7 @@ drop table if exists radiology cascade;
 drop table if exists lab_results cascade;
 drop table if exists medications cascade;
 drop table if exists medical_history cascade;
+drop table if exists admissions cascade;
 drop table if exists patients cascade;
 drop table if exists doctors cascade;
 drop table if exists profiles cascade;
@@ -85,6 +86,27 @@ create table if not exists patients (
 alter table patients enable row level security;
 
 -- ---------------------------------------------------------------------------
+-- admissions: a hospital stay (ward admission to discharge). Medical history
+-- records added while a patient has an open admission (discharged_at is
+-- null) are grouped under it in the UI instead of showing individually.
+-- ---------------------------------------------------------------------------
+create table if not exists admissions (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients(id) on delete cascade,
+  admitted_by text not null,
+  admitted_by_id uuid,
+  ward text not null default '',
+  reason text not null default '',
+  admitted_at timestamptz not null default now(),
+  discharged_at timestamptz,
+  discharged_by text,
+  created_at timestamptz not null default now()
+);
+
+alter table admissions enable row level security;
+create index if not exists admissions_patient_id_idx on admissions(patient_id);
+
+-- ---------------------------------------------------------------------------
 -- medical_history: past diagnoses / treatment notes per patient.
 -- ---------------------------------------------------------------------------
 create table if not exists medical_history (
@@ -101,11 +123,13 @@ create table if not exists medical_history (
   referred_to_doctor_name text,
   referred_to_doctor_department text,
   referred_to_department text,
+  admission_id uuid references admissions(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 alter table medical_history enable row level security;
 create index if not exists medical_history_patient_id_idx on medical_history(patient_id);
+create index if not exists medical_history_admission_id_idx on medical_history(admission_id);
 
 -- ---------------------------------------------------------------------------
 -- medications: prescriptions a patient is currently taking or has taken.

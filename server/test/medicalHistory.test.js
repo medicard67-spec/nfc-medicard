@@ -91,12 +91,13 @@ describe("POST /api/medical-history", () => {
 
   it("creates a record with no images (backward compatible)", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open admission
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {
           id: "h1", patient_id: "p1", diagnosis: "Routine check", date: "2026-01-01",
           physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
-          remarks: "", image_urls: [], created_at: new Date().toISOString(),
+          remarks: "", image_urls: [], admission_id: null, created_at: new Date().toISOString(),
         },
         error: null,
       })
@@ -110,10 +111,39 @@ describe("POST /api/medical-history", () => {
     expect(res.status).toBe(201);
     expect(res.body.imageUrls).toEqual([]);
     expect(res.body.physicianDepartment).toBe("Orthopedics");
+    expect(res.body.admissionId).toBeNull();
+  });
+
+  it("attaches the patient's open admission to a new record, if one exists", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "admission1" }, error: null })); // open admission
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "h1", patient_id: "p1", diagnosis: "Day 2 progress note", date: "2026-01-01",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "", image_urls: [], admission_id: "admission1", created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .post("/api/medical-history")
+      .field("patientId", "p1")
+      .field("diagnosis", "Day 2 progress note");
+
+    expect(res.status).toBe(201);
+    expect(res.body.admissionId).toBe("admission1");
+
+    const insertCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "medical_history");
+    const insertChain = mockSupabase.from.mock.results[insertCallIndex].value;
+    expect(insertChain.insert).toHaveBeenCalledWith(expect.objectContaining({ admission_id: "admission1" }));
   });
 
   it("uploads attached images and stores their URLs", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open admission
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {
@@ -147,6 +177,7 @@ describe("POST /api/medical-history", () => {
 
   it("referring to a doctor whose typed name matches resolves their id and department", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open admission
     mockSupabase.from.mockReturnValueOnce(
       chain({ data: { id: "doctor2", name: "Dr. Robert Chan", department: "Cardiology" }, error: null })
     );
@@ -185,7 +216,8 @@ describe("POST /api/medical-history", () => {
 
   it("a typed doctor name with no match is still stored as free text, without an id", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
-    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open admission
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // doctor name lookup, unmatched
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {
@@ -213,6 +245,7 @@ describe("POST /api/medical-history", () => {
 
   it("referring to a department (no specific doctor) stores it plainly", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open admission
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {

@@ -27,6 +27,7 @@ function toJson(row) {
     referredToDoctorName: row.referred_to_doctor_name,
     referredToDoctorDepartment: row.referred_to_doctor_department,
     referredToDepartment: row.referred_to_department,
+    admissionId: row.admission_id,
     createdAt: row.created_at,
   };
 }
@@ -66,6 +67,16 @@ router.post(
       .eq("id", req.user.uid)
       .maybeSingle();
 
+    // If the patient currently has an open admission, tag this record with
+    // it so the UI can group the whole stay into one entry instead of
+    // showing every update made during it individually.
+    const { data: openAdmission } = await supabase
+      .from("admissions")
+      .select("id")
+      .eq("patient_id", patientId)
+      .is("discharged_at", null)
+      .maybeSingle();
+
     // The doctor field is free-typed (not a locked dropdown), so it may not
     // match anyone in the system -- e.g. an external referral. Resolve it
     // against known doctors case-insensitively when possible, but still
@@ -103,6 +114,7 @@ router.post(
         referred_to_doctor_name: referredDoctor?.name || typedDoctorName || null,
         referred_to_doctor_department: referredDoctor?.department || null,
         referred_to_department: referredToDepartment?.trim() || null,
+        admission_id: openAdmission?.id || null,
       })
       .select()
       .single();
