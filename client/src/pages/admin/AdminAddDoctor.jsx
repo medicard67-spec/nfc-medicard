@@ -3,6 +3,7 @@ import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { MALAYSIA_HOSPITALS } from "../../lib/malaysiaHospitals.js";
+import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
 
 const emptyForm = {
   name: "",
@@ -80,10 +81,16 @@ export default function AdminAddDoctor() {
           <Input
             label="Department"
             required
+            list="department-suggestions"
             value={form.department}
             onChange={update("department")}
             placeholder="e.g. Cardiology"
           />
+          <datalist id="department-suggestions">
+            {HOSPITAL_DEPARTMENTS.map((dep) => (
+              <option key={dep} value={dep} />
+            ))}
+          </datalist>
 
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">

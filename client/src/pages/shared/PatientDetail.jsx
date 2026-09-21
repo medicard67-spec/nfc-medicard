@@ -8,6 +8,7 @@ import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
+import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
 
 const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "Update Record", "Message"];
 
@@ -729,7 +730,8 @@ function UpdateRecordTab({ patientId, onSaved }) {
   }, []);
 
   const departments = useMemo(
-    () => Array.from(new Set(doctors.map((d) => d.department).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set([...HOSPITAL_DEPARTMENTS, ...doctors.map((d) => d.department).filter(Boolean)])).sort(),
     [doctors]
   );
 
