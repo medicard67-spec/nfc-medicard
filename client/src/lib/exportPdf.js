@@ -139,7 +139,7 @@ export async function exportPatientRecordPdf({ patient, history = [], medication
   } else {
     medications.forEach((m) => {
       ensureSpace(10);
-      const status = m.endDate ? `stopped ${m.endDate}` : "current";
+      const status = m.endDate ? `${m.startDate} to ${m.endDate}` : `current, since ${m.startDate}`;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...dark);
