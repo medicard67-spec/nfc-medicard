@@ -55,7 +55,7 @@ router.post(
   requireRole("admin", "doctor"),
   upload.array("images", 6),
   async (req, res) => {
-    const { patientId, diagnosis, date, remarks, referredToDoctorId, referredToDepartment } = req.body;
+    const { patientId, diagnosis, date, remarks, referredToDoctorName, referredToDepartment } = req.body;
     if (!patientId || !diagnosis) {
       return res.status(400).json({ error: "patientId and diagnosis are required" });
     }
@@ -66,15 +66,19 @@ router.post(
       .eq("id", req.user.uid)
       .maybeSingle();
 
+    // The doctor field is free-typed (not a locked dropdown), so it may not
+    // match anyone in the system -- e.g. an external referral. Resolve it
+    // against known doctors case-insensitively when possible, but still
+    // keep the typed name either way.
     let referredDoctor = null;
-    if (referredToDoctorId) {
+    const typedDoctorName = referredToDoctorName?.trim();
+    if (typedDoctorName) {
       const { data } = await supabase
         .from("doctors")
         .select("id, name, department")
-        .eq("id", referredToDoctorId)
+        .ilike("name", typedDoctorName)
         .maybeSingle();
-      if (!data) return res.status(400).json({ error: "referredToDoctorId does not match a known doctor" });
-      referredDoctor = data;
+      referredDoctor = data || null;
     }
 
     const files = req.files || [];
@@ -96,9 +100,9 @@ router.post(
         remarks: remarks || "",
         image_urls: imageUrls,
         referred_to_doctor_id: referredDoctor?.id || null,
-        referred_to_doctor_name: referredDoctor?.name || null,
+        referred_to_doctor_name: referredDoctor?.name || typedDoctorName || null,
         referred_to_doctor_department: referredDoctor?.department || null,
-        referred_to_department: referredDoctor ? null : referredToDepartment || null,
+        referred_to_department: referredToDepartment?.trim() || null,
       })
       .select()
       .single();
@@ -106,7 +110,8 @@ router.post(
     await logAudit(req.user, "medical_history.create", "patient", patientId, {
       diagnosis,
       images: imageUrls.length,
-      referredTo: referredDoctor?.name || referredToDepartment || undefined,
+      referredToDoctor: typedDoctorName || undefined,
+      referredToDepartment: referredToDepartment?.trim() || undefined,
     });
     res.status(201).json(toJson(data));
   }

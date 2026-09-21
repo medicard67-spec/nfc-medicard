@@ -145,20 +145,7 @@ describe("POST /api/medical-history", () => {
     );
   });
 
-  it("rejects referring to a doctor id that doesn't exist", async () => {
-    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
-    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
-
-    const res = await request(buildApp())
-      .post("/api/medical-history")
-      .field("patientId", "p1")
-      .field("diagnosis", "Routine check")
-      .field("referredToDoctorId", "missing-doctor");
-
-    expect(res.status).toBe(400);
-  });
-
-  it("referring to a specific doctor stores their name and department, ignoring any department field", async () => {
+  it("referring to a doctor whose typed name matches resolves their id and department", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
     mockSupabase.from.mockReturnValueOnce(
       chain({ data: { id: "doctor2", name: "Dr. Robert Chan", department: "Cardiology" }, error: null })
@@ -170,7 +157,7 @@ describe("POST /api/medical-history", () => {
           physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
           remarks: "", image_urls: [],
           referred_to_doctor_id: "doctor2", referred_to_doctor_name: "Dr. Robert Chan",
-          referred_to_doctor_department: "Cardiology", referred_to_department: null,
+          referred_to_doctor_department: "Cardiology", referred_to_department: "Neurology",
           created_at: new Date().toISOString(),
         },
         error: null,
@@ -181,19 +168,47 @@ describe("POST /api/medical-history", () => {
       .post("/api/medical-history")
       .field("patientId", "p1")
       .field("diagnosis", "Chest pain")
-      .field("referredToDoctorId", "doctor2")
+      .field("referredToDoctorName", "dr. robert chan")
       .field("referredToDepartment", "Neurology");
 
     expect(res.status).toBe(201);
     expect(res.body.referredToDoctorName).toBe("Dr. Robert Chan");
     expect(res.body.referredToDoctorDepartment).toBe("Cardiology");
-    expect(res.body.referredToDepartment).toBeNull();
+    expect(res.body.referredToDepartment).toBe("Neurology");
 
     const insertCallIndex = mockSupabase.from.mock.calls.findIndex(([table]) => table === "medical_history");
     const insertChain = mockSupabase.from.mock.results[insertCallIndex].value;
     expect(insertChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ referred_to_doctor_id: "doctor2", referred_to_department: null })
+      expect.objectContaining({ referred_to_doctor_id: "doctor2", referred_to_department: "Neurology" })
     );
+  });
+
+  it("a typed doctor name with no match is still stored as free text, without an id", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { department: "Orthopedics" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+    mockSupabase.from.mockReturnValueOnce(
+      chain({
+        data: {
+          id: "h1", patient_id: "p1", diagnosis: "Routine check", date: "2026-01-01",
+          physician: "Dr. Sarah Jenkins", physician_id: "doctor1", physician_department: "Orthopedics",
+          remarks: "", image_urls: [],
+          referred_to_doctor_id: null, referred_to_doctor_name: "Dr. Someone External",
+          referred_to_doctor_department: null, referred_to_department: null,
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      })
+    );
+
+    const res = await request(buildApp())
+      .post("/api/medical-history")
+      .field("patientId", "p1")
+      .field("diagnosis", "Routine check")
+      .field("referredToDoctorName", "Dr. Someone External");
+
+    expect(res.status).toBe(201);
+    expect(res.body.referredToDoctorName).toBe("Dr. Someone External");
+    expect(res.body.referredToDoctorId).toBeNull();
   });
 
   it("referring to a department (no specific doctor) stores it plainly", async () => {

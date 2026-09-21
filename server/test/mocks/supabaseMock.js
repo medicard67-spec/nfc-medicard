@@ -8,7 +8,7 @@ export function chain(result) {
   const obj = {};
   const methods = [
     "select", "insert", "update", "delete", "upsert", "eq", "neq", "or",
-    "gt", "gte", "lt", "lte", "order", "limit", "single", "maybeSingle",
+    "gt", "gte", "lt", "lte", "ilike", "order", "limit", "single", "maybeSingle",
   ];
   methods.forEach((m) => {
     obj[m] = vi.fn(() => obj);
