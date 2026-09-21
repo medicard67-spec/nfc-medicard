@@ -172,9 +172,15 @@ function HistoryTab({ history, onSaved }) {
   // quick "who's involved in this patient's care" overview.
   const doctorsInvolved = useMemo(() => {
     const map = new Map();
+    // history is sorted newest-first, so the first time we see a doctor's
+    // name is their most recent record -- keep that one rather than letting
+    // an older (possibly stale, e.g. pre-migration default) department
+    // overwrite it.
     history.forEach((r) => {
-      if (r.physician) map.set(r.physician, r.physicianDepartment || "General");
-      if (r.referredToDoctorName) map.set(r.referredToDoctorName, r.referredToDoctorDepartment || "General");
+      if (r.physician && !map.has(r.physician)) map.set(r.physician, r.physicianDepartment || "General");
+      if (r.referredToDoctorName && !map.has(r.referredToDoctorName)) {
+        map.set(r.referredToDoctorName, r.referredToDoctorDepartment || "General");
+      }
     });
     return Array.from(map, ([name, department]) => ({ name, department }));
   }, [history]);
