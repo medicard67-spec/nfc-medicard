@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import {
   Home, Nfc, FolderOpen, UserPlus, Calendar, User,
   ClipboardList, FlaskConical, ScanLine, MessageCircle,
-  Stethoscope, Shield, Hospital, ClipboardCheck, Pill,
+  Stethoscope, Shield, Hospital, ClipboardCheck, Pill, QrCode,
 } from "lucide-react";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useUnread } from "./context/UnreadContext.jsx";
@@ -20,6 +20,7 @@ const PatientRadiology = lazy(() => import("./pages/patient/PatientRadiology.jsx
 const PatientMessages = lazy(() => import("./pages/patient/PatientMessages.jsx"));
 const PatientProfile = lazy(() => import("./pages/patient/PatientProfile.jsx"));
 const PatientAppointments = lazy(() => import("./pages/patient/PatientAppointments.jsx"));
+const PatientQrCode = lazy(() => import("./pages/patient/PatientQrCode.jsx"));
 
 const DoctorDashboard = lazy(() => import("./pages/doctor/DoctorDashboard.jsx"));
 const DoctorScan = lazy(() => import("./pages/doctor/DoctorScan.jsx"));
@@ -84,6 +85,7 @@ export default function App() {
     { to: "/patient/radiology", label: "Imaging", icon: ScanLine },
     { to: "/patient/messages", label: "Messages", icon: MessageCircle, badge: unreadCount },
     { to: "/patient/appointments", label: "Appointments", icon: Calendar },
+    { to: "/patient/qr", label: "My QR Code", icon: QrCode },
     { to: "/patient/profile", label: "Profile", icon: User },
   ];
 
@@ -109,6 +111,7 @@ export default function App() {
           <Route path="radiology" element={<PatientRadiology />} />
           <Route path="messages" element={<PatientMessages />} />
           <Route path="appointments" element={<PatientAppointments />} />
+          <Route path="qr" element={<PatientQrCode />} />
           <Route path="profile" element={<PatientProfile />} />
         </Route>
 
