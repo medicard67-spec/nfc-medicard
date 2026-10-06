@@ -16,4 +16,11 @@ if (!OFFLINE && (!supabaseUrl || !supabaseAnonKey)) {
   );
 }
 
+// Read before createClient: the client consumes and strips the link's hash
+// tokens on startup, and this is the only reliable way to know the page was
+// opened from a password-reset email even if Supabase redirected to the site
+// root instead of /reset-password.
+export const openedFromRecoveryLink =
+  typeof window !== "undefined" && window.location.hash.includes("type=recovery");
+
 export const supabase = OFFLINE ? offlineSupabase : createClient(supabaseUrl, supabaseAnonKey);

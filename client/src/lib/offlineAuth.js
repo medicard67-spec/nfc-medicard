@@ -68,5 +68,13 @@ export const offlineSupabase = {
 
     // No real email flow offline — demo accounts are already "confirmed".
     resend: async () => ({ error: null }),
+
+    resetPasswordForEmail: async () => ({
+      error: { message: "Password reset needs an internet connection; it isn't available in the offline demo." },
+    }),
+
+    updateUser: async () => ({
+      error: { message: "Password changes aren't available in the offline demo." },
+    }),
   },
 };

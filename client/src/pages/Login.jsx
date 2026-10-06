@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Shield, Stethoscope, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundImage from "../components/BackgroundImage.jsx";
@@ -124,6 +124,11 @@ export default function Login() {
             onSubmit={handleSubmit}
             className="space-y-4 rounded-2xl border border-slate-200 bg-white p-8 shadow-card dark:border-slate-800 dark:bg-slate-900 lg:border-0 lg:p-0 lg:shadow-none"
           >
+            {location.state?.passwordReset && (
+              <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
+                Your password has been updated. Sign in with your new password.
+              </p>
+            )}
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
                 Email
@@ -141,9 +146,18 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                Password
-              </label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  state={{ email: email.trim() }}
+                  className="text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required

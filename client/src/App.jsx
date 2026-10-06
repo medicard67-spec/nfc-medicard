@@ -12,6 +12,9 @@ import PortalLayout from "./components/PortalLayout.jsx";
 import { SkeletonList } from "./components/Skeleton.jsx";
 import Login from "./pages/Login.jsx";
 
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
+
 const PatientHome = lazy(() => import("./pages/patient/PatientHome.jsx"));
 const PatientHistory = lazy(() => import("./pages/patient/PatientHistory.jsx"));
 const PatientMedications = lazy(() => import("./pages/patient/PatientMedications.jsx"));
@@ -94,6 +97,8 @@ export default function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<RoleRedirect />} />
 
         <Route

@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabase } from "../lib/supabase.js";
+import { useNavigate } from "react-router-dom";
+import { supabase, openedFromRecoveryLink } from "../lib/supabase.js";
 import api from "../lib/api.js";
+
+// The Android app's own origin (https://localhost) can't be opened from an
+// email, so reset links always point at the public website when one is set.
+const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || window.location.origin;
 
 const AuthContext = createContext(null);
 
@@ -9,6 +14,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const loadProfile = useCallback(async () => {
     try {
@@ -30,7 +36,10 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    if (openedFromRecoveryLink) navigate("/reset-password", { replace: true });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (event === "PASSWORD_RECOVERY") navigate("/reset-password", { replace: true });
       setSession(newSession);
       if (newSession) {
         await loadProfile();
@@ -43,7 +52,7 @@ export function AuthProvider({ children }) {
       active = false;
       listener.subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, navigate]);
 
   const login = async (email, password) => {
     setError(null);
@@ -76,6 +85,18 @@ export function AuthProvider({ children }) {
     if (resendError) throw resendError;
   };
 
+  const requestPasswordReset = async (email) => {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${PUBLIC_URL}/reset-password`,
+    });
+    if (resetError) throw resetError;
+  };
+
+  const updatePassword = async (password) => {
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    if (updateError) throw updateError;
+  };
+
   const logout = () => supabase.auth.signOut();
 
   const value = {
@@ -87,6 +108,8 @@ export function AuthProvider({ children }) {
     login,
     logout,
     resendVerificationEmail,
+    requestPasswordReset,
+    updatePassword,
     refreshProfile: loadProfile,
   };
 
