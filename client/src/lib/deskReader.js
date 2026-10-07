@@ -6,9 +6,15 @@
 // with a 64-byte HID input report containing a presence flag and the card's
 // 7-byte UID at a fixed offset.
 //
-// Chrome/Edge desktop only, HTTPS or localhost required. Close the vendor
-// "NFC Tool" app first — a HID device generally only accepts one open
-// handle at a time.
+// In a browser: Chrome/Edge desktop only, HTTPS or localhost required. Close
+// the vendor "NFC Tool" app first — a HID device generally only accepts one
+// open handle at a time. In the Android app the WebView has no WebHID, so the
+// same protocol runs natively over USB host instead (DeskReaderPlugin.java).
+import { Capacitor, registerPlugin } from "@capacitor/core";
+
+const isAndroidApp = Capacitor.getPlatform() === "android";
+const NativeDeskReader = isAndroidApp ? registerPlugin("DeskReader") : null;
+
 const VENDOR_ID = 0x0483;
 const PRODUCT_ID = 0x4343;
 
@@ -22,6 +28,7 @@ function bytes(prefix) {
 }
 
 export function isDeskReaderSupported() {
+  if (isAndroidApp) return true;
   return typeof navigator !== "undefined" && "hid" in navigator;
 }
 
@@ -65,6 +72,9 @@ async function getDevice() {
 // HID interrupt endpoint (1-10ms hardware polling) can keep up with — most
 // of the old 300ms interval was pure waiting, not device response time.
 export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 60 } = {}) {
+  if (isAndroidApp) {
+    return NativeDeskReader.readCardUid({ timeoutMs }).then(({ uid }) => uid);
+  }
   if (!isDeskReaderSupported()) {
     return Promise.reject(new Error("This browser doesn't support WebHID (use desktop Chrome or Edge)."));
   }

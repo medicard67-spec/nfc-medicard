@@ -22,6 +22,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Plugging in the NFC-X desk reader offers to open MediCard and lets
+                 the user grant it permanent access to the reader. -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/desk_reader_filter" />
+
         </activity>
 
         <provider
@@ -43,4 +52,5 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
 </manifest>
