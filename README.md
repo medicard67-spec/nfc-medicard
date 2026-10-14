@@ -19,6 +19,15 @@ portals (Patient, Doctor, Admin) built on:
   [Capacitor](https://capacitorjs.com) — see [Packaging as an Android app](#packaging-as-an-android-app-capacitor)
   below. iOS isn't supported from this setup (requires a Mac + Xcode).
 
+## Demo videos
+
+| Video | What it shows |
+|-------|---------------|
+| [Overview](docs/videos/overview-explainer.mp4) (1:30) | What NFC MediCard is and how it works, in one compilation |
+| [Patient demo](docs/videos/patient-demo.mp4) (1:32) | A patient's journey: card registration, check-in, the doctor's tap, and the patient app |
+| [Doctor walkthrough](docs/videos/doctor-walkthrough.mp4) (1:18) | Dashboard, appointments, admissions and discharge, medication renewals, labs and imaging, referrals, and the tablet + USB reader |
+| [Admin walkthrough](docs/videos/admin-walkthrough.mp4) (1:12) | Hospital dashboard, adding patients and assigning cards, check-in queue and rooms, doctor accounts, data entry, reports, and the audit log |
+
 ## Prerequisites
 
 - Node.js 18+
@@ -133,6 +142,20 @@ Runs on http://localhost:5173. Log in with any of the demo accounts above.
   physical card; Doctor's scan page can read it back with the device camera.
 - **Email verification** — patients/doctors registered through the app must confirm their email
   before they can log in (seeded demo accounts are exempt for convenience).
+- **Forgot / reset password** — password reset by email from the login page.
+- **Registration desk** — Admin scans a card at check-in and hands the patient a queue number and
+  room, shown in a "Today's Queue" list, without opening their full record.
+- **Assign a card to an existing account** — for patients added without a card; their login and
+  records are kept.
+- **Admissions** — doctors admit a patient to a ward/room and discharge them later; history is
+  grouped by admission.
+- **Medication renewal cycles** — prescriptions can renew weekly or monthly; expired ones are
+  flagged "Needs renewal" with a one-click Renew.
+- **Lab and imaging details** — lab results can be flagged abnormal; imaging covers X-ray, MRI,
+  CT scan, and wound-care photos.
+- **Referrals** — a record update can be sent to another doctor/department with photos attached.
+- **My QR Code** — patients can show their card's QR code from the portal if they forget the card.
+- **USB desk reader** — the Android app supports a USB NFC desk reader (e.g. on a tablet).
 
 ## Running tests
 
@@ -149,6 +172,7 @@ on every push/PR via GitHub Actions.
 ```
 nfc-medicard/
 ├── .github/workflows/ci.yml              # Runs backend tests + frontend build on push/PR
+├── docs/videos/                          # Overview, patient demo, doctor and admin walkthroughs
 ├── supabase/
 │   ├── schema.sql                        # Full schema + RLS (fresh setup)
 │   └── migration_002_audit_and_unread.sql # Incremental migration (existing projects)
@@ -294,4 +318,5 @@ real security, so never deploy this file or expose it beyond your own machine.
 - Storage buckets are created **public** for simplicity (matches the original demo behavior). For
   a real deployment with sensitive clinical files, switch to private buckets and generate
   short-lived signed URLs per request instead (`supabase.storage.from(bucket).createSignedUrl()`).
-- No automated test suite yet; verified via manual end-to-end testing.
+- The automated tests cover the backend (mocked Supabase); the frontend is verified by manual
+  end-to-end testing.
