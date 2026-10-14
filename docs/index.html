@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NFC MediCard — Demo Videos</title>
+<meta name="description" content="NFC MediCard, a final year project at GMI. Four short films: pick who you want to follow.">
+<meta name="theme-color" content="#f6f6f3">
+<meta property="og:title" content="NFC MediCard — Demo Videos">
+<meta property="og:description" content="Four short films. Pick who you want to follow.">
+<meta property="og:image" content="assets/poster-overview.jpg">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f6f3; --bg-2: #ffffff; --surface: #ffffff; --line: rgba(12,12,14,.08); --line-2: rgba(12,12,14,.16);
+  --text: #0c0c0e; --muted: #55555c; --dim: #6c6c73; --accent: #1f4dff;
+  --lime: #d4ff3a; --sky: #8ec5ff; --mint: #7ee0b5; --pink: #ffb1c6; --sun: #ffe17a; --red: #ff5a6e;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 17px/1.55 Geist, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+img { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+.display { font-family: "Bricolage Grotesque", Geist, sans-serif; letter-spacing: -.035em; }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font: 500 13px/1 Geist, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(31,77,255,.14); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- nav ---------- */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding: 14px 0; transition: background .4s var(--ease), border-color .4s; border-bottom: 1px solid transparent; }
+.nav.solid { background: rgba(246,246,243,.82); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 14px; }
+.mark { display: flex; align-items: center; gap: 10px; font: 700 17px "Bricolage Grotesque", sans-serif; letter-spacing: -.02em; }
+.mark i { width: 26px; height: 26px; border-radius: 8px; background: var(--text); display: grid; place-items: center; }
+.mark i svg { width: 16px; height: 16px; }
+.nav .sp { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line-2); font-weight: 500; font-size: 15px; transition: background .3s var(--ease), color .3s, border-color .3s; }
+.pill:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+.pill.lime { background: var(--text); color: #fff; border-color: var(--text); }
+.pill.lime:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.nav .meta { color: var(--dim); font-size: 14px; }
+@media (max-width: 640px) { .nav .meta { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { position: relative; padding: 104px 0 30px; overflow: hidden; }
+.hero h1 { margin: 16px 0 0; font-size: clamp(46px, 8.5vw, 104px); line-height: .92; font-weight: 800; }
+.intro-p { margin: 14px 0 0; max-width: 46ch; font-size: clamp(17px, 2vw, 20px); color: var(--muted); }
+.hero h1 .line { display: block; overflow: hidden; padding-bottom: .04em; }
+.hero h1 .w { display: inline-block; will-change: transform; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-foot { display: grid; gap: 22px; margin-top: 28px; }
+@media (min-width: 900px) { .hero-foot { grid-template-columns: 1fr auto; align-items: end; } }
+.hero-foot p { margin: 0; max-width: 34ch; font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); line-height: 1.4; }
+.hero-foot p b { color: var(--text); font-weight: 500; }
+.scroll-cue { display: inline-flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; }
+.scroll-cue span { width: 26px; height: 40px; border: 1.5px solid var(--line-2); border-radius: 14px; position: relative; }
+.scroll-cue span::after { content: ""; position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--accent); animation: cue 1.8s var(--ease) infinite; }
+@keyframes cue { 0% { transform: translateY(0); opacity: 1; } 80%, 100% { transform: translateY(14px); opacity: 0; } }
+
+/* ---------- the films (bento) ---------- */
+.films { display: grid; gap: 14px; margin-top: 34px; grid-template-columns: 1fr 1fr; }
+@media (min-width: 900px) { .films { grid-template-columns: 1.35fr 1fr 1fr; grid-template-rows: 300px 300px; gap: 16px; } }
+.film { position: relative; display: block; overflow: hidden; border: 0; padding: 0; border-radius: 26px; background: var(--tile); color: #0a0a0b; text-align: left; isolation: isolate;
+  min-height: 250px; transform-style: preserve-3d; transition: box-shadow .5s var(--ease); -webkit-tap-highlight-color: transparent; }
+.film.big { grid-column: 1 / -1; min-height: 330px; }
+@media (min-width: 900px) { .film.big { grid-column: 1; grid-row: 1 / 3; min-height: 0; } .film:nth-child(4) { grid-column: 2 / 4; } }
+.film[data-id=overview] { --tile: var(--lime); } .film[data-id=patient] { --tile: var(--sky); } .film[data-id=doctor] { --tile: var(--pink); } .film[data-id=admin] { --tile: var(--mint); }
+.film:hover { box-shadow: 0 24px 50px -28px rgba(12,12,14,.45); }
+.film .inner { position: absolute; inset: 0; }
+.film .prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .6s var(--ease); z-index: 0; }
+.film.previewing .prev { opacity: 1; }
+.film .shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, transparent 40%, rgba(10,10,11,.55)); opacity: 0; transition: opacity .6s var(--ease); }
+.film.previewing .shade { opacity: 1; }
+.film .who { position: absolute; z-index: 2; right: 4%; bottom: 0; width: min(58%, 260px); transition: transform .7s var(--ease), opacity .5s; filter: drop-shadow(0 18px 24px rgba(0,0,0,.22)); }
+.film.big .who { width: min(62%, 330px); }
+.film:hover .who { transform: translateY(-6px); }
+.film.previewing .who { transform: translate(20%, 30%) scale(.7); opacity: .0; }
+.film .txt { position: absolute; z-index: 3; left: 22px; top: 20px; right: 22px; transition: color .5s; }
+.film.previewing .txt { color: #fff; }
+.film .kicker { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(10,10,11,.88); color: #fff; font: 500 12px Geist, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.film h3 { margin: 14px 0 0; font: 800 clamp(26px, 3.4vw, 40px)/.95 "Bricolage Grotesque", sans-serif; letter-spacing: -.035em; max-width: 9ch; }
+.film.big h3 { font-size: clamp(36px, 5.4vw, 64px); }
+.film .play { position: absolute; z-index: 3; left: 22px; bottom: 20px; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 18px 0 8px; border-radius: 999px; background: #0a0a0b; color: #fff; font-weight: 500; font-size: 15px;
+  transition: transform .4s var(--ease), background .3s; }
+.film .play i { width: 30px; height: 30px; border-radius: 50%; background: var(--tile); display: grid; place-items: center; }
+.film .play i svg { width: 12px; height: 12px; margin-left: 2px; }
+.film:hover .play { transform: translateX(4px); }
+.film .seen { position: absolute; z-index: 3; right: 16px; top: 16px; height: 28px; padding: 0 10px; border-radius: 999px; background: #0a0a0b; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+@media (max-width: 899px) { .film:nth-child(4) { grid-column: 1 / -1; } .film .who { width: 52%; } .film h3 { font-size: 26px; } .film .play { height: 40px; font-size: 14px; } .film .txt { left: 16px; top: 16px; } .film .play { left: 16px; bottom: 14px; } }
+
+/* ---------- how it works: pinned horizontal steps ---------- */
+.how { position: relative; padding: 100px 0 0; }
+.how-head { display: grid; gap: 14px; margin-bottom: 36px; }
+.how-head h2, .find h2, .end h2 { margin: 0; font-size: clamp(38px, 6vw, 76px); line-height: .95; font-weight: 800; }
+.how-head p { margin: 0; color: var(--muted); max-width: 46ch; }
+.steps { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .steps { grid-template-columns: repeat(4, 1fr); } }
+.step { min-height: 280px; padding: 26px; border-radius: 26px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.step .n { font: 800 84px/0.8 "Bricolage Grotesque", sans-serif; letter-spacing: -.06em; color: transparent; -webkit-text-stroke: 1.5px var(--line-2); }
+.step h3 { margin: auto 0 8px; font: 700 28px/1.05 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; }
+.step p { margin: 0; color: var(--muted); }
+.step .ico { position: absolute; right: 22px; top: 22px; width: 54px; height: 54px; border-radius: 16px; background: var(--c); display: grid; place-items: center; color: #0a0a0b; }
+.step .ico svg { width: 26px; height: 26px; }
+.step:nth-child(1) { --c: var(--lime); } .step:nth-child(2) { --c: var(--sky); } .step:nth-child(3) { --c: var(--pink); } .step:nth-child(4) { --c: var(--mint); }
+
+/* ---------- find a moment ---------- */
+.find { padding: 120px 0 0; }
+.palette { margin-top: 26px; max-width: 760px; border-radius: 22px; border: 1px solid var(--line-2); background: var(--surface); overflow: hidden; }
+.palette label { display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--line); }
+.palette label svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
+.palette input { flex: 1; min-width: 0; height: 64px; border: 0; background: none; color: var(--text); font: 500 19px Geist, sans-serif; outline: none; }
+.palette input::placeholder { color: var(--dim); }
+.palette kbd { padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line-2); color: var(--muted); font: 500 12px Geist, sans-serif; }
+@media (hover: none) { .palette kbd { display: none; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px; }
+.chips button { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line-2); background: none; color: var(--text); font-size: 14px; transition: background .25s, color .25s; }
+.chips button:hover { background: var(--text); color: var(--bg); }
+.results { list-style: none; margin: 0; padding: 6px; }
+.results:empty { display: none; }
+.hit { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 60px; padding: 8px 12px; border: 0; border-radius: 14px; background: none; text-align: left; transition: background .2s; }
+.hit:hover, .hit:focus-visible { background: rgba(12,12,14,.05); }
+.hit .av { width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--c); display: grid; place-items: center; overflow: hidden; }
+.hit .av img { width: 120%; margin-top: 18%; }
+.hit b { font-weight: 500; }
+.hit small { display: block; color: var(--muted); font-size: 13px; }
+.hit .go { margin-left: auto; color: var(--dim); font-size: 13px; white-space: nowrap; }
+.empty { padding: 16px 18px; color: var(--muted); }
+mark { background: rgba(31,77,255,.14); color: var(--text); border-radius: 4px; padding: 0 2px; }
+
+/* ---------- end ---------- */
+.end { padding: 140px 0 0; }
+.big-link { display: block; margin-top: 18px; font: 800 clamp(54px, 12vw, 170px)/.88 "Bricolage Grotesque", sans-serif; letter-spacing: -.055em; }
+.big-link span { display: inline-block; transition: transform .6s var(--ease), color .4s; }
+.big-link:hover span { color: var(--accent); }
+.big-link:hover .arr { transform: translate(12px, -12px) rotate(0deg); }
+.end-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 34px; }
+.qr { display: none; }
+@media (min-width: 900px) and (hover: hover) { .qr { display: flex; align-items: center; gap: 14px; margin-left: auto; color: var(--muted); font-size: 14px; } .qr img { width: 88px; height: 88px; padding: 6px; background: #fff; border-radius: 14px; } }
+footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+/* motion: a calm intro and fade-up on scroll */
+@keyframes rise { from { transform: translateY(110%); } }
+@keyframes up { from { opacity: 0; transform: translateY(26px); } }
+.hero h1 .w { animation: rise 1s var(--ease) both; animation-delay: calc(var(--i) * 90ms); }
+[data-hero] { animation: up .9s var(--ease) both; animation-delay: .35s; }
+.film { animation: up 1s var(--ease) both; animation-delay: calc(.45s + var(--i) * 90ms); }
+.js [data-reveal] { opacity: 0; transform: translateY(30px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.js [data-reveal].in { opacity: 1; transform: none; }
+
+/* ---------- player ---------- */
+.player { position: fixed; inset: 0; z-index: 80; display: none; place-items: center; padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)); background: #050506;
+  clip-path: circle(0 at var(--ox, 50%) var(--oy, 50%)); }
+.player.open { display: grid; }
+.pbox { width: min(1180px, 100%); }
+.phead { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; color: #f4f4f1; }
+.phead .av { width: 46px; height: 46px; border-radius: 14px; background: var(--c, var(--lime)); overflow: hidden; display: grid; place-items: center; flex: none; }
+.phead .av img { width: 120%; margin-top: 20%; }
+.phead .t { flex: 1; min-width: 0; }
+.phead .t small { display: block; color: #a3a3a8; font-size: 13px; }
+.phead .t b { display: block; font: 700 22px/1.1 "Bricolage Grotesque", sans-serif; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.x { width: 48px; height: 48px; flex: none; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: none; color: #f4f4f1; display: grid; place-items: center; transition: background .3s, color .3s, transform .4s var(--ease); }
+.x:hover { background: #f4f4f1; color: #0c0c0e; transform: rotate(90deg); }
+.x svg { width: 18px; height: 18px; }
+.screen { position: relative; border-radius: 22px; overflow: hidden; background: #000; }
+.screen video { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100dvh - 120px); background: #000; }
+.upnext { position: absolute; inset: 0; display: none; place-items: center; background: rgba(5,5,6,.9); color: #f4f4f1; text-align: center; padding: 16px; }
+.upnext.show { display: grid; }
+.upnext small { color: #9fb4ff; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; font-weight: 600; }
+.upnext h3 { margin: 8px 0 18px; font: 800 clamp(28px, 4vw, 44px)/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; }
+.upnext .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.upnext .pill { color: #f4f4f1; border-color: rgba(255,255,255,.3); }
+.upnext .pill.lime { background: #f4f4f1; color: #0c0c0e; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 95; transform: translate(-50%, 160%); visibility: hidden; padding: 12px 18px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 600; transition: transform .5s var(--ease), visibility .5s; }
+.toast.show { transform: translate(-50%, 0); visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue span::after { animation: none; }
+  .js [data-reveal] { opacity: 1; transform: none; }
+  .hero h1 .w, [data-hero], .film { animation: none; }
+  .player { clip-path: none !important; }
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add("js");</script>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="mark" href="#top" aria-label="NFC MediCard, back to top"><i><svg viewBox="0 0 24 24" fill="none" stroke="#f6f6f3" stroke-width="2.4" stroke-linecap="round"><path d="M6 8.3a6 6 0 0 1 0 7.4M9.5 6a10 10 0 0 1 0 12M13 4a14 14 0 0 1 0 16"/></svg></i>NFC MediCard</a>
+    <span class="sp"></span>
+    <span class="meta">FYP 2026 · GMI</span>
+    <a class="pill" href="https://github.com/medicard67-spec/nfc-medicard" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="eyebrow" data-hero>NFC MediCard · Final Year Project · GMI</span>
+      <h1 class="display"><span class="line"><span class="w" style="--i:0">Watch</span> <span class="w" style="--i:1">the</span> <span class="w" style="--i:2"><em>demos.</em></span></span></h1>
+      <p class="intro-p" data-hero>Start with the summary, or go straight to the patient, doctor or admin demo. Each one is under two minutes.</p>
+      <div class="films" id="films"></div>
+    </div>
+  </section>
+
+  <section class="find">
+    <div class="wrap">
+      <div data-reveal><span class="eyebrow">Jump to a moment</span><h2 class="display" style="margin-top:14px">Looking for<br>something specific?</h2></div>
+      <div class="palette" data-reveal>
+        <label for="q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span class="sr">Search the films</span><input id="q" type="search" placeholder="Search a feature…" autocomplete="off" enterkeyhint="search"><kbd>/</kbd></label>
+        <div class="chips" id="chips"></div>
+        <ul class="results" id="results" aria-live="polite"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="end">
+    <div class="wrap">
+      <span class="eyebrow" data-reveal>Open source</span>
+      <a class="big-link display" href="https://github.com/medicard67-spec/nfc-medicard" target="_blank" rel="noopener" data-reveal><span>See the code</span> <span class="arr">↗</span></a>
+      <div class="end-row" data-reveal>
+        <button class="pill lime" id="shareBtn">Share this page</button>
+        <a class="pill" href="#top">Back to the demos</a>
+        <div class="qr"><img src="assets/site-qr.svg" alt="QR code for this page">Scan to open<br>on your phone</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><footer><span>NFC MediCard — Final Year Project 2026</span><span>Made by Faaris · Diploma in Software Engineering, GMI · 3D characters: <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noopener" style="text-decoration:underline">Microsoft Fluent Emoji</a> (MIT)</span></footer></div>
+</main>
+
+<div class="player" id="player" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+  <div class="pbox">
+    <div class="phead">
+      <span class="av" id="pAv"></span>
+      <div class="t"><small id="pSub"></small><b id="pTitle"></b></div>
+      <button class="x" id="pClose" aria-label="Close video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="screen">
+      <video id="video" controls playsinline preload="metadata"></video>
+      <div class="upnext" id="upnext" aria-live="polite"><div id="upnextBox"></div></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/data.js"></script>
+<script>
+(() => {
+  const VIDEOS = window.MEDICARD_VIDEOS;
+  const byId = Object.fromEntries(VIDEOS.map(v => [v.id, v]));
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  // ---------------------------------------------------------------- the four films
+  const FILMS = [
+    { id: "overview", img: "summary", kicker: "Start here", title: "The whole story", sub: "Summary film", tile: "var(--lime)" },
+    { id: "patient", img: "patient", kicker: "Patient", title: "Ahmad's journey", sub: "Patient film", tile: "var(--sky)" },
+    { id: "doctor", img: "doctor", kicker: "Doctor", title: "Dr. Sarah's toolkit", sub: "Doctor film", tile: "var(--pink)" },
+    { id: "admin", img: "admin", kicker: "Admin", title: "The front desk", sub: "Admin film", tile: "var(--mint)" },
+  ];
+  const filmOf = id => FILMS.find(f => f.id === id);
+  const pic = id => `assets/crew3d/${filmOf(id).img}.png`;
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("mc:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("mc:" + k, JSON.stringify(v)); } catch {} },
+  };
+  let progress = store.get("progress", {});
+  const PLAY = '<svg viewBox="0 0 12 14"><path d="M0 0l12 7-12 7z" fill="#0a0a0b"/></svg>';
+
+  const renderFilms = () => {
+    $("#films").innerHTML = FILMS.map((f, i) => {
+      const v = byId[f.id];
+      return `<button class="film${i === 0 ? " big" : ""}" style="--i:${i}" data-id="${f.id}" aria-label="Play ${esc(f.title)}, ${v.duration}">
+        <span class="inner">
+          <video class="prev" muted loop playsinline preload="none" poster="${v.poster}" data-src="${v.src}"></video><span class="shade"></span>
+          <img class="who" src="${pic(f.id)}" alt="" draggable="false">
+          <span class="txt"><span class="kicker">${esc(f.kicker)}</span><h3>${esc(f.title)}</h3></span>
+          ${progress[f.id]?.done ? `<span class="seen">✓ Watched</span>` : ""}
+          <span class="play"><i>${PLAY}</i>Play · ${v.duration}</span>
+        </span></button>`;
+    }).join("");
+    bindFilms();
+  };
+
+  function bindFilms() {
+    $$(".film").forEach(el => {
+      el.addEventListener("click", e => openPlayer(el.dataset.id, undefined, false, e));
+      if (!fine) return;
+      const prev = el.querySelector(".prev"); let t;
+      el.addEventListener("pointerenter", () => {
+        if (reduced) return;
+        t = setTimeout(() => { if (!prev.src) prev.src = prev.dataset.src; prev.currentTime = 4; prev.play().then(() => el.classList.add("previewing")).catch(() => {}); }, 450);
+      });
+      el.addEventListener("pointerleave", () => { clearTimeout(t); el.classList.remove("previewing"); prev.pause(); });
+    });
+  }
+
+  // ---------------------------------------------------------------- search
+  const ALL = VIDEOS.flatMap(v => v.chapters.filter(c => c.kw !== "intro" && c.kw !== "outro").map(c => ({ v, c, hay: (c.title + " " + c.kw + " " + v.role).toLowerCase() })));
+  const CHIPS = ["Allergies", "Queue number", "QR backup", "Medication renewal", "Audit log", "USB reader"];
+  $("#chips").innerHTML = CHIPS.map(c => `<button data-q="${c}">${c}</button>`).join("");
+  const STOP = new Set(["a", "the", "in", "of", "and", "to", "on", "number"]);
+  const runSearch = q => {
+    const ws = q.toLowerCase().split(/[^a-z0-9-]+/).filter(w => w && !STOP.has(w));
+    if (!ws.length) { $("#results").innerHTML = ""; return; }
+    const hits = ALL.map(h => ({ ...h, score: ws.reduce((s, w) => s + (h.hay.includes(w) ? (h.c.title.toLowerCase().includes(w) ? 3 : 1) : (w.length > 3 && h.hay.includes(w.slice(0, -1)) ? 1 : 0)), 0) }))
+      .filter(h => h.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
+    const hl = s => { let out = esc(s); ws.forEach(w => { if (w.length > 1) out = out.replace(new RegExp(`(${w.replace(/[-]/g, "\\-")})`, "ig"), "<mark>$1</mark>"); }); return out; };
+    $("#results").innerHTML = hits.length ? hits.map(h => `<li><button class="hit" data-id="${h.v.id}" data-t="${h.c.t}">
+        <span class="av" style="--c:${filmOf(h.v.id).tile}"><img src="${pic(h.v.id)}" alt=""></span>
+        <span><b>${hl(h.c.title)}</b><small>${esc(filmOf(h.v.id).title)}</small></span><span class="go">${fmt(h.c.t)} →</span></button></li>`).join("")
+      : `<li class="empty">Nothing for “${esc(q)}”. Try one of the chips.</li>`;
+  };
+  $("#q").addEventListener("input", e => runSearch(e.target.value.trim()));
+  $("#chips").onclick = e => { const b = e.target.closest("[data-q]"); if (b) { $("#q").value = b.dataset.q; runSearch(b.dataset.q); } };
+  $("#results").onclick = e => { const b = e.target.closest(".hit"); if (b) openPlayer(b.dataset.id, +b.dataset.t, false, e); };
+  addEventListener("keydown", e => { if (e.key === "/" && document.activeElement.tagName !== "INPUT" && !player.classList.contains("open")) { e.preventDefault(); $("#q").focus(); } });
+
+  // ---------------------------------------------------------------- share + nav
+  let toastTimer;
+  const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); };
+  const pageUrl = () => location.href.split("#")[0];
+  $("#shareBtn").onclick = async () => {
+    if (navigator.share) { try { await navigator.share({ title: "NFC MediCard", url: pageUrl() }); } catch {} return; }
+    try { await navigator.clipboard.writeText(pageUrl()); toast("Link copied"); } catch { prompt("Copy this link:", pageUrl()); }
+  };
+  const onScroll = () => $("#nav").classList.toggle("solid", scrollY > 30);
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  // ---------------------------------------------------------------- player (opens as a circle from where you tapped)
+  const player = $("#player"), video = $("#video");
+  let cur = null, saveTimer = 0, countdown = null, opener = null;
+  function openPlayer(id, t, fromHash, ev) {
+    const v = byId[id]; if (!v) return;
+    const f = filmOf(id);
+    opener = opener || document.activeElement;
+    cancelCountdown(); $("#upnext").classList.remove("show");
+    cur = v;
+    $("#pAv").style.setProperty("--c", f.tile); $("#pAv").innerHTML = `<img src="${pic(id)}" alt="">`;
+    $("#pTitle").textContent = f.title; $("#pSub").textContent = `${f.sub} · ${v.duration}`;
+    const start = t ?? (progress[id] && !progress[id].done ? progress[id].t : 0);
+    video.poster = v.poster; video.src = v.src;
+    video.addEventListener("loadedmetadata", () => { if (start) video.currentTime = start; }, { once: true });
+    const wasOpen = player.classList.contains("open");
+    if (!wasOpen) {
+      player.style.setProperty("--ox", ev ? `${ev.clientX}px` : "50%"); player.style.setProperty("--oy", ev ? `${ev.clientY}px` : "50%");
+      player.classList.add("open"); document.body.style.overflow = "hidden";
+      const at = `at ${player.style.getPropertyValue("--ox")} ${player.style.getPropertyValue("--oy")}`;
+      player.style.clipPath = "none";
+      if (!reduced) player.animate([{ clipPath: `circle(0% ${at})` }, { clipPath: `circle(150% ${at})` }], { duration: 700, easing: "cubic-bezier(.65,0,.35,1)" });
+      if (!fromHash) history.pushState({ player: true }, "", `#watch=${id}`);
+    } else history.replaceState({ player: true }, "", `#watch=${id}`);
+    video.play().catch(() => {});
+    $("#pClose").focus({ preventScroll: true });
+  }
+  function closePlayer(fromPop) {
+    if (!player.classList.contains("open")) return;
+    saveNow(); cancelCountdown(); video.pause();
+    const done = () => {
+      video.removeAttribute("src"); video.load();
+      player.classList.remove("open"); player.style.clipPath = ""; document.body.style.overflow = "";
+      const was = cur; cur = null; renderFilms();
+      const back = was && document.querySelector(`.film[data-id="${was.id}"]`);
+      (back || opener)?.focus({ preventScroll: true }); opener = null;
+    };
+    if (!reduced) player.animate([{ clipPath: `circle(150% at ${player.style.getPropertyValue("--ox") || "50%"} ${player.style.getPropertyValue("--oy") || "50%"})` }, { clipPath: `circle(0% at ${player.style.getPropertyValue("--ox") || "50%"} ${player.style.getPropertyValue("--oy") || "50%"})` }], { duration: 480, easing: "cubic-bezier(.65,0,.35,1)" }).onfinish = done;
+    else done();
+    if (!fromPop && history.state?.player) history.back();
+    else if (!fromPop) history.replaceState(null, "", location.pathname + location.search);
+  }
+  $("#pClose").onclick = () => closePlayer();
+  addEventListener("popstate", () => { if (player.classList.contains("open")) closePlayer(true); else route(); });
+  video.addEventListener("timeupdate", () => { if (Date.now() - saveTimer > 2000) { saveTimer = Date.now(); saveNow(); } });
+  function saveNow() {
+    if (!cur || !video.duration) return;
+    const p = progress[cur.id] || {}; p.t = video.currentTime; if (video.currentTime / video.duration > 0.9) p.done = true;
+    progress[cur.id] = p; store.set("progress", progress);
+  }
+  video.addEventListener("ended", () => {
+    progress[cur.id] = { t: 0, done: true }; store.set("progress", progress);
+    const next = FILMS.find(f => !progress[f.id]?.done);
+    $("#upnextBox").innerHTML = next
+      ? `<small>Up next</small><h3>${esc(next.title)}</h3><div class="row"><button class="pill lime" data-act="next" data-id="${next.id}">Play now <span id="cd">8</span></button><button class="pill" data-act="stay">Stay here</button></div>`
+      : `<small>That's all four</small><h3>Thanks for stopping by.</h3><div class="row"><a class="pill lime" href="https://github.com/medicard67-spec/nfc-medicard" target="_blank" rel="noopener">See the code ↗</a><button class="pill" data-act="close">Back</button></div>`;
+    $("#upnext").classList.add("show");
+    if (next) { let n = 8; countdown = setInterval(() => { n--; const el = document.getElementById("cd"); if (el) el.textContent = n; if (n <= 0) { cancelCountdown(); openPlayer(next.id, 0); } }, 1000); }
+  });
+  $("#upnext").addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return; cancelCountdown();
+    if (b.dataset.act === "next") openPlayer(b.dataset.id, 0); else if (b.dataset.act === "close") closePlayer(); else $("#upnext").classList.remove("show");
+  });
+  function cancelCountdown() { if (countdown) clearInterval(countdown); countdown = null; }
+  addEventListener("keydown", e => {
+    if (!player.classList.contains("open")) return;
+    if (e.key === "Escape") closePlayer();
+    if (e.key === "Tab") {
+      const f = [...player.querySelectorAll("button, video, a[href]")].filter(el => el.offsetParent);
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+  });
+  addEventListener("pagehide", saveNow);
+  function route() { const m = location.hash.match(/watch=(\w+)(?:&t=(\d+))?/); if (m && byId[m[1]]) openPlayer(m[1], m[2] ? +m[2] : undefined, true); }
+
+  // ---------------------------------------------------------------- reveal on scroll
+  renderFilms();
+  if ("IntersectionObserver" in window && !reduced) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -10% 0px" });
+    $$("[data-reveal]").forEach(el => io.observe(el));
+  } else $$("[data-reveal]").forEach(el => el.classList.add("in"));
+  route();
+})();
+</script>
+</body>
+</html>
