@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { formatImagingDate } from "../components/ImagingCard.jsx";
 
 async function loadImageAsDataUrl(url) {
   const res = await fetch(url, { mode: "cors" });
@@ -181,7 +182,7 @@ export async function exportPatientRecordPdf({ patient, history = [], medication
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...dark);
-      doc.text(`${r.type} — ${r.anatomy || "—"} ${r.classification ? `(${r.classification})` : ""}`, marginX, y);
+      doc.text(`${r.type} — ${r.anatomy || "—"} ${r.classification ? `(${r.classification})` : ""}${r.uploadedAt ? `  ·  ${formatImagingDate(r.uploadedAt)}` : ""}`, marginX, y);
       y += 6;
     });
   }

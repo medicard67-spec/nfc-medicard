@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { ScanLine, Bandage } from "lucide-react";
+import { ScanLine } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
-import Card from "../../components/Card.jsx";
+import ImagingCard from "../../components/ImagingCard.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 
@@ -31,18 +31,7 @@ export default function PatientRadiology() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {images.map((img) => (
-          <Card key={img.id} className="p-3">
-            <a href={img.fileUrl} target="_blank" rel="noreferrer">
-              <img src={img.fileUrl} alt={img.type} className="mb-2 h-28 w-full rounded-lg object-cover" />
-            </a>
-            <p className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {img.type === "Wound Care" && <Bandage size={13} />} {img.type}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
-            {img.classification && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{img.classification}</p>
-            )}
-          </Card>
+          <ImagingCard key={img.id} img={img} classificationClassName="mt-1 text-amber-600 dark:text-amber-400" />
         ))}
       </div>
     </div>

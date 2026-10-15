@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-  FileText, ClipboardList, FlaskConical, ScanLine, Bandage, TriangleAlert, Phone, Pill, X, Pencil, Check,
+  FileText, ClipboardList, FlaskConical, ScanLine, TriangleAlert, Phone, Pill, X, Pencil, Check,
   Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw,
 } from "lucide-react";
 import api from "../../lib/api.js";
@@ -9,6 +9,7 @@ import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import ImagingCard from "../../components/ImagingCard.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
@@ -873,18 +874,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img) => (
-            <Card key={img.id} className="p-3">
-              <a href={img.fileUrl} target="_blank" rel="noreferrer">
-                <img src={img.fileUrl} alt={img.type} className="mb-2 h-28 w-full rounded-lg object-cover" />
-              </a>
-              <p className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                {img.type === "Wound Care" && <Bandage size={13} />} {img.type}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
-              {img.classification && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">{img.classification}</p>
-              )}
-            </Card>
+            <ImagingCard key={img.id} img={img} />
           ))}
         </div>
       )}
