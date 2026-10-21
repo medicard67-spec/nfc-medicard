@@ -191,5 +191,359 @@ window.MEDICARD_TRANSCRIPTS = {
    "t": 68.6,
    "text": "NFC MediCard."
   }
+ ],
+ "live": [
+  {
+   "t": 12.9,
+   "text": "Hello everyone, today we are going to do"
+  },
+  {
+   "t": 16.6,
+   "text": "a demonstration video for our FYP group"
+  },
+  {
+   "t": 20.1,
+   "text": "which is the NFC MediCard. We are from group 115/24B"
+  },
+  {
+   "t": 30.8,
+   "text": "Hi! I'm Ayuni and I'm the narrator"
+  },
+  {
+   "t": 34.6,
+   "text": "I'm Amsyar and I'll be playing the role of doctor"
+  },
+  {
+   "t": 38.9,
+   "text": "Hello!"
+  },
+  {
+   "t": 39.4,
+   "text": "My name is Abid Wafiy Shakirin bin Abdul Hafiz, today I will be playing the son"
+  },
+  {
+   "t": 44.2,
+   "text": "I am Danish Al-Hilmi and I'm playing as the patient"
+  },
+  {
+   "t": 49.0,
+   "text": "so please enjoy watching!"
+  },
+  {
+   "t": 50.9,
+   "text": "How this NFC MediCard works?"
+  },
+  {
+   "t": 54.7,
+   "text": "All patient information will be shown in this card"
+  },
+  {
+   "t": 57.6,
+   "text": "and this card belongs to the patient"
+  },
+  {
+   "t": 59.7,
+   "text": "and the doctor plays an important role"
+  },
+  {
+   "t": 62.6,
+   "text": "in checking the patient's information in this card"
+  },
+  {
+   "t": 65.1,
+   "text": "Besides that, doctors have a much more efficient way"
+  },
+  {
+   "t": 68.8,
+   "text": "which is by scanning the QR code"
+  },
+  {
+   "t": 73.7,
+   "text": "to view the patient's information"
+  },
+  {
+   "t": 75.9,
+   "text": "and the person responsible for registering patient information"
+  },
+  {
+   "t": 81.1,
+   "text": "in our card system is the admin"
+  },
+  {
+   "t": 111.7,
+   "text": "Have a seat first"
+  },
+  {
+   "t": 115.0,
+   "text": "Oh dad,"
+  },
+  {
+   "t": 118.2,
+   "text": "did you bring the MediCard that I told you about?"
+  },
+  {
+   "t": 120.7,
+   "text": "I brought it"
+  },
+  {
+   "t": 123.4,
+   "text": "That's good, I'm just glad you brought the MediCard"
+  },
+  {
+   "t": 126.8,
+   "text": "because if something bad happens to you"
+  },
+  {
+   "t": 130.5,
+   "text": "this will make things much easier for us"
+  },
+  {
+   "t": 133.2,
+   "text": "so we don't have to queue at the clinic"
+  },
+  {
+   "t": 138.4,
+   "text": "That's right! It helps the doctor check my past results"
+  },
+  {
+   "t": 143.5,
+   "text": "Let's go shopping"
+  },
+  {
+   "t": 148.7,
+   "text": "Hey dad! What's wrong?"
+  },
+  {
+   "t": 151.4,
+   "text": "Dad! Dad!"
+  },
+  {
+   "t": 152.7,
+   "text": "What's wrong? Dad! Help!"
+  },
+  {
+   "t": 157.2,
+   "text": "Dad, what happened?"
+  },
+  {
+   "t": 158.9,
+   "text": "Why did he collapse?"
+  },
+  {
+   "t": 160.5,
+   "text": "Who are you? — I'm a doctor from a nearby hospital"
+  },
+  {
+   "t": 163.0,
+   "text": "Oh really?"
+  },
+  {
+   "t": 163.9,
+   "text": "Please doctor,"
+  },
+  {
+   "t": 165.5,
+   "text": "help my dad, doctor"
+  },
+  {
+   "t": 167.0,
+   "text": "Do you have any patient information about your dad?"
+  },
+  {
+   "t": 168.5,
+   "text": "Yes, we have"
+  },
+  {
+   "t": 169.9,
+   "text": "which is the MediCard"
+  },
+  {
+   "t": 171.4,
+   "text": "Yes, yes, yes"
+  },
+  {
+   "t": 172.9,
+   "text": "This one, right?"
+  },
+  {
+   "t": 173.7,
+   "text": "Yeah"
+  },
+  {
+   "t": 174.5,
+   "text": "Give me a minute, I'll check your—"
+  },
+  {
+   "t": 180.7,
+   "text": "with your father's permission"
+  },
+  {
+   "t": 186.8,
+   "text": "Dad, are you okay now?"
+  },
+  {
+   "t": 193.0,
+   "text": "Hey, can we have a little talk about your dad's condition?"
+  },
+  {
+   "t": 199.1,
+   "text": "Yeah, sure"
+  },
+  {
+   "t": 205.3,
+   "text": "Okay, let's go"
+  },
+  {
+   "t": 211.4,
+   "text": "I'm glad me and my dad have this NFC MediCard"
+  },
+  {
+   "t": 220.7,
+   "text": "otherwise me and my dad would need to go to the hospital"
+  },
+  {
+   "t": 224.4,
+   "text": "near my house, and it takes a long time to get there"
+  },
+  {
+   "t": 227.7,
+   "text": "That's true. If your card happens to be damaged,"
+  },
+  {
+   "t": 229.7,
+   "text": "you can always use your NFC MediCard QR code"
+  },
+  {
+   "t": 232.5,
+   "text": "Or even better,"
+  },
+  {
+   "t": 233.3,
+   "text": "you can type in your ID at any other hospital"
+  },
+  {
+   "t": 236.1,
+   "text": "since with this NFC card you can just"
+  },
+  {
+   "t": 239.2,
+   "text": "get your patient information from any other hospital"
+  },
+  {
+   "t": 241.9,
+   "text": "from anywhere in the world, if you have access to it"
+  },
+  {
+   "t": 246.3,
+   "text": "So, wait..."
+  },
+  {
+   "t": 247.9,
+   "text": "how about my dad's follow-up treatment?"
+  },
+  {
+   "t": 251.1,
+   "text": "Do we need to see you here again?"
+  },
+  {
+   "t": 253.6,
+   "text": "There's no need."
+  },
+  {
+   "t": 254.2,
+   "text": "I've already updated your father's current information"
+  },
+  {
+   "t": 257.4,
+   "text": "and his current health condition in the database"
+  },
+  {
+   "t": 259.8,
+   "text": "so you can just go to any hospital"
+  },
+  {
+   "t": 262.7,
+   "text": "you don't even need to come back here"
+  },
+  {
+   "t": 264.3,
+   "text": "any other hospital will do just fine"
+  },
+  {
+   "t": 266.1,
+   "text": "since they already have your personal information,"
+  },
+  {
+   "t": 268.6,
+   "text": "medical history,"
+  },
+  {
+   "t": 269.6,
+   "text": "and what happened today — I've updated it all"
+  },
+  {
+   "t": 272.0,
+   "text": "Oh alright, doctor"
+  },
+  {
+   "t": 274.3,
+   "text": "Thank you for your service"
+  },
+  {
+   "t": 277.3,
+   "text": "See? So easy, right?"
+  },
+  {
+   "t": 278.8,
+   "text": "You can use the card anywhere"
+  },
+  {
+   "t": 281.5,
+   "text": "any doctor can check it"
+  },
+  {
+   "t": 283.7,
+   "text": "and give early and immediate treatment"
+  },
+  {
+   "t": 287.6,
+   "text": "Besides that, elderly people like me"
+  },
+  {
+   "t": 289.5,
+   "text": "don't need to stress about appointment dates"
+  },
+  {
+   "t": 292.3,
+   "text": "Just leave it to the doctor and they will arrange it"
+  },
+  {
+   "t": 296.2,
+   "text": "and I just need to check on my phone. Simple!"
+  },
+  {
+   "t": 300.4,
+   "text": "That's right. If something like that happens again,"
+  },
+  {
+   "t": 304.0,
+   "text": "me, as a patient representative,"
+  },
+  {
+   "t": 306.7,
+   "text": "don't have to worry about remembering my dad's past results"
+  },
+  {
+   "t": 311.1,
+   "text": "because all the past results are in this card"
+  },
+  {
+   "t": 316.0,
+   "text": "With the NFC MediCard, it's easier for patients"
+  },
+  {
+   "t": 318.7,
+   "text": "and doctors to stay connected"
+  }
  ]
 };

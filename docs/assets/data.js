@@ -315,5 +315,58 @@ window.MEDICARD_VIDEOS = [
     "thumb": "assets/thumbs/admin-10.jpg"
    }
   ]
+ },
+ {
+  "id": "live",
+  "title": "See it in real life",
+  "role": "Live demo",
+  "icon": "film",
+  "duration": "5:30",
+  "blurb": "Our group acts out a real emergency: a patient collapses, a doctor taps his MediCard and treats him on the spot.",
+  "who": "The full story, filmed in 4K",
+  "src": "videos/live-demo-4k.mp4",
+  "poster": "assets/poster-live.jpg",
+  "chapters": [
+   {
+    "t": 0,
+    "title": "Meet the group",
+    "kw": "intro"
+   },
+   {
+    "t": 30,
+    "title": "Meet the cast",
+    "kw": "cast actors ayuni amsyar danish abid narrator"
+   },
+   {
+    "t": 50,
+    "title": "How NFC MediCard works",
+    "kw": "card qr code admin doctor patient information register"
+   },
+   {
+    "t": 84,
+    "title": "Scene 1: An ordinary day out",
+    "kw": "dad son medicard queue clinic shopping"
+   },
+   {
+    "t": 144,
+    "title": "Scene 2: The emergency",
+    "kw": "collapse emergency help doctor cpr"
+   },
+   {
+    "t": 166,
+    "title": "The doctor checks the MediCard",
+    "kw": "scan tap nfc tablet emergency profile blood type allergies history"
+   },
+   {
+    "t": 209,
+    "title": "The follow-up talk",
+    "kw": "follow-up damaged lost card qr code ic number any hospital database updated"
+   },
+   {
+    "t": 276,
+    "title": "Why it matters",
+    "kw": "appointments phone past results connected elderly"
+   }
+  ]
  }
 ];

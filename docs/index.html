@@ -106,6 +106,18 @@ img { display: block; max-width: 100%; }
 .film .play i svg { width: 12px; height: 12px; margin-left: 2px; }
 .film:hover .play { transform: translateX(4px); }
 .film .seen { position: absolute; z-index: 3; right: 16px; top: 16px; height: 28px; padding: 0 10px; border-radius: 999px; background: #0a0a0b; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+/* the live demo: a real still instead of a character, full width under the bento */
+.film.wide { grid-column: 1 / -1; min-height: 300px; background: #0a0a0b; color: #fff; }
+@media (min-width: 900px) { .film.wide { grid-row: 3; min-height: 360px; } }
+.film[data-id=live] { --tile: var(--lime); }
+.film .still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 40%; z-index: 0; transition: transform 1.2s var(--ease), opacity .6s; }
+.film:hover .still { transform: scale(1.03); }
+.film.previewing .still { opacity: 0; }
+.film.wide .shade { opacity: 1; background: linear-gradient(90deg, rgba(10,10,11,.78), rgba(10,10,11,.25) 55%, transparent 80%); }
+.film.wide h3 { max-width: 12ch; }
+.film.wide .play { background: #fff; color: #0a0a0b; }
+.film .tag4k { margin-left: 2px; padding: 0 7px; height: 18px; border-radius: 6px; background: var(--lime); color: #0a0a0b; font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; letter-spacing: .02em; }
+.av img.photo { width: 100%; height: 100%; margin: 0; object-fit: cover; }
 @media (max-width: 899px) { .film:nth-child(4) { grid-column: 1 / -1; } .film .who { width: 52%; } .film h3 { font-size: 26px; } .film .play { height: 40px; font-size: 14px; } .film .txt { left: 16px; top: 16px; } .film .play { left: 16px; bottom: 14px; } }
 
 /* ---------- how it works: pinned horizontal steps ---------- */
@@ -186,6 +198,8 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
 .x svg { width: 18px; height: 18px; }
 .screen { position: relative; border-radius: 22px; overflow: hidden; background: #000; }
 .screen video { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100dvh - 120px); background: #000; }
+.screen #yt { display: none; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100dvh - 120px); border: 0; }
+.screen.yt-on video { display: none; } .screen.yt-on #yt { display: block; }
 .upnext { position: absolute; inset: 0; display: none; place-items: center; background: rgba(5,5,6,.9); color: #f4f4f1; text-align: center; padding: 16px; }
 .upnext.show { display: grid; }
 .upnext small { color: #9fb4ff; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; font-weight: 600; }
@@ -223,7 +237,7 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
     <div class="wrap">
       <span class="eyebrow" data-hero>NFC MediCard · Final Year Project · GMI</span>
       <h1 class="display"><span class="line"><span class="w" style="--i:0">Watch</span> <span class="w" style="--i:1">the</span> <span class="w" style="--i:2"><em>demos.</em></span></span></h1>
-      <p class="intro-p" data-hero>Start with the summary, or go straight to the patient, doctor or admin demo. Each one is under two minutes.</p>
+      <p class="intro-p" data-hero>Start with the summary, or go straight to the patient, doctor or admin demo. Each one is under two minutes, then see it acted out in the live demo.</p>
       <div class="films" id="films"></div>
     </div>
   </section>
@@ -263,7 +277,7 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
       <button class="x" id="pClose" aria-label="Close video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="screen">
-      <video id="video" controls playsinline preload="metadata"></video>
+      <video id="video" controls playsinline preload="metadata"></video><div id="yt"></div>
       <div class="upnext" id="upnext" aria-live="polite"><div id="upnextBox"></div></div>
     </div>
   </div>
@@ -288,9 +302,12 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
     { id: "patient", img: "patient", kicker: "Patient", title: "Ahmad's journey", sub: "Patient film", tile: "var(--sky)" },
     { id: "doctor", img: "doctor", kicker: "Doctor", title: "Dr. Sarah's toolkit", sub: "Doctor film", tile: "var(--pink)" },
     { id: "admin", img: "admin", kicker: "Admin", title: "The front desk", sub: "Admin film", tile: "var(--mint)" },
+    // the filmed role-play: the booth laptop plays the local 4K file, everywhere else plays the unlisted YouTube copy (yt = video id)
+    { id: "live", yt: "7uKbTHSQU1Q", still: "assets/live-tile.jpg", av: "assets/live-av.jpg", kicker: "Live demo", title: "See it in real life", sub: "Live demo · 4K", tile: "var(--lime)", previewAt: 172 },
   ];
   const filmOf = id => FILMS.find(f => f.id === id);
-  const pic = id => `assets/crew3d/${filmOf(id).img}.png`;
+  const pic = id => filmOf(id).av || `assets/crew3d/${filmOf(id).img}.png`;
+  const avImg = id => `<img src="${pic(id)}" alt=""${filmOf(id).av ? ' class="photo"' : ""}>`;
   const store = {
     get(k, d) { try { const v = localStorage.getItem("mc:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem("mc:" + k, JSON.stringify(v)); } catch {} },
@@ -306,11 +323,12 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
   const renderFilms = () => {
     $("#films").innerHTML = FILMS.map((f, i) => {
       const v = byId[f.id];
-      return `<button class="film${i === 0 ? " big" : ""}" style="--i:${i}" data-id="${f.id}" aria-label="Play ${esc(f.title)}, ${v.duration}">
+      return `<button class="film${i === 0 ? " big" : ""}${f.still ? " wide" : ""}" style="--i:${i}" data-id="${f.id}" aria-label="Play ${esc(f.title)}, ${v.duration}">
         <span class="inner">
-          <video class="prev" muted loop playsinline preload="none" poster="${v.poster}" data-src="${v.src}"></video><span class="shade"></span>
-          <img class="who" src="${pic(f.id)}" alt="" draggable="false">
-          <span class="txt"><span class="kicker">${esc(f.kicker)}</span><h3>${esc(f.title)}</h3></span>
+          ${f.still ? `<img class="still" src="${f.still}" alt="" draggable="false">` : ""}
+          <video class="prev" muted loop playsinline preload="none" poster="${f.still || v.poster}" data-src="${v.src}"></video><span class="shade"></span>
+          ${f.still ? "" : `<img class="who" src="${pic(f.id)}" alt="" draggable="false">`}
+          <span class="txt"><span class="kicker">${esc(f.kicker)}${f.still ? '<span class="tag4k">4K</span>' : ""}</span><h3>${esc(f.title)}</h3></span>
           ${progress[f.id]?.done ? `<span class="seen">✓ Watched</span>` : ""}
           <span class="play"><i>${PLAY}</i>Play · ${v.duration}</span>
         </span></button>`;
@@ -324,8 +342,8 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
       if (!fine) return;
       const prev = el.querySelector(".prev"); let t;
       el.addEventListener("pointerenter", () => {
-        if (reduced) return;
-        t = setTimeout(() => { if (!prev.src) prev.src = prev.dataset.src; prev.currentTime = 4; prev.play().then(() => el.classList.add("previewing")).catch(() => {}); }, 450);
+        if (reduced || useYt(el.dataset.id)) return;
+        t = setTimeout(() => { if (!prev.src) prev.src = prev.dataset.src; prev.currentTime = filmOf(el.dataset.id).previewAt || 4; prev.play().then(() => el.classList.add("previewing")).catch(() => {}); }, 450);
       });
       el.addEventListener("pointerleave", () => { clearTimeout(t); el.classList.remove("previewing"); prev.pause(); });
     });
@@ -397,7 +415,7 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
     const extra = new Set(groups.flatMap(g => [...g.exact, ...g.alts]).filter(w => it.words.includes(w))).size;
     return { sc: sc + (matched === groups.length ? 2 : 0) + (it.spoken ? .5 : 0) + extra * .3, matched };
   };
-  const CHIPS = ["Allergies", "Lost card", "X-ray", "Queue number", "Medication renewal", "Audit log", "USB reader", "Android app"];
+  const CHIPS = ["Emergency", "Allergies", "Lost card", "X-ray", "Queue number", "Medication renewal", "Audit log", "USB reader", "Android app"];
   $("#chips").innerHTML = CHIPS.map(c => `<button data-q="${c}">${c}</button>`).join("");
   const runSearch = q => {
     const groups = words(q).map(expand);
@@ -414,7 +432,7 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
     const flat = groups.flatMap(g => [...g.exact, ...g.alts]).filter(w => w.length > 1);
     const hl = str => { let out = esc(str); flat.forEach(w => { out = out.replace(new RegExp(`\\b(${w.replace(/[-]/g, "\\-")}\\w*)`, "ig"), "<mark>$1</mark>"); }); return out; };
     const row = r => `<li><button class="hit" data-id="${r.it.v.id}" data-t="${r.it.t}">
-        <span class="av" style="--c:${filmOf(r.it.v.id).tile}"><img src="${pic(r.it.v.id)}" alt=""></span>
+        <span class="av" style="--c:${filmOf(r.it.v.id).tile}">${avImg(r.it.v.id)}</span>
         <span><b>${esc(filmOf(r.it.v.id).title)}</b><span class="line">${r.it.spoken ? "“" + hl(r.it.title) + "”" : hl(r.it.title)}</span></span><span class="go">Watch →</span></button></li>`;
     if (strong.length) { $("#results").innerHTML = strong.map(row).join(""); return; }
     if (picked.length) { $("#results").innerHTML = `<li class="near">No exact match for “${esc(q)}” — closest moments:</li>` + picked.slice(0, 4).map(row).join(""); return; }
@@ -440,17 +458,46 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
   // ---------------------------------------------------------------- player (opens as a circle from where you tapped)
   const player = $("#player"), video = $("#video");
   let cur = null, saveTimer = 0, countdown = null, opener = null;
+
+  // YouTube: the live demo online (the booth laptop plays its local 4K file instead, see the check at the bottom)
+  let yt = null, ytApi = null;
+  function useYt(id) { const f = filmOf(id); return !!(f && f.yt && !f.local); }
+  const loadYtApi = () => ytApi ||= new Promise(res => {
+    window.onYouTubeIframeAPIReady = res;
+    const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; document.head.append(s);
+  });
+  async function playYt(f, start) {
+    await loadYtApi();
+    if (yt) { yt.loadVideoById({ videoId: f.yt, startSeconds: start }); return; }
+    yt = await new Promise(res => {
+      const p = new YT.Player("yt", {
+        host: "https://www.youtube-nocookie.com", videoId: f.yt,
+        playerVars: { autoplay: 1, start: Math.floor(start), rel: 0, playsinline: 1 },
+        events: { onReady: () => res(p), onStateChange: e => { if (e.data === YT.PlayerState.ENDED) onEnded(); } },
+      });
+    });
+  }
+  const nowT = () => cur && useYt(cur.id) ? (yt?.getCurrentTime?.() || 0) : video.currentTime;
+  const totalT = () => cur && useYt(cur.id) ? (yt?.getDuration?.() || 0) : video.duration;
+  setInterval(() => { if (cur && useYt(cur.id)) saveNow(); }, 2000);
+
   function openPlayer(id, t, fromHash, ev) {
     const v = byId[id]; if (!v) return;
     const f = filmOf(id);
     opener = opener || document.activeElement;
     cancelCountdown(); $("#upnext").classList.remove("show");
     cur = v;
-    $("#pAv").style.setProperty("--c", f.tile); $("#pAv").innerHTML = `<img src="${pic(id)}" alt="">`;
+    $("#pAv").style.setProperty("--c", f.tile); $("#pAv").innerHTML = avImg(id);
     $("#pTitle").textContent = f.title; $("#pSub").textContent = `${f.sub} · ${v.duration}`;
     const start = t ?? (progress[id] && !progress[id].done ? progress[id].t : 0);
-    video.poster = v.poster; video.src = v.src;
-    video.addEventListener("loadedmetadata", () => { if (start) video.currentTime = start; }, { once: true });
+    const onYt = useYt(id);
+    $(".screen").classList.toggle("yt-on", onYt);
+    if (onYt) { video.pause(); video.removeAttribute("src"); video.load(); playYt(f, start || 0); }
+    else {
+      yt?.pauseVideo?.();
+      video.poster = v.poster; video.src = v.src;
+      video.addEventListener("loadedmetadata", () => { if (start) video.currentTime = start; }, { once: true });
+    }
     const wasOpen = player.classList.contains("open");
     if (!wasOpen) {
       player.style.setProperty("--ox", ev ? `${ev.clientX}px` : "50%"); player.style.setProperty("--oy", ev ? `${ev.clientY}px` : "50%");
@@ -460,13 +507,14 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
       if (!reduced) player.animate([{ clipPath: `circle(0% ${at})` }, { clipPath: `circle(150% ${at})` }], { duration: 700, easing: "cubic-bezier(.65,0,.35,1)" });
       if (!fromHash) history.pushState({ player: true }, "", `#watch=${id}`);
     } else history.replaceState({ player: true }, "", `#watch=${id}`);
-    video.play().catch(() => {});
+    if (!onYt) video.play().catch(() => {});
     $("#pClose").focus({ preventScroll: true });
   }
   function closePlayer(fromPop) {
     if (!player.classList.contains("open")) return;
-    saveNow(); cancelCountdown(); video.pause();
+    saveNow(); cancelCountdown(); video.pause(); yt?.pauseVideo?.();
     const done = () => {
+      yt?.stopVideo?.();
       video.removeAttribute("src"); video.load();
       player.classList.remove("open"); player.style.clipPath = ""; document.body.style.overflow = "";
       const was = cur; cur = null; markWatched(); window.scrollTo(0, keepY);
@@ -482,19 +530,22 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
   addEventListener("popstate", () => { if (player.classList.contains("open")) closePlayer(true); else route(); });
   video.addEventListener("timeupdate", () => { if (Date.now() - saveTimer > 2000) { saveTimer = Date.now(); saveNow(); } });
   function saveNow() {
-    if (!cur || !video.duration) return;
-    const p = progress[cur.id] || {}; p.t = video.currentTime; if (video.currentTime / video.duration > 0.9) p.done = true;
+    const d = totalT(), t = nowT();
+    if (!cur || !d) return;
+    const p = progress[cur.id] || {}; p.t = t; if (t / d > 0.9) p.done = true;
     progress[cur.id] = p; store.set("progress", progress);
   }
-  video.addEventListener("ended", () => {
+  video.addEventListener("ended", onEnded);
+  function onEnded() {
+    if (!cur) return;
     progress[cur.id] = { t: 0, done: true }; store.set("progress", progress);
     const next = FILMS.find(f => !progress[f.id]?.done);
     $("#upnextBox").innerHTML = next
       ? `<small>Up next</small><h3>${esc(next.title)}</h3><div class="row"><button class="pill lime" data-act="next" data-id="${next.id}">Play now <span id="cd">8</span></button><button class="pill" data-act="stay">Stay here</button></div>`
-      : `<small>That's all four</small><h3>Thanks for stopping by.</h3><div class="row"><a class="pill lime" href="https://github.com/medicard67-spec/nfc-medicard" target="_blank" rel="noopener">See the code ↗</a><button class="pill" data-act="close">Back</button></div>`;
+      : `<small>That's all of them</small><h3>Thanks for stopping by.</h3><div class="row"><a class="pill lime" href="https://github.com/medicard67-spec/nfc-medicard" target="_blank" rel="noopener">See the code ↗</a><button class="pill" data-act="close">Back</button></div>`;
     $("#upnext").classList.add("show");
     if (next) { let n = 8; countdown = setInterval(() => { n--; const el = document.getElementById("cd"); if (el) el.textContent = n; if (n <= 0) { cancelCountdown(); openPlayer(next.id, 0); } }, 1000); }
-  });
+  }
   $("#upnext").addEventListener("click", e => {
     const b = e.target.closest("[data-act]"); if (!b) return; cancelCountdown();
     if (b.dataset.act === "next") openPlayer(b.dataset.id, 0); else if (b.dataset.act === "close") closePlayer(); else $("#upnext").classList.remove("show");
@@ -504,7 +555,7 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
     if (!player.classList.contains("open")) return;
     if (e.key === "Escape") closePlayer();
     if (e.key === "Tab") {
-      const f = [...player.querySelectorAll("button, video, a[href]")].filter(el => el.offsetParent);
+      const f = [...player.querySelectorAll("button, video, iframe, a[href]")].filter(el => el.offsetParent);
       if (!f.length) return;
       if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
       else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
@@ -515,6 +566,15 @@ footer { margin-top: 90px; padding: 26px 0 calc(34px + env(safe-area-inset-botto
 
   // ---------------------------------------------------------------- reveal on scroll
   renderFilms();
+  // the 4K live demo file is only on the booth laptop: play it from there when it's served, otherwise use YouTube
+  // (?yt in the address forces the YouTube version, to preview the online site on the laptop)
+  FILMS.filter(f => f.still).forEach(f => (/[?&]yt\b/.test(location.search) ? Promise.reject() : fetch(byId[f.id].src, { headers: { Range: "bytes=0-0" } }))
+    .then(r => { if (!r.ok) throw 0; r.body?.cancel(); f.local = true; })
+    .catch(() => {
+      f.local = false; if (f.yt) return;
+      FILMS.splice(FILMS.indexOf(f), 1); delete byId[f.id]; $(`.film[data-id="${f.id}"]`)?.remove();
+      for (let k = ITEMS.length; k--;) if (ITEMS[k].v.id === f.id) ITEMS.splice(k, 1);
+    }));
   setTimeout(() => document.documentElement.classList.add("settled"), 2000);
   if ("IntersectionObserver" in window && !reduced) {
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -10% 0px" });
