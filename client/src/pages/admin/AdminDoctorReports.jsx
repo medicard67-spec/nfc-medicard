@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
+import { t, dateLocale } from "../../i18n/index.js";
 
 export default function AdminDoctorReports() {
   const [doctors, setDoctors] = useState([]);
@@ -20,10 +21,10 @@ export default function AdminDoctorReports() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Doctor's Report</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Doctor's Report")}</h1>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-        <Card title="Active Doctors" className="lg:col-span-1">
+        <Card title={t("Active Doctors")} className="lg:col-span-1">
           <ul className="space-y-1">
             <li>
               <button
@@ -32,7 +33,7 @@ export default function AdminDoctorReports() {
                   !activeDoctor ? "bg-brand-50 dark:bg-brand-800 text-brand-700 dark:text-brand-100" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
-                All Doctors
+                {t("All Doctors")}
               </button>
             </li>
             {doctors.map((d) => (
@@ -54,9 +55,9 @@ export default function AdminDoctorReports() {
           </ul>
         </Card>
 
-        <Card title="Patient Reports" className="lg:col-span-3">
+        <Card title={t("Patient Reports")} className="lg:col-span-3">
           {filtered.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">No reports submitted yet.</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t("No reports submitted yet.")}</p>
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.map((r) => (
@@ -67,7 +68,7 @@ export default function AdminDoctorReports() {
                   </div>
                   <div className="text-right text-xs text-slate-400 dark:text-slate-500">
                     <p>{r.physician}</p>
-                    <p>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : ""}</p>
+                    <p>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString(dateLocale()) : ""}</p>
                   </div>
                 </li>
               ))}

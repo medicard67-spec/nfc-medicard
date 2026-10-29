@@ -4,6 +4,8 @@ import { Menu, Moon, Sun, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import logo from "../assets/logo.png";
+import LanguageSwitcher from "./LanguageSwitcher.jsx";
+import { t } from "../i18n/index.js";
 
 export default function PortalLayout({ navItems, title }) {
   const { profile, logout } = useAuth();
@@ -19,7 +21,7 @@ export default function PortalLayout({ navItems, title }) {
       <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-900/90">
         <button
           onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
+          aria-label={t("Open menu")}
           className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           <Menu size={20} strokeWidth={2} />
@@ -28,7 +30,7 @@ export default function PortalLayout({ navItems, title }) {
           <img src={logo} alt="NFC MediCard" className="h-7 w-7 object-contain" />
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">NFC MediCard</p>
         </div>
-        <div className="w-9" />
+        <LanguageSwitcher compact />
       </div>
 
       {/* Mobile backdrop */}
@@ -54,7 +56,7 @@ export default function PortalLayout({ navItems, title }) {
           </div>
           <div className="md:hidden lg:block">
             <p className="text-sm font-semibold leading-tight text-white">NFC MediCard</p>
-            <p className="text-xs text-brand-200">{title}</p>
+            <p className="text-xs text-brand-200">{t(title)}</p>
           </div>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -63,7 +65,7 @@ export default function PortalLayout({ navItems, title }) {
               key={item.to}
               to={item.to}
               end={item.end}
-              title={item.label}
+              title={t(item.label)}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition md:justify-center lg:justify-between ${
                   isActive
@@ -74,7 +76,7 @@ export default function PortalLayout({ navItems, title }) {
             >
               <span className="flex items-center gap-2.5">
                 <item.icon size={17} strokeWidth={2} className="flex-shrink-0" />
-                <span className="md:hidden lg:inline">{item.label}</span>
+                <span className="md:hidden lg:inline">{t(item.label)}</span>
               </span>
               {item.badge > 0 && (
                 <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white md:hidden lg:flex">
@@ -85,11 +87,17 @@ export default function PortalLayout({ navItems, title }) {
           ))}
         </nav>
         <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+          <div className="mb-2 px-1 md:hidden lg:block">
+            <LanguageSwitcher className="w-full justify-start" />
+          </div>
+          <div className="mb-2 hidden justify-center md:flex lg:hidden">
+            <LanguageSwitcher compact />
+          </div>
           <div className="mb-1 flex items-center justify-between px-1 md:justify-center lg:justify-between">
             <p className="truncate text-xs text-slate-500 md:hidden lg:block dark:text-slate-400">{profile?.email}</p>
             <button
               onClick={toggleTheme}
-              aria-label="Toggle dark mode"
+              aria-label={t("Toggle dark mode")}
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
@@ -97,11 +105,11 @@ export default function PortalLayout({ navItems, title }) {
           </div>
           <button
             onClick={logout}
-            title="Log out"
+            title={t("Log out")}
             className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 md:justify-center lg:justify-start dark:text-red-400 dark:hover:bg-red-950/50"
           >
             <LogOut size={16} className="hidden md:inline lg:hidden" />
-            <span className="md:hidden lg:inline">Log out</span>
+            <span className="md:hidden lg:inline">{t("Log out")}</span>
           </button>
         </div>
       </aside>

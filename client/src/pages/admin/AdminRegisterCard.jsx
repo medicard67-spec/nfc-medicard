@@ -7,6 +7,7 @@ import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrCodeCard from "../../components/QrCodeCard.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
+import { t } from "../../i18n/index.js";
 
 const emptyForm = {
   name: "", email: "", password: "", ic: "", dob: "", age: "", gender: "Male",
@@ -61,12 +62,12 @@ export default function AdminRegisterCard() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      toast.info("Hold the unassigned NFC card near your device...", { duration: 6000 });
+      toast.info(t("Hold the unassigned NFC card near your device..."), { duration: 6000 });
       const uid = await scanOnce({ signal: controller.signal });
       setCardUid(uid);
       setStep(2);
     } catch (err) {
-      setError(err.message || "NFC scan failed or was cancelled.");
+      setError(err.message || t("NFC scan failed or was cancelled."));
     } finally {
       setNfcScanning(false);
     }
@@ -80,7 +81,7 @@ export default function AdminRegisterCard() {
       setCardUid(uid);
       setStep(2);
     } catch (err) {
-      setError(err.message || "Desk reader scan failed.");
+      setError(err.message || t("Desk reader scan failed."));
     } finally {
       setDeskScanning(false);
     }
@@ -107,9 +108,9 @@ export default function AdminRegisterCard() {
       setSuccess(data);
       setJustAssigned(false);
       resetAll();
-      toast.success(`Card registered to ${data.name}.`);
+      toast.success(t("Card registered to {name}.", { name: data.name }));
     } catch (err) {
-      setError(err.response?.data?.error || "Registration failed.");
+      setError(err.response?.data?.error || t("Registration failed."));
     } finally {
       setSaving(false);
     }
@@ -124,7 +125,7 @@ export default function AdminRegisterCard() {
       const { data } = await api.get("/patients", { params: { search: search.trim() } });
       setSearchResults(data.filter((p) => !p.cardUid));
     } catch {
-      setError("Search failed.");
+      setError(t("Search failed."));
     } finally {
       setSearching(false);
     }
@@ -139,9 +140,9 @@ export default function AdminRegisterCard() {
       setSuccess(data);
       setJustAssigned(true);
       resetAll();
-      toast.success(`Card assigned to ${data.name}.`);
+      toast.success(t("Card assigned to {name}.", { name: data.name }));
     } catch (err) {
-      setError(err.response?.data?.error || "Assigning the card failed.");
+      setError(err.response?.data?.error || t("Assigning the card failed."));
     } finally {
       setSaving(false);
     }
@@ -153,20 +154,20 @@ export default function AdminRegisterCard() {
     const waiting = nfcScanning || deskScanning;
 
     const heading = nfcScanning
-      ? "Waiting for a tap..."
+      ? t("Waiting for a tap...")
       : deskScanning
-      ? "Waiting for a tap on the desk reader..."
-      : "Scan an Unassigned Card";
+      ? t("Waiting for a tap on the desk reader...")
+      : t("Scan an Unassigned Card");
 
     const subtext = nfcScanning
-      ? "Hold the new card against the back of your device."
+      ? t("Hold the new card against the back of your device.")
       : deskScanning
-      ? "Hold the card on the reader — close its own software first."
-      : "Tap a phone, use a desk reader, or type the card's UID below.";
+      ? t("Hold the card on the reader — close its own software first.")
+      : t("Tap a phone, use a desk reader, or type the card's UID below.");
 
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Register New Card</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Register New Card")}</h1>
 
         <Card>
           <div className="flex flex-col items-center gap-5 py-2 text-center">
@@ -195,7 +196,7 @@ export default function AdminRegisterCard() {
                     disabled={waiting}
                     className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                   >
-                    <Nfc size={15} /> Tap Phone
+                    <Nfc size={15} /> {t("Tap Phone")}
                   </button>
                 )}
                 {deskSupported && (
@@ -204,7 +205,7 @@ export default function AdminRegisterCard() {
                     disabled={waiting}
                     className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                   >
-                    <Usb size={15} /> Desk Reader
+                    <Usb size={15} /> {t("Desk Reader")}
                   </button>
                 )}
               </div>
@@ -214,7 +215,7 @@ export default function AdminRegisterCard() {
 
             <div className="flex w-full items-center gap-3">
               <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">or enter UID manually</span>
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{t("or enter UID manually")}</span>
               <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
             </div>
 
@@ -223,14 +224,14 @@ export default function AdminRegisterCard() {
                 ref={manualInputRef}
                 value={cardUid}
                 onChange={(e) => setCardUid(e.target.value)}
-                placeholder="e.g. 0443FADB3D0289"
+                placeholder={t("e.g. 0443FADB3D0289")}
                 className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 required
               />
               <button
                 type="submit"
                 className="flex items-center justify-center rounded-lg bg-slate-800 px-3.5 text-white hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600"
-                aria-label="Continue with this UID"
+                aria-label={t("Continue with this UID")}
               >
                 <ArrowRight size={17} />
               </button>
@@ -242,17 +243,16 @@ export default function AdminRegisterCard() {
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <QrCode size={44} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Scan a printed QR code (e.g. from a previously issued card) with your device's camera
-              instead of tapping or typing.
+              {t("Scan a printed QR code (e.g. from a previously issued card) with your device's camera instead of tapping or typing.")}
             </p>
             {showQr ? (
               <div className="w-full space-y-3">
-                <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || "Camera error.")} />
+                <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || t("Camera error."))} />
                 <button
                   onClick={() => setShowQr(false)}
                   className="w-full rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
               </div>
             ) : (
@@ -260,7 +260,7 @@ export default function AdminRegisterCard() {
                 onClick={() => setShowQr(true)}
                 className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
               >
-                Scan QR Code
+                {t("Scan QR Code")}
               </button>
             )}
           </div>
@@ -269,17 +269,17 @@ export default function AdminRegisterCard() {
         {success && (
           <Card>
             <p className="text-sm font-semibold text-green-600">
-              Card registered to {success.name} (UID: {success.cardUid}).
+              {t("Card registered to")} {success.name} {t("(UID:")} {success.cardUid}).
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {justAssigned
-                ? "This patient can keep using their existing login — only the card is new."
+                ? t("This patient can keep using their existing login — only the card is new.")
                 : `A verification email has been sent to ${success.email} — they must confirm it before they can log in.`}
             </p>
             <div className="mt-4">
               <QrCodeCard
                 value={success.cardUid}
-                label="Optional: print this QR code on the card as a fallback for phones without NFC."
+                label={t("Optional: print this QR code on the card as a fallback for phones without NFC.")}
               />
             </div>
           </Card>
@@ -290,7 +290,7 @@ export default function AdminRegisterCard() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Assign Card UID: {cardUid}</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Assign Card UID:")} {cardUid}</h1>
 
       <div className="flex gap-2">
         <button
@@ -301,7 +301,7 @@ export default function AdminRegisterCard() {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           }`}
         >
-          <UserPlus size={14} /> New Patient
+          <UserPlus size={14} /> {t("New Patient")}
         </button>
         <button
           onClick={() => setMode("existing")}
@@ -311,28 +311,28 @@ export default function AdminRegisterCard() {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           }`}
         >
-          <Search size={14} /> Existing Patient
+          <Search size={14} /> {t("Existing Patient")}
         </button>
       </div>
 
       {mode === "new" ? (
         <Card>
           <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Full Name" value={form.name} onChange={update("name")} required />
-            <Input label="Email (login)" type="email" value={form.email} onChange={update("email")} required />
-            <Input label="Temporary Password" value={form.password} onChange={update("password")} required />
-            <Input label="IC Number" value={form.ic} onChange={update("ic")} />
-            <Input label="Date of Birth" type="date" value={form.dob} onChange={update("dob")} />
-            <Input label="Age" type="number" value={form.age} onChange={update("age")} />
-            <Select label="Gender" value={form.gender} onChange={update("gender")} options={["Male", "Female", "Other"]} />
-            <Select label="Blood Type" value={form.bloodType} onChange={update("bloodType")} options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]} />
-            <Input label="Allergies (comma separated)" value={form.allergies} onChange={update("allergies")} />
-            <Input label="Chronic Illnesses (comma separated)" value={form.chronicIllnesses} onChange={update("chronicIllnesses")} />
-            <Input label="Height (cm)" type="number" value={form.height} onChange={update("height")} />
-            <Input label="Weight (kg)" type="number" value={form.weight} onChange={update("weight")} />
-            <Input label="Phone" value={form.phone} onChange={update("phone")} />
-            <Input label="Emergency Contact Name" value={form.emergencyContactName} onChange={update("emergencyContactName")} />
-            <Input label="Emergency Contact Phone" value={form.emergencyContactPhone} onChange={update("emergencyContactPhone")} />
+            <Input label={t("Full Name")} value={form.name} onChange={update("name")} required />
+            <Input label={t("Email (login)")} type="email" value={form.email} onChange={update("email")} required />
+            <Input label={t("Temporary Password")} value={form.password} onChange={update("password")} required />
+            <Input label={t("IC Number")} value={form.ic} onChange={update("ic")} />
+            <Input label={t("Date of Birth")} type="date" value={form.dob} onChange={update("dob")} />
+            <Input label={t("Age")} type="number" value={form.age} onChange={update("age")} />
+            <Select label={t("Gender")} value={form.gender} onChange={update("gender")} options={["Male", "Female", "Other"]} />
+            <Select label={t("Blood Type")} value={form.bloodType} onChange={update("bloodType")} options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]} />
+            <Input label={t("Allergies (comma separated)")} value={form.allergies} onChange={update("allergies")} />
+            <Input label={t("Chronic Illnesses (comma separated)")} value={form.chronicIllnesses} onChange={update("chronicIllnesses")} />
+            <Input label={t("Height (cm)")} type="number" value={form.height} onChange={update("height")} />
+            <Input label={t("Weight (kg)")} type="number" value={form.weight} onChange={update("weight")} />
+            <Input label={t("Phone")} value={form.phone} onChange={update("phone")} />
+            <Input label={t("Emergency Contact Name")} value={form.emergencyContactName} onChange={update("emergencyContactName")} />
+            <Input label={t("Emergency Contact Phone")} value={form.emergencyContactPhone} onChange={update("emergencyContactPhone")} />
 
             <div className="col-span-full flex items-center gap-3">
               {error && <p className="text-sm text-red-600">{error}</p>}
@@ -341,13 +341,13 @@ export default function AdminRegisterCard() {
                 onClick={() => setStep(1)}
                 className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50"
               >
-                Back
+                {t("Back")}
               </button>
               <button
                 disabled={saving}
                 className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
               >
-                {saving ? "Registering..." : "Confirm Registration"}
+                {saving ? t("Registering...") : t("Confirm Registration")}
               </button>
             </div>
           </form>
@@ -355,27 +355,26 @@ export default function AdminRegisterCard() {
       ) : (
         <Card>
           <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-            For a patient who already has an account but no card yet — search by name or IC, then
-            assign this card to them. Their login and existing records are untouched.
+            {t("For a patient who already has an account but no card yet — search by name or IC, then assign this card to them. Their login and existing records are untouched.")}
           </p>
           <form onSubmit={runSearch} className="mb-4 flex gap-2">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or IC..."
+              placeholder={t("Search by name or IC...")}
               className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
             />
             <button
               disabled={searching}
               className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
             >
-              {searching ? "Searching..." : "Search"}
+              {searching ? t("Searching...") : t("Search")}
             </button>
           </form>
 
           {searchResults.length === 0 && !searching && (
             <p className="text-sm text-slate-400">
-              No cardless patients found yet — try a search above.
+              {t("No cardless patients found yet — try a search above.")}
             </p>
           )}
 
@@ -404,7 +403,7 @@ export default function AdminRegisterCard() {
               onClick={() => setStep(1)}
               className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50"
             >
-              Back
+              {t("Back")}
             </button>
             <button
               type="button"
@@ -412,7 +411,7 @@ export default function AdminRegisterCard() {
               disabled={saving || !selectedPatient}
               className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
             >
-              {saving ? "Assigning..." : selectedPatient ? `Assign Card to ${selectedPatient.name}` : "Select a patient"}
+              {saving ? t("Assigning...") : selectedPatient ? `Assign Card to ${selectedPatient.name}` : t("Select a patient")}
             </button>
           </div>
         </Card>
@@ -437,7 +436,7 @@ function Select({ label, options, ...props }) {
       <select {...props} className="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm">
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {t(o)}
           </option>
         ))}
       </select>

@@ -8,6 +8,7 @@ import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
+import { localiseChartLabel, t } from "../../i18n/index.js";
 
 export default function DoctorDashboard() {
   const { profile } = useAuth();
@@ -41,28 +42,28 @@ export default function DoctorDashboard() {
       <div className="flex items-center gap-3">
         <Avatar name={profile?.name} url={profile?.avatarUrl} size="md" />
         <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Welcome, {profile?.name}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{profile?.department} Department</p>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Welcome,")} {profile?.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("{department} Department", { department: profile?.department ?? "" })}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Total Registered Patients" value={patientCount} />
-        <StatTile label="Patients You've Treated" value={stats?.myPatientCount ?? "—"} />
-        <StatTile label="Records Logged (You)" value={stats?.totalRecordsLogged ?? "—"} />
-        <StatTile label="Upcoming Appointments" value={stats?.upcomingAppointments ?? "—"} />
+        <StatTile label={t("Total Registered Patients")} value={patientCount} />
+        <StatTile label={t("Patients You've Treated")} value={stats?.myPatientCount ?? "—"} />
+        <StatTile label={t("Records Logged (You)")} value={stats?.totalRecordsLogged ?? "—"} />
+        <StatTile label={t("Upcoming Appointments")} value={stats?.upcomingAppointments ?? "—"} />
       </div>
 
-      <Card title="Your Weekly Activity (records logged)">
+      <Card title={t("Your Weekly Activity (records logged)")}>
         {!stats ? (
           <SkeletonList rows={1} />
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={stats.weeklyActivity}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="week" tick={{ fill: tickColor, fontSize: 12 }} tickFormatter={(w) => localiseChartLabel(w)} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
-              <Tooltip formatter={(value) => [value, "Records"]} {...tooltipStyle} />
+              <Tooltip formatter={(value) => [value, t("Records")]} labelFormatter={(w) => localiseChartLabel(w)} {...tooltipStyle} />
               <Line type="monotone" dataKey="records" stroke={lineColor} strokeWidth={2} dot={{ r: 3, fill: lineColor }} />
             </LineChart>
           </ResponsiveContainer>
@@ -72,16 +73,15 @@ export default function DoctorDashboard() {
       <Card>
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <Nfc size={34} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Scan NFC Card</h2>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t("Scan NFC Card")}</h2>
           <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
-            Tap a patient's physical NFC card to instantly retrieve their medical history, lab
-            results, and imaging records.
+            {t("Tap a patient's physical NFC card to instantly retrieve their medical history, lab results, and imaging records.")}
           </p>
           <Link
             to="/doctor/scan"
             className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700"
           >
-            Scan NFC Card
+            {t("Scan NFC Card")}
           </Link>
         </div>
       </Card>

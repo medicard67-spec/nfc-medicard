@@ -182,7 +182,7 @@ export async function exportPatientRecordPdf({ patient, history = [], medication
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...dark);
-      doc.text(`${r.type} — ${r.anatomy || "—"} ${r.classification ? `(${r.classification})` : ""}${r.uploadedAt ? `  ·  ${formatImagingDate(r.uploadedAt)}` : ""}`, marginX, y);
+      doc.text(`${r.type} — ${r.anatomy || "—"} ${r.classification ? `(${r.classification})` : ""}${r.uploadedAt ? `  ·  ${formatImagingDate(r.uploadedAt, "en-MY")}` : ""}`, marginX, y);
       y += 6;
     });
   }

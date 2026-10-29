@@ -5,6 +5,7 @@ import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
+import { t } from "../../i18n/index.js";
 
 function Field({ label, value }) {
   return (
@@ -33,9 +34,9 @@ export default function DoctorProfile() {
       form.append("file", file);
       await api.post("/doctor/avatar", form, { headers: { "Content-Type": "multipart/form-data" } });
       await refreshProfile();
-      toast.success("Profile picture updated.");
+      toast.success(t("Profile picture updated."));
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to update profile picture.");
+      toast.error(err.response?.data?.error || t("Failed to update profile picture."));
     } finally {
       setUploadingAvatar(false);
     }
@@ -43,7 +44,7 @@ export default function DoctorProfile() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Profile</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Profile")}</h1>
 
       <Card>
         <div className="mb-4 flex items-center gap-4">
@@ -53,7 +54,7 @@ export default function DoctorProfile() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingAvatar}
-              aria-label="Change profile picture"
+              aria-label={t("Change profile picture")}
               className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
             >
               {uploadingAvatar ? "…" : <Camera size={12} />}
@@ -68,15 +69,15 @@ export default function DoctorProfile() {
           </div>
           <div>
             <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{profile.name}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{profile.department} Department</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("{department} Department", { department: profile.department })}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="Email" value={profile.email} />
-          <Field label="Department" value={profile.department} />
-          <Field label="Hospital" value={profile.hospital} />
-          <Field label="Role" value="Doctor" />
+          <Field label={t("Email")} value={profile.email} />
+          <Field label={t("Department")} value={profile.department} />
+          <Field label={t("Hospital")} value={profile.hospital} />
+          <Field label={t("Role")} value="Doctor" />
         </div>
       </Card>
     </div>

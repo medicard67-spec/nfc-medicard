@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { CapacitorNfc } from "@capgo/capacitor-nfc";
+import { t } from "../i18n/index.js";
 
 // Android's WebView (what the installed app actually runs in) has no Web
 // NFC support at all -- NDEFReader exists on window so feature-detection
@@ -30,7 +31,7 @@ function bytesToHexUid(bytes) {
 // AbortSignal, or scanning otherwise fails.
 export function scanOnce({ signal } = {}) {
   if (!isNfcSupported()) {
-    return Promise.reject(new Error("NFC is not supported on this device/browser."));
+    return Promise.reject(new Error(t("NFC is not supported on this device/browser.")));
   }
   return isNative ? scanOnceNative({ signal }) : scanOnceWeb({ signal });
 }
@@ -49,13 +50,13 @@ function scanOnceNative({ signal }) {
     };
 
     if (signal) {
-      signal.addEventListener("abort", () => finish(reject, new Error("Scan cancelled.")));
+      signal.addEventListener("abort", () => finish(reject, new Error(t("Scan cancelled."))));
     }
 
     CapacitorNfc.addListener("nfcEvent", (event) => {
       const id = event?.tag?.id;
       if (!id || !id.length) {
-        finish(reject, new Error("Failed to read the NFC card. Try tapping it again."));
+        finish(reject, new Error(t("Failed to read the NFC card. Try tapping it again.")));
         return;
       }
       finish(resolve, bytesToHexUid(id));
@@ -79,7 +80,7 @@ function scanOnceWeb({ signal }) {
           resolve(normalizeSerialNumber(event.serialNumber || ""));
         };
         reader.onreadingerror = () => {
-          reject(new Error("Failed to read the NFC card. Try tapping it again."));
+          reject(new Error(t("Failed to read the NFC card. Try tapping it again.")));
         };
       })
       .catch((err) => {

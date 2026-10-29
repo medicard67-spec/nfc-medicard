@@ -5,6 +5,7 @@ import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import { t } from "../../i18n/index.js";
 
 export default function PatientHistory() {
   const { profile } = useAuth();
@@ -32,12 +33,12 @@ export default function PatientHistory() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Medical History Timeline</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Medical History Timeline")}</h1>
 
       {loading && <SkeletonList rows={3} />}
 
       {!loading && records.length === 0 && (
-        <EmptyState icon={ClipboardList} title="No medical history yet" subtitle="Records added by your doctor will show up here." />
+        <EmptyState icon={ClipboardList} title={t("No medical history yet")} subtitle={t("Records added by your doctor will show up here.")} />
       )}
 
       {!loading && records.length > 0 && (
@@ -45,7 +46,7 @@ export default function PatientHistory() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search diagnosis or physician..."
+            placeholder={t("Search diagnosis or physician...")}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 sm:max-w-xs"
           />
           {filtered.map((r) => (
@@ -63,7 +64,7 @@ export default function PatientHistory() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {r.imageUrls.map((url) => (
                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt="Attached" className="h-20 w-20 rounded-lg object-cover" />
+                      <img src={url} alt={t("Attached")} className="h-20 w-20 rounded-lg object-cover" />
                     </a>
                   ))}
                 </div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import { useNavigate } from "react-router-dom";
 import { supabase, openedFromRecoveryLink } from "../lib/supabase.js";
 import api from "../lib/api.js";
+import { t } from "../i18n/index.js";
 
 // The Android app's own origin (https://localhost) can't be opened from an
 // email, so reset links always point at the public website when one is set.
@@ -61,7 +62,7 @@ export function AuthProvider({ children }) {
       if (signInError.message?.toLowerCase().includes("email not confirmed")) {
         setError("email_not_confirmed");
       } else {
-        setError("Invalid email or password.");
+        setError(t("Invalid email or password."));
       }
       throw signInError;
     }

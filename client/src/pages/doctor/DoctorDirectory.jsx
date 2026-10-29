@@ -6,6 +6,7 @@ import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import { t } from "../../i18n/index.js";
 
 export default function DoctorDirectory() {
   const [patients, setPatients] = useState([]);
@@ -27,9 +28,9 @@ export default function DoctorDirectory() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Patient Directory</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Patient Directory")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Browse your hospital's patients and open a full record.
+          {t("Browse your hospital's patients and open a full record.")}
         </p>
       </div>
 
@@ -38,7 +39,7 @@ export default function DoctorDirectory() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or IC number..."
+          placeholder={t("Search by name or IC number...")}
           className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         {search && (
@@ -46,7 +47,7 @@ export default function DoctorDirectory() {
             type="button"
             onClick={() => setSearch("")}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            aria-label="Clear search"
+            aria-label={t("Clear search")}
           >
             <X size={15} />
           </button>
@@ -56,13 +57,13 @@ export default function DoctorDirectory() {
       {loading && <SkeletonList rows={4} />}
 
       {!loading && patients.length === 0 && (
-        <EmptyState icon={Users} title="No matching patients" subtitle="Try a different name or IC number." />
+        <EmptyState icon={Users} title={t("No matching patients")} subtitle={t("Try a different name or IC number.")} />
       )}
 
       {!loading && patients.length > 0 && (
         <>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {patients.length} {patients.length === 1 ? "patient" : "patients"}
+            {patients.length} {patients.length === 1 ? t("patient") : t("patients")}
           </p>
 
           <Card className="p-0">
@@ -77,7 +78,7 @@ export default function DoctorDirectory() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{p.name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {p.gender}, {p.age} yrs &middot; IC: {p.ic}
+                      {t(p.gender)}, {p.age} {t("yrs · IC:")} {p.ic}
                     </p>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-2">
@@ -90,9 +91,9 @@ export default function DoctorDirectory() {
                       <TriangleAlert
                         size={15}
                         className="text-amber-500"
-                        aria-label="Has recorded allergies"
+                        aria-label={t("Has recorded allergies")}
                       >
-                        <title>Allergies: {p.allergies.join(", ")}</title>
+                        <title>{t("Allergies:")} {p.allergies.join(", ")}</title>
                       </TriangleAlert>
                     )}
                     <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />

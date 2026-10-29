@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 const SIZES = {
   sm: "h-9 w-9 text-sm",
   md: "h-16 w-16 text-2xl",
@@ -11,7 +12,7 @@ export default function Avatar({ name, url, size = "md", className = "" }) {
     return (
       <img
         src={url}
-        alt={name || "Avatar"}
+        alt={name || t("Avatar")}
         className={`rounded-full object-cover ${sizeClasses} ${className}`}
       />
     );

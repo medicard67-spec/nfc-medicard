@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
+import { t } from "../../i18n/index.js";
 
 export default function PatientQrCode() {
   const { profile } = useAuth();
@@ -27,17 +28,17 @@ export default function PatientQrCode() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">My QR Code</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("My QR Code")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Show this to hospital staff if your card isn't with you — it works just like tapping it.
+          {t("Show this to hospital staff if your card isn't with you — it works just like tapping it.")}
         </p>
       </div>
 
       {!cardUid ? (
         <EmptyState
           icon={QrCode}
-          title="No card registered yet"
-          subtitle="Visit the registration desk to get your MediCard. Your QR code will appear here once it's issued."
+          title={t("No card registered yet")}
+          subtitle={t("Visit the registration desk to get your MediCard. Your QR code will appear here once it's issued.")}
         />
       ) : (
         <Card>
@@ -57,7 +58,7 @@ export default function PatientQrCode() {
             {dataUrl && (
               <img
                 src={dataUrl}
-                alt="Your MediCard QR code"
+                alt={t("Your MediCard QR code")}
                 className="w-full max-w-[280px] rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700"
               />
             )}
@@ -70,7 +71,7 @@ export default function PatientQrCode() {
                 download={`medicard-${cardUid}.png`}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                <Download size={15} /> Save to phone
+                <Download size={15} /> {t("Save to phone")}
               </a>
             )}
           </div>

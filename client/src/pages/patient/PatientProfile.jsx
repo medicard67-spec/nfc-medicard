@@ -6,6 +6,7 @@ import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { t, dateLocale } from "../../i18n/index.js";
 
 function Field({ label, value }) {
   return (
@@ -40,9 +41,9 @@ export default function PatientProfile() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await refreshProfile();
-      toast.success("Profile picture updated.");
+      toast.success(t("Profile picture updated."));
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to update profile picture.");
+      toast.error(err.response?.data?.error || t("Failed to update profile picture."));
     } finally {
       setUploadingAvatar(false);
     }
@@ -58,9 +59,9 @@ export default function PatientProfile() {
         api.get("/radiology", { params: { patientId: profile.uid } }).then((r) => r.data),
       ]);
       await exportPatientRecordPdf({ patient: profile, history, medications, labs, radiology });
-      toast.success("PDF downloaded.");
+      toast.success(t("PDF downloaded."));
     } catch (err) {
-      toast.error("Failed to generate PDF.");
+      toast.error(t("Failed to generate PDF."));
     } finally {
       setExporting(false);
     }
@@ -82,9 +83,9 @@ export default function PatientProfile() {
       await api.patch(`/patients/${profile.uid}`, contactForm);
       await refreshProfile();
       setEditingContact(false);
-      toast.success("Contact details updated.");
+      toast.success(t("Contact details updated."));
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to update contact details.");
+      toast.error(err.response?.data?.error || t("Failed to update contact details."));
     } finally {
       setSavingContact(false);
     }
@@ -94,29 +95,29 @@ export default function PatientProfile() {
     if (!profile.cardUid) return;
     try {
       await navigator.clipboard.writeText(profile.cardUid);
-      toast.success("Card UID copied.");
+      toast.success(t("Card UID copied."));
     } catch {
-      toast.error("Couldn't copy to clipboard.");
+      toast.error(t("Couldn't copy to clipboard."));
     }
   };
 
-  const allergies = profile.allergies?.length ? profile.allergies.join(", ") : "None recorded";
-  const chronic = profile.chronicIllnesses?.length ? profile.chronicIllnesses.join(", ") : "None recorded";
+  const allergies = profile.allergies?.length ? profile.allergies.join(", ") : t("None recorded");
+  const chronic = profile.chronicIllnesses?.length ? profile.chronicIllnesses.join(", ") : t("None recorded");
   const memberSince = profile.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long" })
+    ? new Date(profile.createdAt).toLocaleDateString(dateLocale(), { year: "numeric", month: "long" })
     : null;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Profile Summary</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Profile Summary")}</h1>
         <button
           onClick={handleExport}
           disabled={exporting}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <FileText size={15} />
-          {exporting ? "Preparing..." : "Export as PDF"}
+          {exporting ? t("Preparing...") : t("Export as PDF")}
         </button>
       </div>
 
@@ -129,7 +130,7 @@ export default function PatientProfile() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                aria-label="Change profile picture"
+                aria-label={t("Change profile picture")}
                 className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-xs text-white shadow-soft hover:bg-brand-700 disabled:opacity-60 dark:border-slate-900"
               >
                 {uploadingAvatar ? "…" : <Camera size={13} />}
@@ -145,11 +146,11 @@ export default function PatientProfile() {
             <div>
               <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{profile.name}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {profile.gender}
+                {t(profile.gender)}
                 {profile.age ? `, ${profile.age} yrs` : ""}
               </p>
               {memberSince && (
-                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Patient since {memberSince}</p>
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{t("Patient since")} {memberSince}</p>
               )}
             </div>
           </div>
@@ -157,13 +158,13 @@ export default function PatientProfile() {
           <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
             <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-sm font-bold text-red-700 dark:bg-red-950/50 dark:text-red-300">
               <Droplet size={14} />
-              {profile.bloodType || "Unknown"}
+              {profile.bloodType || t("Unknown")}
             </span>
             {profile.cardUid && (
               <button
                 onClick={copyCardUid}
                 className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-mono text-slate-500 hover:border-brand-300 hover:text-brand-700 dark:border-slate-700 dark:text-slate-400 dark:hover:text-brand-300"
-                title="Copy card UID"
+                title={t("Copy card UID")}
               >
                 {profile.cardUid}
                 <Copy size={12} />
@@ -173,45 +174,45 @@ export default function PatientProfile() {
         </div>
       </Card>
 
-      <Card title="Medical Information">
+      <Card title={t("Medical Information")}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-              <TriangleAlert size={12} /> Severe Allergies
+              <TriangleAlert size={12} /> {t("Severe Allergies")}
             </p>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{allergies}</p>
           </div>
           <div>
             <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-              <HeartPulse size={12} /> Chronic Illnesses
+              <HeartPulse size={12} /> {t("Chronic Illnesses")}
             </p>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{chronic}</p>
           </div>
-          <Field label="Height / Weight" value={profile.height || profile.weight ? `${profile.height || "—"} cm · ${profile.weight || "—"} kg` : null} />
+          <Field label={t("Height / Weight")} value={profile.height || profile.weight ? `${profile.height || "—"} cm · ${profile.weight || "—"} kg` : null} />
         </div>
         <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
-          Medical details are kept accurate by your doctor or hospital admin and can't be edited here.
+          {t("Medical details are kept accurate by your doctor or hospital admin and can't be edited here.")}
         </p>
       </Card>
 
-      <Card title="Personal Information">
+      <Card title={t("Personal Information")}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="IC Number" value={profile.ic} />
-          <Field label="Date of Birth" value={profile.dob} />
-          <Field label="Gender" value={profile.gender} />
-          <Field label="Email" value={profile.email} />
+          <Field label={t("IC Number")} value={profile.ic} />
+          <Field label={t("Date of Birth")} value={profile.dob} />
+          <Field label={t("Gender")} value={t(profile.gender)} />
+          <Field label={t("Email")} value={profile.email} />
         </div>
       </Card>
 
       <Card
-        title="Contact"
+        title={t("Contact")}
         action={
           !editingContact && (
             <button
               onClick={startEditContact}
               className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
             >
-              <Pencil size={12} /> Edit
+              <Pencil size={12} /> {t("Edit")}
             </button>
           )
         }
@@ -220,7 +221,7 @@ export default function PatientProfile() {
           <form onSubmit={saveContact} className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Phone</label>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Phone")}</label>
                 <input
                   value={contactForm.phone}
                   onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
@@ -228,7 +229,7 @@ export default function PatientProfile() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Emergency Contact</label>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Emergency Contact")}</label>
                 <input
                   value={contactForm.emergencyContactName}
                   onChange={(e) => setContactForm({ ...contactForm, emergencyContactName: e.target.value })}
@@ -236,7 +237,7 @@ export default function PatientProfile() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Emergency Phone</label>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Emergency Phone")}</label>
                 <input
                   value={contactForm.emergencyContactPhone}
                   onChange={(e) => setContactForm({ ...contactForm, emergencyContactPhone: e.target.value })}
@@ -250,7 +251,7 @@ export default function PatientProfile() {
                 disabled={savingContact}
                 className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
               >
-                <Check size={14} /> {savingContact ? "Saving..." : "Save"}
+                <Check size={14} /> {savingContact ? t("Saving...") : t("Save")}
               </button>
               <button
                 type="button"
@@ -258,15 +259,15 @@ export default function PatientProfile() {
                 disabled={savingContact}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                <X size={14} /> Cancel
+                <X size={14} /> {t("Cancel")}
               </button>
             </div>
           </form>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Field label="Phone" value={profile.phone} />
-            <Field label="Emergency Contact" value={profile.emergencyContactName} />
-            <Field label="Emergency Phone" value={profile.emergencyContactPhone} />
+            <Field label={t("Phone")} value={profile.phone} />
+            <Field label={t("Emergency Contact")} value={profile.emergencyContactName} />
+            <Field label={t("Emergency Phone")} value={profile.emergencyContactPhone} />
           </div>
         )}
       </Card>

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState } from "react";
+import { t as tr } from "../i18n/index.js";
 
 const ToastContext = createContext(null);
 
@@ -52,7 +53,7 @@ export function ToastProvider({ children }) {
             <button
               onClick={() => dismiss(t.id)}
               className="opacity-50 hover:opacity-100"
-              aria-label="Dismiss"
+              aria-label={tr("Dismiss")}
             >
               ✕
             </button>

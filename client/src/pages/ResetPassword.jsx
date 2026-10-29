@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundImage from "../components/BackgroundImage.jsx";
+import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
 import logo from "../assets/logo.png";
+import { t } from "../i18n/index.js";
 
 const MIN_LENGTH = 8;
 
@@ -17,11 +19,11 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password.length < MIN_LENGTH) {
-      setError(`Use at least ${MIN_LENGTH} characters.`);
+      setError(t("Use at least {MIN_LENGTH} characters.", { MIN_LENGTH: MIN_LENGTH }));
       return;
     }
     if (password !== confirm) {
-      setError("The two passwords don't match.");
+      setError(t("The two passwords don't match."));
       return;
     }
     setSubmitting(true);
@@ -32,7 +34,7 @@ export default function ResetPassword() {
       await logout();
       navigate("/login", { replace: true, state: { passwordReset: true } });
     } catch (err) {
-      setError(err.message || "Couldn't update your password. Please try again.");
+      setError(err.message || t("Couldn't update your password. Please try again."));
       setSubmitting(false);
     }
   };
@@ -43,36 +45,39 @@ export default function ResetPassword() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <BackgroundImage />
+      <div className="fixed right-4 top-4 z-50">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white p-1.5 shadow-soft ring-1 ring-slate-200 dark:ring-slate-800">
             <img src={logo} alt="NFC MediCard" className="h-full w-full object-contain" />
           </div>
-          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">Choose a new password</h1>
+          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t("Choose a new password")}</h1>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-card dark:border-slate-800 dark:bg-slate-900">
           {loading ? (
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">Checking your reset link...</p>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">{t("Checking your reset link...")}</p>
           ) : !user ? (
             <div className="space-y-3 text-center">
               <p className="text-sm text-slate-700 dark:text-slate-200">
-                This reset link is invalid or has expired.
+                {t("This reset link is invalid or has expired.")}
               </p>
               <Link
                 to="/forgot-password"
                 className="inline-block text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300"
               >
-                Send a new link
+                {t("Send a new link")}
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Resetting the password for <span className="font-medium text-slate-700 dark:text-slate-200">{user.email}</span>
+                {t("Resetting the password for")} <span className="font-medium text-slate-700 dark:text-slate-200">{user.email}</span>
               </p>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">New password</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("New password")}</label>
                 <input
                   type="password"
                   required
@@ -82,10 +87,10 @@ export default function ResetPassword() {
                   onChange={(e) => setPassword(e.target.value)}
                   className={inputClass}
                 />
-                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">At least {MIN_LENGTH} characters.</p>
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{t("At least")} {MIN_LENGTH} {t("characters.")}</p>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Confirm new password</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("Confirm new password")}</label>
                 <input
                   type="password"
                   required
@@ -101,7 +106,7 @@ export default function ResetPassword() {
                 disabled={submitting}
                 className="w-full rounded-lg bg-brand-700 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-800 disabled:opacity-60"
               >
-                {submitting ? "Saving..." : "Save new password"}
+                {submitting ? t("Saving...") : t("Save new password")}
               </button>
             </form>
           )}

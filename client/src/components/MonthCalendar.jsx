@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { t, dateLocale } from "../i18n/index.js";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Short weekday names, Sunday first, in the chosen language (4 Jan 2026 is a Sunday).
+function weekdayNames() {
+  return Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i).toLocaleDateString(dateLocale(), { weekday: "short" }));
+}
 
 function toDateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -31,7 +35,7 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
     return map;
   }, [events]);
 
-  const monthLabel = cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const monthLabel = cursor.toLocaleDateString(dateLocale(), { month: "long", year: "numeric" });
 
   const days = useMemo(() => {
     const year = cursor.getFullYear();
@@ -54,7 +58,7 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-          aria-label="Previous month"
+          aria-label={t("Previous month")}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           <ChevronLeft size={18} />
@@ -62,7 +66,7 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{monthLabel}</p>
         <button
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-          aria-label="Next month"
+          aria-label={t("Next month")}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           <ChevronRight size={18} />
@@ -70,7 +74,7 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
-        {WEEKDAYS.map((w) => (
+        {weekdayNames().map((w) => (
           <div key={w}>{w}</div>
         ))}
       </div>
@@ -113,10 +117,10 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
 
       <div className="space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          {new Date(selected + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          {new Date(selected + "T00:00:00").toLocaleDateString(dateLocale(), { weekday: "long", month: "long", day: "numeric" })}
         </p>
         {selectedEvents.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">{emptyLabel}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t(emptyLabel)}</p>
         ) : (
           <div className="space-y-2">
             {selectedEvents.map((e, i) => (

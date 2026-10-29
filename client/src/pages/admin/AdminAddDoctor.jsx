@@ -4,6 +4,7 @@ import Card from "../../components/Card.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { MALAYSIA_HOSPITALS } from "../../lib/malaysiaHospitals.js";
 import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
+import { t } from "../../i18n/index.js";
 
 const emptyForm = {
   name: "",
@@ -42,9 +43,9 @@ export default function AdminAddDoctor() {
       const { data } = await api.post("/users", { ...form, role: "doctor" });
       setSuccess(data);
       setForm(emptyForm);
-      toast.success(`Doctor account created for ${data.name}.`);
+      toast.success(t("Doctor account created for {name}.", { name: data.name }));
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to create doctor account.");
+      setError(err.response?.data?.error || t("Failed to create doctor account."));
     } finally {
       setSaving(false);
     }
@@ -53,38 +54,37 @@ export default function AdminAddDoctor() {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Add Doctor</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Add Doctor")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Create a doctor account. Hospital of origin is restricted to hospitals located in
-          Malaysia.
+          {t("Create a doctor account. Hospital of origin is restricted to hospitals located in Malaysia.")}
         </p>
       </div>
 
       <Card>
         <form onSubmit={submit} className="space-y-4">
-          <Input label="Full Name" required value={form.name} onChange={update("name")} placeholder="Dr. Jane Tan" />
+          <Input label={t("Full Name")} required value={form.name} onChange={update("name")} placeholder={t("Dr. Jane Tan")} />
           <Input
-            label="Email (login)"
+            label={t("Email (login)")}
             type="email"
             required
             value={form.email}
             onChange={update("email")}
-            placeholder="doctor@hospital.my"
+            placeholder={t("doctor@hospital.my")}
           />
           <Input
-            label="Temporary Password"
+            label={t("Temporary Password")}
             required
             value={form.password}
             onChange={update("password")}
-            placeholder="At least 6 characters"
+            placeholder={t("At least 6 characters")}
           />
           <Input
-            label="Department"
+            label={t("Department")}
             required
             list="department-suggestions"
             value={form.department}
             onChange={update("department")}
-            placeholder="e.g. Cardiology"
+            placeholder={t("e.g. Cardiology")}
           />
           <datalist id="department-suggestions">
             {HOSPITAL_DEPARTMENTS.map((dep) => (
@@ -94,7 +94,7 @@ export default function AdminAddDoctor() {
 
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
-              Hospital of Origin (Malaysia only)
+              {t("Hospital of Origin (Malaysia only)")}
             </label>
             <select
               required
@@ -103,7 +103,7 @@ export default function AdminAddDoctor() {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="" disabled>
-                Select a hospital...
+                {t("Select a hospital...")}
               </option>
               {MALAYSIA_HOSPITALS.map((h) => (
                 <option key={h} value={h}>
@@ -119,7 +119,7 @@ export default function AdminAddDoctor() {
             disabled={saving}
             className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
           >
-            {saving ? "Creating..." : "Create Doctor Account"}
+            {saving ? t("Creating...") : t("Create Doctor Account")}
           </button>
         </form>
       </Card>
@@ -127,11 +127,10 @@ export default function AdminAddDoctor() {
       {success && (
         <Card>
           <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-            Doctor account created for {success.name}.
+            {t("Doctor account created for")} {success.name}.
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            A verification email has been sent to {success.email} — they must confirm it before
-            they can log in.
+            {t("A verification email has been sent to")} {success.email} {t("— they must confirm it before they can log in.")}
           </p>
         </Card>
       )}

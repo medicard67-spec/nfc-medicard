@@ -7,6 +7,7 @@ import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
 import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
+import { t } from "../../i18n/index.js";
 
 const ROOM_SUGGESTIONS = ["Room 1", "Room 2", "Room 3", "Room 4", "Consultation A", "Consultation B"];
 
@@ -52,7 +53,7 @@ export default function AdminCheckIn() {
       setRoom("");
       setStep("assign");
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to read card.");
+      setError(err.response?.data?.error || t("Failed to read card."));
     } finally {
       setScanning(false);
     }
@@ -69,13 +70,13 @@ export default function AdminCheckIn() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      toast.info("Hold the patient's NFC card near your device...", { duration: 6000 });
+      toast.info(t("Hold the patient's NFC card near your device..."), { duration: 6000 });
       const uid = await scanOnce({ signal: controller.signal });
       setNfcScanning(false);
       await lookupPatient(uid, "nfc");
     } catch (err) {
       setNfcScanning(false);
-      setError(err.message || "NFC scan failed or was cancelled.");
+      setError(err.message || t("NFC scan failed or was cancelled."));
     }
   };
 
@@ -88,7 +89,7 @@ export default function AdminCheckIn() {
       await lookupPatient(uid, "nfc");
     } catch (err) {
       setDeskScanning(false);
-      setError(err.message || "Desk reader scan failed.");
+      setError(err.message || t("Desk reader scan failed."));
     }
   };
 
@@ -108,7 +109,7 @@ export default function AdminCheckIn() {
       setStep("done");
       loadToday();
     } catch (err) {
-      setError(err.response?.data?.error || "Check-in failed.");
+      setError(err.response?.data?.error || t("Check-in failed."));
     } finally {
       setSaving(false);
     }
@@ -126,10 +127,9 @@ export default function AdminCheckIn() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Registration Desk</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Registration Desk")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Scan a patient in and hand them a queue number and room — instead of opening their full
-          record.
+          {t("Scan a patient in and hand them a queue number and room — instead of opening their full record.")}
         </p>
       </div>
 
@@ -153,10 +153,10 @@ export default function AdminCheckIn() {
 
                   <div>
                     <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                      {nfcScanning ? "Waiting for a tap..." : deskScanning ? "Waiting for a tap on the desk reader..." : scanning ? "Looking up patient..." : "Scan a Patient Card"}
+                      {nfcScanning ? t("Waiting for a tap...") : deskScanning ? t("Waiting for a tap on the desk reader...") : scanning ? t("Looking up patient...") : t("Scan a Patient Card")}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      Tap a phone, use a desk reader, or type the card's UID below.
+                      {t("Tap a phone, use a desk reader, or type the card's UID below.")}
                     </p>
                   </div>
 
@@ -168,7 +168,7 @@ export default function AdminCheckIn() {
                           disabled={waiting || scanning}
                           className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                         >
-                          <Nfc size={15} /> Tap Phone
+                          <Nfc size={15} /> {t("Tap Phone")}
                         </button>
                       )}
                       {deskSupported && (
@@ -177,7 +177,7 @@ export default function AdminCheckIn() {
                           disabled={waiting || scanning}
                           className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                         >
-                          <Usb size={15} /> Desk Reader
+                          <Usb size={15} /> {t("Desk Reader")}
                         </button>
                       )}
                     </div>
@@ -187,7 +187,7 @@ export default function AdminCheckIn() {
 
                   <div className="flex w-full items-center gap-3">
                     <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">or enter UID manually</span>
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{t("or enter UID manually")}</span>
                     <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
                   </div>
 
@@ -196,7 +196,7 @@ export default function AdminCheckIn() {
                       ref={manualInputRef}
                       value={cardUid}
                       onChange={(e) => setCardUid(e.target.value)}
-                      placeholder="e.g. 0443FADB3D0289"
+                      placeholder={t("e.g. 0443FADB3D0289")}
                       className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       required
                     />
@@ -204,7 +204,7 @@ export default function AdminCheckIn() {
                       type="submit"
                       disabled={scanning}
                       className="flex items-center justify-center rounded-lg bg-slate-800 px-3.5 text-white hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
-                      aria-label="Look up UID"
+                      aria-label={t("Look up UID")}
                     >
                       <ArrowRight size={17} />
                     </button>
@@ -216,16 +216,16 @@ export default function AdminCheckIn() {
                 <div className="flex flex-col items-center gap-4 py-6 text-center">
                   <QrCode size={44} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Scan the QR code printed on the patient's card instead of tapping or typing.
+                    {t("Scan the QR code printed on the patient's card instead of tapping or typing.")}
                   </p>
                   {showQr ? (
                     <div className="w-full space-y-3">
-                      <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || "Camera error.")} />
+                      <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || t("Camera error."))} />
                       <button
                         onClick={() => setShowQr(false)}
                         className="w-full rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
-                        Cancel
+                        {t("Cancel")}
                       </button>
                     </div>
                   ) : (
@@ -233,7 +233,7 @@ export default function AdminCheckIn() {
                       onClick={() => setShowQr(true)}
                       className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
                     >
-                      Scan QR Code
+                      {t("Scan QR Code")}
                     </button>
                   )}
                 </div>
@@ -247,17 +247,17 @@ export default function AdminCheckIn() {
                 <Avatar name={patient.name} url={patient.avatarUrl} size="md" />
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-slate-100">{patient.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{patient.gender}, {patient.age ?? "?"} yrs</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t(patient.gender)}, {patient.age ?? "?"} {t("yrs")}</p>
                 </div>
               </div>
 
               <form onSubmit={assignRoom} className="mt-4 space-y-3">
                 <div>
-                  <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Room</label>
+                  <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Room")}</label>
                   <input
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
-                    placeholder="e.g. Room 3"
+                    placeholder={t("e.g. Room 3")}
                     list="room-suggestions"
                     autoFocus
                     required
@@ -276,13 +276,13 @@ export default function AdminCheckIn() {
                     onClick={reset}
                     className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     disabled={saving}
                     className="flex-1 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                   >
-                    {saving ? "Checking in..." : "Check In & Assign Room"}
+                    {saving ? t("Checking in...") : t("Check In & Assign Room")}
                   </button>
                 </div>
               </form>
@@ -302,26 +302,26 @@ export default function AdminCheckIn() {
                   </p>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Show the patient their number — they can also see it on their own account.
+                  {t("Show the patient their number — they can also see it on their own account.")}
                 </p>
                 <button
                   onClick={reset}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700"
                 >
-                  <RotateCcw size={15} /> Check In Next Patient
+                  <RotateCcw size={15} /> {t("Check In Next Patient")}
                 </button>
               </div>
             </Card>
           )}
         </div>
 
-        <Card title="Today's Queue">
+        <Card title={t("Today's Queue")}>
           {loadingToday ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">Loading...</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t("Loading...")}</p>
           ) : today.length === 0 ? (
             <div className="py-4 text-center">
               <ClipboardList size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-              <p className="text-sm text-slate-400 dark:text-slate-500">No one checked in yet today.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t("No one checked in yet today.")}</p>
             </div>
           ) : (
             <ul className="space-y-2">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { t } from "../i18n/index.js";
 
 export default function QrCodeCard({ value, label }) {
   const [dataUrl, setDataUrl] = useState(null);
@@ -25,7 +26,7 @@ export default function QrCodeCard({ value, label }) {
         download={`nfc-card-${value}.png`}
         className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
       >
-        Download to print on the physical card
+        {t("Download to print on the physical card")}
       </a>
     </div>
   );

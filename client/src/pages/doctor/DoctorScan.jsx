@@ -7,6 +7,7 @@ import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
 import { isDeskReaderSupported, readCardUid } from "../../lib/deskReader.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import QrScannerView from "../../components/QrScannerView.jsx";
+import { t } from "../../i18n/index.js";
 
 export default function DoctorScan() {
   const [cardUid, setCardUid] = useState("");
@@ -41,7 +42,7 @@ export default function DoctorScan() {
       const { data } = await api.get(`/nfc/${uid.trim()}`, { params: { method } });
       navigate(`/doctor/patient/${data.uid}`);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to read card.");
+      setError(err.response?.data?.error || t("Failed to read card."));
       setCardUid("");
     } finally {
       setScanning(false);
@@ -59,13 +60,13 @@ export default function DoctorScan() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      toast.info("Hold the patient's NFC card near your device...", { duration: 6000 });
+      toast.info(t("Hold the patient's NFC card near your device..."), { duration: 6000 });
       const uid = await scanOnce({ signal: controller.signal });
       setNfcScanning(false);
       await lookupCard(uid, "nfc");
     } catch (err) {
       setNfcScanning(false);
-      setError(err.message || "NFC scan failed or was cancelled.");
+      setError(err.message || t("NFC scan failed or was cancelled."));
     }
   };
 
@@ -78,7 +79,7 @@ export default function DoctorScan() {
       await lookupCard(uid, "nfc");
     } catch (err) {
       setDeskScanning(false);
-      setError(err.message || "Desk reader scan failed.");
+      setError(err.message || t("Desk reader scan failed."));
     }
   };
 
@@ -88,24 +89,24 @@ export default function DoctorScan() {
   };
 
   const heading = nfcScanning
-    ? "Waiting for a tap..."
+    ? t("Waiting for a tap...")
     : deskScanning
-    ? "Waiting for a tap on the desk reader..."
+    ? t("Waiting for a tap on the desk reader...")
     : scanning
-    ? "Looking up patient..."
-    : "Scan a Patient Card";
+    ? t("Looking up patient...")
+    : t("Scan a Patient Card");
 
   const subtext = nfcScanning
-    ? "Hold the card against the back of your device."
+    ? t("Hold the card against the back of your device.")
     : deskScanning
-    ? "Hold the card on the reader — close its own software first."
+    ? t("Hold the card on the reader — close its own software first.")
     : scanning
-    ? "One moment..."
-    : "Tap a phone, use a desk reader, or type the card's UID below.";
+    ? t("One moment...")
+    : t("Tap a phone, use a desk reader, or type the card's UID below.");
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Scan NFC Card</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Scan NFC Card")}</h1>
 
       <Card>
         <div className="flex flex-col items-center gap-5 py-2 text-center">
@@ -134,7 +135,7 @@ export default function DoctorScan() {
                   disabled={waiting || scanning}
                   className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                 >
-                  <Nfc size={15} /> Tap Phone
+                  <Nfc size={15} /> {t("Tap Phone")}
                 </button>
               )}
               {deskSupported && (
@@ -143,7 +144,7 @@ export default function DoctorScan() {
                   disabled={waiting || scanning}
                   className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                 >
-                  <Usb size={15} /> Desk Reader
+                  <Usb size={15} /> {t("Desk Reader")}
                 </button>
               )}
             </div>
@@ -153,7 +154,7 @@ export default function DoctorScan() {
 
           <div className="flex w-full items-center gap-3">
             <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">or enter UID manually</span>
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{t("or enter UID manually")}</span>
             <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
           </div>
 
@@ -162,7 +163,7 @@ export default function DoctorScan() {
               ref={manualInputRef}
               value={cardUid}
               onChange={(e) => setCardUid(e.target.value)}
-              placeholder="e.g. 0443FADB3D0289"
+              placeholder={t("e.g. 0443FADB3D0289")}
               className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               required
             />
@@ -170,7 +171,7 @@ export default function DoctorScan() {
               type="submit"
               disabled={scanning}
               className="flex items-center justify-center rounded-lg bg-slate-800 px-3.5 text-white hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
-              aria-label="Look up UID"
+              aria-label={t("Look up UID")}
             >
               <ArrowRight size={17} />
             </button>
@@ -182,17 +183,16 @@ export default function DoctorScan() {
         <div className="flex flex-col items-center gap-4 py-6 text-center">
           <QrCode size={44} strokeWidth={1.5} className="text-brand-600 dark:text-brand-300" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No NFC on this device? Scan the QR code printed on the patient's card instead — works
-            with any phone camera.
+            {t("No NFC on this device? Scan the QR code printed on the patient's card instead — works with any phone camera.")}
           </p>
           {showQr ? (
             <div className="w-full space-y-3">
-              <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || "Camera error.")} />
+              <QrScannerView onDecode={handleQrDecode} onError={(err) => setError(err.message || t("Camera error."))} />
               <button
                 onClick={() => setShowQr(false)}
                 className="w-full rounded-lg border border-slate-300 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           ) : (
@@ -200,7 +200,7 @@ export default function DoctorScan() {
               onClick={() => setShowQr(true)}
               className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
             >
-              Scan QR Code
+              {t("Scan QR Code")}
             </button>
           )}
         </div>

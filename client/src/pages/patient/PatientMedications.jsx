@@ -6,6 +6,7 @@ import Card from "../../components/Card.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { RENEWAL_FREQUENCY_LABELS } from "../../lib/medicationRenewal.js";
+import { t, dateLocale } from "../../i18n/index.js";
 
 function todayKey() {
   const d = new Date();
@@ -13,13 +14,13 @@ function todayKey() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(dateLocale(), { month: "short", day: "numeric", year: "numeric" });
 }
 
 function medicationDateLine(m) {
   if (m.renewalFrequency && m.renewalFrequency !== "none") {
     const label = RENEWAL_FREQUENCY_LABELS[m.renewalFrequency] || m.renewalFrequency;
-    return `${formatDate(m.startDate)} – ${formatDate(m.endDate)} · renews ${label.toLowerCase()}`;
+    return t("{start} – {end} · renews {label}", { start: formatDate(m.startDate), end: formatDate(m.endDate), label: t(label).toLowerCase() });
   }
   return `Since ${formatDate(m.startDate)}`;
 }
@@ -44,12 +45,12 @@ export default function PatientMedications() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Medications</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Medications")}</h1>
 
       {loading && <SkeletonList rows={3} />}
 
       {!loading && medications.length === 0 && (
-        <EmptyState icon={Pill} title="No medications recorded" subtitle="Medicines your doctor prescribes will appear here." />
+        <EmptyState icon={Pill} title={t("No medications recorded")} subtitle={t("Medicines your doctor prescribes will appear here.")} />
       )}
 
       {!loading && medications.length > 0 && (
@@ -57,7 +58,7 @@ export default function PatientMedications() {
           {needsRenewal.length > 0 && (
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
-                <TriangleAlert size={13} /> Needs Renewal ({needsRenewal.length})
+                <TriangleAlert size={13} /> {t("Needs Renewal (")}{needsRenewal.length})
               </p>
               <div className="space-y-2">
                 {needsRenewal.map((m) => (
@@ -72,7 +73,7 @@ export default function PatientMedications() {
                         </p>
                         <p className="text-xs text-red-600 dark:text-red-400">
                           {m.frequency && <>{m.frequency} &middot; </>}
-                          {medicationDateLine(m)} &middot; expired &middot; ask your doctor to renew
+                          {medicationDateLine(m)} {t("· expired · ask your doctor to renew")}
                         </p>
                       </div>
                     </div>
@@ -84,10 +85,10 @@ export default function PatientMedications() {
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-              Current ({current.length})
+              {t("Current (")}{current.length})
             </p>
             {current.length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500">You're not currently taking any recorded medication.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t("You're not currently taking any recorded medication.")}</p>
             ) : (
               <div className="space-y-2">
                 {current.map((m) => (
@@ -102,7 +103,7 @@ export default function PatientMedications() {
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {m.frequency && <>{m.frequency} &middot; </>}
-                          {medicationDateLine(m)} &middot; Prescribed by {m.prescribedBy}
+                          {medicationDateLine(m)} {t("· Prescribed by")} {m.prescribedBy}
                         </p>
                       </div>
                     </div>
@@ -115,7 +116,7 @@ export default function PatientMedications() {
           {past.length > 0 && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                Past ({past.length})
+                {t("Past (")}{past.length})
               </p>
               <div className="space-y-2">
                 {past.map((m) => (
@@ -125,7 +126,7 @@ export default function PatientMedications() {
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {m.frequency && <>{m.frequency} &middot; </>}
-                      {formatDate(m.startDate)} &ndash; {formatDate(m.endDate)} &middot; Prescribed by {m.prescribedBy}
+                      {formatDate(m.startDate)} &ndash; {formatDate(m.endDate)} {t("· Prescribed by")} {m.prescribedBy}
                     </p>
                   </Card>
                 ))}

@@ -8,6 +8,7 @@ import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import { t, dateLocale } from "../../i18n/index.js";
 
 const PAGE_SIZE = 10;
 
@@ -50,7 +51,7 @@ const METHOD_LABELS = { nfc: "NFC tap", qr: "QR scan", manual: "Manual entry" };
 function matchesSearch(e, term) {
   if (!term) return true;
   const haystack = [
-    ACTION_LABELS[e.action] || e.action,
+    t(ACTION_LABELS[e.action] || e.action),
     e.actorName,
     e.actorRole,
     e.details?.hospital,
@@ -60,7 +61,7 @@ function matchesSearch(e, term) {
     e.details?.cardUid,
     e.details?.room,
     e.details?.dosage,
-    e.details?.method && (METHOD_LABELS[e.details.method] || e.details.method),
+    e.details?.method && t(METHOD_LABELS[e.details.method] || e.details.method),
   ]
     .filter(Boolean)
     .join(" ")
@@ -110,9 +111,9 @@ export default function AdminAuditLog() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Audit Log</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Audit Log")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          A record of key actions taken across the system, for accountability and security review.
+          {t("A record of key actions taken across the system, for accountability and security review.")}
         </p>
       </div>
 
@@ -122,7 +123,7 @@ export default function AdminAuditLog() {
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by actor, action, patient, hospital, card UID..."
+            placeholder={t("Search by actor, action, patient, hospital, card UID...")}
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
           {searchInput && (
@@ -130,7 +131,7 @@ export default function AdminAuditLog() {
               type="button"
               onClick={clearSearch}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-              aria-label="Clear search"
+              aria-label={t("Clear search")}
             >
               <X size={15} />
             </button>
@@ -140,7 +141,7 @@ export default function AdminAuditLog() {
           type="submit"
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
         >
-          Search
+          {t("Search")}
         </button>
       </form>
 
@@ -165,7 +166,7 @@ export default function AdminAuditLog() {
         </div>
         {!loading && filtered.length > 0 && (
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+            {filtered.length} {filtered.length === 1 ? t("entry") : t("entries")}
           </p>
         )}
       </div>
@@ -173,11 +174,11 @@ export default function AdminAuditLog() {
       {loading && <SkeletonList rows={4} />}
 
       {!loading && filtered.length === 0 && entries.length > 0 && (
-        <EmptyState icon={Search} title="No matching entries" subtitle="Try a different search term or filter." />
+        <EmptyState icon={Search} title={t("No matching entries")} subtitle={t("Try a different search term or filter.")} />
       )}
 
       {!loading && entries.length === 0 && (
-        <EmptyState icon={Shield} title="No audit entries yet" subtitle="Actions like registrations, scans, and record updates will appear here." />
+        <EmptyState icon={Shield} title={t("No audit entries yet")} subtitle={t("Actions like registrations, scans, and record updates will appear here.")} />
       )}
 
       {!loading && filtered.length > 0 && (
@@ -194,7 +195,7 @@ export default function AdminAuditLog() {
                   </span>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {ACTION_LABELS[e.action] || e.action}
+                      {t(ACTION_LABELS[e.action] || e.action)}
                     </p>
                     <p className="flex flex-wrap items-center gap-x-1 text-xs text-slate-500 dark:text-slate-400">
                       <span>{e.actorName} ({e.actorRole})</span>
@@ -213,17 +214,17 @@ export default function AdminAuditLog() {
                       )}
                       {e.details?.diagnosis && <span>&middot; {e.details.diagnosis}</span>}
                       {e.details?.testName && <span>&middot; {e.details.testName}</span>}
-                      {e.details?.cardUid && <span>&middot; card {e.details.cardUid}</span>}
+                      {e.details?.cardUid && <span>{t("· card")} {e.details.cardUid}</span>}
                       {e.details?.method && (
                         <span className="inline-flex items-center gap-1">
                           &middot; {MethodIcon && <MethodIcon size={12} />}
-                          {METHOD_LABELS[e.details.method] || e.details.method}
+                          {t(METHOD_LABELS[e.details.method] || e.details.method)}
                         </span>
                       )}
                     </p>
                   </div>
                   <p className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
-                    {new Date(e.createdAt).toLocaleString()}
+                    {new Date(e.createdAt).toLocaleString(dateLocale())}
                   </p>
                 </li>
               );
@@ -238,17 +239,17 @@ export default function AdminAuditLog() {
                 disabled={safePage === 1}
                 className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                <ChevronLeft size={14} /> Prev
+                <ChevronLeft size={14} /> {t("Prev")}
               </button>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Page {safePage} of {totalPages}
+                {t("Page")} {safePage} {t("of")} {totalPages}
               </p>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safePage === totalPages}
                 className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Next <ChevronRight size={14} />
+                {t("Next")} <ChevronRight size={14} />
               </button>
             </div>
           )}

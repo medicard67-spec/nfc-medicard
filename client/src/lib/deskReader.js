@@ -11,6 +11,7 @@
 // open handle at a time. In the Android app the WebView has no WebHID, so the
 // same protocol runs natively over USB host instead (DeskReaderPlugin.java).
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { t } from "../i18n/index.js";
 
 const isAndroidApp = Capacitor.getPlatform() === "android";
 const NativeDeskReader = isAndroidApp ? registerPlugin("DeskReader") : null;
@@ -59,7 +60,7 @@ async function getDevice() {
     });
     device = picked[0];
   }
-  if (!device) throw new Error("No NFC-X reader selected.");
+  if (!device) throw new Error(t("No NFC-X reader selected."));
   if (!device.opened) await device.open();
   return device;
 }
@@ -76,7 +77,7 @@ export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 60 } = {}) {
     return NativeDeskReader.readCardUid({ timeoutMs }).then(({ uid }) => uid);
   }
   if (!isDeskReaderSupported()) {
-    return Promise.reject(new Error("This browser doesn't support WebHID (use desktop Chrome or Edge)."));
+    return Promise.reject(new Error(t("This browser doesn't support WebHID (use desktop Chrome or Edge).")));
   }
 
   return getDevice().then(
@@ -125,7 +126,7 @@ export function readCardUid({ timeoutMs = 15000, pollIntervalMs = 60 } = {}) {
         pollOnce();
         const pollTimer = setInterval(pollOnce, pollIntervalMs);
         const timeoutTimer = setTimeout(
-          () => fail(new Error("Timed out waiting for a card. Make sure it's on the reader.")),
+          () => fail(new Error(t("Timed out waiting for a card. Make sure it's on the reader."))),
           timeoutMs
         );
       })

@@ -1,10 +1,12 @@
 import { Bandage } from "lucide-react";
 import Card from "./Card.jsx";
+import { t, dateLocale } from "../i18n/index.js";
 
-// "12 Oct 2026, 3:42 pm" in Malaysian format; used on the image and in the PDF export.
-export function formatImagingDate(iso) {
+// "12 Oct 2026, 3:42 pm" in Malaysian format; used on the image (in the chosen language) and in
+// the PDF export (always English, since the PDF font has no Chinese or Tamil glyphs).
+export function formatImagingDate(iso, locale = dateLocale()) {
   if (!iso) return "";
-  return new Date(iso).toLocaleString("en-MY", {
+  return new Date(iso).toLocaleString(locale, {
     day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
   });
 }
@@ -28,7 +30,7 @@ export default function ImagingCard({ img, classificationClassName = "text-slate
       </p>
       <p className="text-xs text-slate-500 dark:text-slate-400">{img.anatomy}</p>
       {img.classification && <p className={`text-xs ${classificationClassName}`}>{img.classification}</p>}
-      {img.uploadedBy && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Uploaded by {img.uploadedBy}</p>}
+      {img.uploadedBy && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t("Uploaded by")} {img.uploadedBy}</p>}
     </Card>
   );
 }

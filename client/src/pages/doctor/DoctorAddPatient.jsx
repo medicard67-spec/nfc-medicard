@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import PatientRegistrationForm from "../../components/PatientRegistrationForm.jsx";
+import { t } from "../../i18n/index.js";
 
 export default function DoctorAddPatient() {
   const navigate = useNavigate();
@@ -7,9 +8,9 @@ export default function DoctorAddPatient() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Register Patient</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Register Patient")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Register a new patient directly, without needing an NFC card scan or an admin.
+          {t("Register a new patient directly, without needing an NFC card scan or an admin.")}
         </p>
       </div>
       <PatientRegistrationForm onRegistered={(patient) => navigate(`/doctor/patient/${patient.uid}`)} />

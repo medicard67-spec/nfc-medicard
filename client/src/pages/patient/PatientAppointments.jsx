@@ -7,6 +7,7 @@ import MonthCalendar from "../../components/MonthCalendar.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
+import { t, dateLocale } from "../../i18n/index.js";
 
 function todayKey() {
   const d = new Date();
@@ -14,7 +15,7 @@ function todayKey() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(dateLocale(), { weekday: "short", month: "short", day: "numeric" });
 }
 
 export default function PatientAppointments() {
@@ -38,19 +39,19 @@ export default function PatientAppointments() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Appointments</h1>
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Appointments")}</h1>
 
       {loading && <SkeletonList rows={2} />}
 
       {!loading && appointments.length === 0 && (
-        <EmptyState icon={Calendar} title="No appointments scheduled" subtitle="Appointments your doctor schedules will appear here." />
+        <EmptyState icon={Calendar} title={t("No appointments scheduled")} subtitle={t("Appointments your doctor schedules will appear here.")} />
       )}
 
       {!loading && appointments.length > 0 && (
         <>
-          <Card title="Upcoming">
+          <Card title={t("Upcoming")}>
             {upcoming.length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500">No upcoming appointments.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t("No upcoming appointments.")}</p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {upcoming.map((a) => (
@@ -64,7 +65,7 @@ export default function PatientAppointments() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                        {a.doctorName || "Unassigned"}
+                        {a.doctorName || t("Unassigned")}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(a.date)}</p>
                     </div>
@@ -84,7 +85,7 @@ export default function PatientAppointments() {
                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {a.doctorName || "Unassigned"}
+                      {a.doctorName || t("Unassigned")}
                     </p>
                     <StatusBadge status={a.status} />
                   </div>

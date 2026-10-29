@@ -3,7 +3,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Shield, Stethoscope, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundImage from "../components/BackgroundImage.jsx";
+import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
 import logo from "../assets/logo.png";
+import { t } from "../i18n/index.js";
 
 const DEMO_ACCOUNTS = [
   { role: "Admin", email: "admin@medicard.dev", icon: Shield },
@@ -39,9 +41,9 @@ export default function Login() {
     } catch (err) {
       if (err.message?.toLowerCase().includes("email not confirmed")) {
         setUnconfirmed(true);
-        setFormError("Please verify your email before signing in.");
+        setFormError(t("Please verify your email before signing in."));
       } else {
-        setFormError("Invalid email or password.");
+        setFormError(t("Invalid email or password."));
       }
     } finally {
       setSubmitting(false);
@@ -61,6 +63,9 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       <BackgroundImage />
+      <div className="fixed right-4 top-4 z-50">
+        <LanguageSwitcher />
+      </div>
       {/* Brand panel */}
       <div
         className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-brand-800 p-10 text-white lg:flex"
@@ -78,13 +83,12 @@ export default function Login() {
 
         <div className="space-y-6">
           <h1 className="text-4xl font-bold leading-tight">
-            One tap.
+            {t("One tap.")}
             <br />
-            A patient's full history.
+            {t("A patient's full history.")}
           </h1>
           <p className="max-w-md text-brand-200">
-            Secure, role-based access for patients, doctors, and administrators — built around
-            instant NFC card identification for faster, safer hospital registration.
+            {t("Secure, role-based access for patients, doctors, and administrators — built around instant NFC card identification for faster, safer hospital registration.")}
           </p>
           <div className="flex flex-wrap gap-2">
             {["Emergency profile", "Lab vault", "Radiology gallery", "NFC scan"].map((tag) => (
@@ -92,14 +96,14 @@ export default function Login() {
                 key={tag}
                 className="rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-brand-100"
               >
-                {tag}
+                {t(tag)}
               </span>
             ))}
           </div>
         </div>
 
         <p className="text-xs text-brand-300">
-          Diploma in Software Engineering &middot; German-Malaysian Institute
+          {t("Diploma in Software Engineering · German-Malaysian Institute")}
         </p>
       </div>
 
@@ -114,9 +118,9 @@ export default function Login() {
           </div>
 
           <div className="mb-6 hidden lg:block">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Welcome back</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t("Welcome back")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Sign in to your NFC MediCard portal
+              {t("Sign in to your NFC MediCard portal")}
             </p>
           </div>
 
@@ -126,12 +130,12 @@ export default function Login() {
           >
             {location.state?.passwordReset && (
               <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
-                Your password has been updated. Sign in with your new password.
+                {t("Your password has been updated. Sign in with your new password.")}
               </p>
             )}
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                Email
+                {t("Email")}
               </label>
               <input
                 type="email"
@@ -142,20 +146,20 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                placeholder="you@medicard.dev"
+                placeholder={t("you@medicard.dev")}
               />
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-                  Password
+                  {t("Password")}
                 </label>
                 <Link
                   to="/forgot-password"
                   state={{ email: email.trim() }}
                   className="text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
                 >
-                  Forgot password?
+                  {t("Forgot password?")}
                 </Link>
               </div>
               <input
@@ -176,7 +180,7 @@ export default function Login() {
             {unconfirmed && (
               <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                 <p className="mb-2">
-                  Didn't get the email? Check spam, or we can send it again.
+                  {t("Didn't get the email? Check spam, or we can send it again.")}
                 </p>
                 <button
                   type="button"
@@ -185,10 +189,10 @@ export default function Login() {
                   className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100"
                 >
                   {resendState === "sending"
-                    ? "Sending..."
+                    ? t("Sending...")
                     : resendState === "sent"
-                    ? "Verification email sent ✓"
-                    : "Resend verification email"}
+                    ? t("Verification email sent ✓")
+                    : t("Resend verification email")}
                 </button>
               </div>
             )}
@@ -198,7 +202,7 @@ export default function Login() {
               disabled={submitting}
               className="w-full rounded-lg bg-brand-700 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-800 disabled:opacity-60"
             >
-              {submitting ? "Signing in..." : "Sign In"}
+              {submitting ? t("Signing in...") : t("Sign In")}
             </button>
           </form>
 
@@ -208,7 +212,7 @@ export default function Login() {
               sign-in form above it. */}
           <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800">
             <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
-              Try a demo account
+              {t("Try a demo account")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {DEMO_ACCOUNTS.map(({ role, email: demoEmail, icon: Icon }) => (
@@ -218,7 +222,7 @@ export default function Login() {
                   onClick={() => fillDemo(demoEmail)}
                   className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-200"
                 >
-                  <Icon size={13} /> {role}
+                  <Icon size={13} /> {t(role)}
                 </button>
               ))}
             </div>

@@ -8,6 +8,7 @@ import EmptyState from "../../components/EmptyState.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
+import { t, dateLocale } from "../../i18n/index.js";
 
 function todayKey() {
   const d = new Date();
@@ -15,7 +16,7 @@ function todayKey() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(dateLocale(), { weekday: "short", month: "short", day: "numeric" });
 }
 
 export default function DoctorAppointments() {
@@ -57,7 +58,7 @@ export default function DoctorAppointments() {
       const { data } = await api.get("/patients", { params: { search: search.trim() } });
       setSearchResults(data);
     } catch {
-      setError("Search failed.");
+      setError(t("Search failed."));
     } finally {
       setSearching(false);
     }
@@ -80,12 +81,12 @@ export default function DoctorAppointments() {
     setError(null);
     try {
       await api.post("/appointments", { patientId: selectedPatient.uid, date, notes });
-      toast.success(`Appointment set with ${selectedPatient.name}.`);
+      toast.success(t("Appointment set with {name}.", { name: selectedPatient.name }));
       resetForm();
       setLoading(true);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to set appointment.");
+      setError(err.response?.data?.error || t("Failed to set appointment."));
     } finally {
       setSaving(false);
     }
@@ -94,26 +95,26 @@ export default function DoctorAppointments() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Appointments</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Appointments")}</h1>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
           >
-            <Plus size={15} /> New Appointment
+            <Plus size={15} /> {t("New Appointment")}
           </button>
         )}
       </div>
 
       {showForm && (
-        <Card title="Set an Appointment">
+        <Card title={t("Set an Appointment")}>
           {!selectedPatient ? (
             <>
               <form onSubmit={runSearch} className="mb-4 flex gap-2">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search patient by name or IC..."
+                  placeholder={t("Search patient by name or IC...")}
                   autoFocus
                   className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
@@ -121,19 +122,19 @@ export default function DoctorAppointments() {
                   disabled={searching}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                 >
-                  <Search size={15} /> {searching ? "Searching..." : "Search"}
+                  <Search size={15} /> {searching ? t("Searching...") : t("Search")}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
                   className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  aria-label="Cancel"
+                  aria-label={t("Cancel")}
                 >
                   <X size={15} />
                 </button>
               </form>
               {searchResults.length === 0 && !searching && (
-                <p className="text-sm text-slate-400">Search for a patient to schedule with.</p>
+                <p className="text-sm text-slate-400">{t("Search for a patient to schedule with.")}</p>
               )}
               <div className="space-y-2">
                 {searchResults.map((p) => (
@@ -158,11 +159,11 @@ export default function DoctorAppointments() {
                   onClick={() => setSelectedPatient(null)}
                   className="text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
                 >
-                  Change
+                  {t("Change")}
                 </button>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Date</label>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Date")}</label>
                 <input
                   type="date"
                   value={date}
@@ -172,7 +173,7 @@ export default function DoctorAppointments() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Notes (optional)</label>
+                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Notes (optional)")}</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -187,13 +188,13 @@ export default function DoctorAppointments() {
                   onClick={resetForm}
                   className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   disabled={saving}
                   className="flex-1 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : "Set Appointment"}
+                  {saving ? t("Saving...") : t("Set Appointment")}
                 </button>
               </div>
             </form>
@@ -204,14 +205,14 @@ export default function DoctorAppointments() {
       {loading && <SkeletonList rows={2} />}
 
       {!loading && appointments.length === 0 && (
-        <EmptyState icon={Calendar} title="No appointments scheduled" subtitle="Set one with the button above, or from a patient's record." />
+        <EmptyState icon={Calendar} title={t("No appointments scheduled")} subtitle={t("Set one with the button above, or from a patient's record.")} />
       )}
 
       {!loading && appointments.length > 0 && (
         <>
-          <Card title="Upcoming">
+          <Card title={t("Upcoming")}>
             {upcoming.length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500">No upcoming appointments.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t("No upcoming appointments.")}</p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {upcoming.map((a) => (
