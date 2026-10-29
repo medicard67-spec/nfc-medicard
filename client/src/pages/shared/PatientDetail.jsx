@@ -112,7 +112,7 @@ export default function PatientDetail() {
       {tab === "Lab Results" && <LabsTab labs={labs} patientId={id} onUploaded={load} />}
       {tab === "Imaging" && <RadiologyTab images={radiology} patientId={id} onUploaded={load} />}
       {tab === "Update Record" && (
-        <UpdateRecordTab patientId={id} admissions={admissions} onSaved={load} />
+        <UpdateRecordTab patient={patient} patientId={id} admissions={admissions} onSaved={load} />
       )}
       {tab === "Message" && <MessageTab patientId={id} />}
     </div>
@@ -139,6 +139,18 @@ function EmergencyTab({ patient }) {
           <div>
             <p className="text-xs text-red-500 dark:text-red-400/80">{t("Severe Allergies")}</p>
             <p className="text-sm font-semibold text-red-700 dark:text-red-300">{allergies}</p>
+          </div>
+          <div>
+            <p className="text-xs text-red-500 dark:text-red-400/80">{t("Height")}</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+              {patient.height ? `${patient.height} cm` : t("Not recorded")}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-red-500 dark:text-red-400/80">{t("Weight")}</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+              {patient.weight ? `${patient.weight} kg` : t("Not recorded")}
+            </p>
           </div>
           <div className="sm:col-span-2">
             <p className="text-xs text-red-500 dark:text-red-400/80">{t("Chronic Illnesses")}</p>
@@ -883,7 +895,7 @@ function RadiologyTab({ images, patientId, onUploaded }) {
   );
 }
 
-function UpdateRecordTab({ patientId, admissions, onSaved }) {
+function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
   const toast = useToast();
   const [diagnosis, setDiagnosis] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -940,6 +952,7 @@ function UpdateRecordTab({ patientId, admissions, onSaved }) {
   return (
     <div className="space-y-4">
       <AdmissionPanel patientId={patientId} activeAdmission={activeAdmission} onChanged={onSaved} />
+      <MeasurementsPanel patient={patient} onSaved={onSaved} />
 
       <Card title={t("Update Patient Record")}>
       <form onSubmit={submit} className="space-y-3">
@@ -1164,6 +1177,81 @@ function AdmissionPanel({ patientId, activeAdmission, onChanged }) {
           </div>
         </form>
       )}
+    </Card>
+  );
+}
+
+// Height and weight change over time (children, long stays), so doctors and admins can
+// update them here rather than only at registration. An empty box clears the value.
+function MeasurementsPanel({ patient, onSaved }) {
+  const toast = useToast();
+  const [height, setHeight] = useState(patient.height ?? "");
+  const [weight, setWeight] = useState(patient.weight ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setHeight(patient.height ?? "");
+    setWeight(patient.weight ?? "");
+  }, [patient.height, patient.weight]);
+
+  const changed = String(height) !== String(patient.height ?? "") || String(weight) !== String(patient.weight ?? "");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.patch(`/patients/${patient.uid}`, {
+        height: height === "" ? null : Number(height),
+        weight: weight === "" ? null : Number(weight),
+      });
+      onSaved();
+      toast.success(t("Height and weight updated."));
+    } catch (err) {
+      toast.error(err.response?.data?.error || t("Failed to update height and weight."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card title={t("Height & Weight")}>
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Height (cm)")}</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="20"
+            max="250"
+            step="0.1"
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+            placeholder="170"
+            className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Weight (kg)")}</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0.5"
+            max="350"
+            step="0.1"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            placeholder="65"
+            className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving || !changed}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+        >
+          <Check size={14} /> {saving ? t("Saving...") : t("Save")}
+        </button>
+      </form>
     </Card>
   );
 }

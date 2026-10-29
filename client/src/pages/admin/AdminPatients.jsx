@@ -26,6 +26,8 @@ export default function AdminPatients() {
       name: p.name || "",
       age: p.age || "",
       bloodType: p.bloodType || "",
+      height: p.height ?? "",
+      weight: p.weight ?? "",
       chronicIllnesses: (p.chronicIllnesses || []).join(", "),
     });
   };
@@ -36,6 +38,8 @@ export default function AdminPatients() {
       name: form.name,
       age: Number(form.age) || null,
       bloodType: form.bloodType,
+      height: form.height === "" ? null : Number(form.height),
+      weight: form.weight === "" ? null : Number(form.weight),
       chronicIllnesses: form.chronicIllnesses.split(",").map((c) => c.trim()).filter(Boolean),
     });
     setSaving(false);
@@ -62,6 +66,8 @@ export default function AdminPatients() {
               <th className="px-4 py-3">{t("Name")}</th>
               <th className="px-4 py-3">{t("Age")}</th>
               <th className="px-4 py-3">{t("Gender")}</th>
+              <th className="px-4 py-3">{t("Height (cm)")}</th>
+              <th className="px-4 py-3">{t("Weight (kg)")}</th>
               <th className="px-4 py-3">{t("Chronic Condition")}</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -79,6 +85,12 @@ export default function AdminPatients() {
                       <input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-16 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
                     </td>
                     <td className="px-4 py-2">{t(p.gender)}</td>
+                    <td className="px-4 py-2">
+                      <input type="number" step="0.1" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className="w-20 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="w-20 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
+                    </td>
                     <td className="px-4 py-2">
                       <input value={form.chronicIllnesses} onChange={(e) => setForm({ ...form, chronicIllnesses: e.target.value })} className="w-full rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
                     </td>
@@ -101,6 +113,8 @@ export default function AdminPatients() {
                     </td>
                     <td className="px-4 py-2">{p.age}</td>
                     <td className="px-4 py-2">{t(p.gender)}</td>
+                    <td className="px-4 py-2">{p.height ?? "—"}</td>
+                    <td className="px-4 py-2">{p.weight ?? "—"}</td>
                     <td className="px-4 py-2">{(p.chronicIllnesses || []).join(", ") || "—"}</td>
                     <td className="px-4 py-2 text-right">
                       <Link to={`/admin/patients/${p.uid}`} className="mr-3 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline">

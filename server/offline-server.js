@@ -367,7 +367,8 @@ app.post("/api/nfc/register", requireAuth, requireRole("admin"), (req, res) => {
   const row = {
     id, name, email, ic: req.body.ic || "", dob: req.body.dob || null, age: req.body.age ? Number(req.body.age) : null,
     gender: req.body.gender || "", blood_type: req.body.bloodType || "", allergies: [], chronic_illnesses: [],
-    height: null, weight: null, phone: req.body.phone || "",
+    height: req.body.height ? Number(req.body.height) : null, weight: req.body.weight ? Number(req.body.weight) : null,
+    phone: req.body.phone || "",
     emergency_contact_name: req.body.emergencyContactName || "", emergency_contact_phone: req.body.emergencyContactPhone || "",
     card_uid: cardUid, avatar_url: null, created_at: now(),
   };
