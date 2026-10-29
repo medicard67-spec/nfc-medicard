@@ -64,7 +64,7 @@ export default function Login() {
     <div className="flex min-h-screen">
       <BackgroundImage />
       <div className="fixed right-4 top-4 z-50">
-        <LanguageSwitcher />
+        <LanguageSwitcher align="end" />
       </div>
       {/* Brand panel */}
       <div

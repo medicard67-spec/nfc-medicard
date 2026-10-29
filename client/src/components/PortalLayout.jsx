@@ -30,7 +30,7 @@ export default function PortalLayout({ navItems, title }) {
           <img src={logo} alt="NFC MediCard" className="h-7 w-7 object-contain" />
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">NFC MediCard</p>
         </div>
-        <LanguageSwitcher compact />
+        <LanguageSwitcher compact align="end" />
       </div>
 
       {/* Mobile backdrop */}
@@ -88,10 +88,10 @@ export default function PortalLayout({ navItems, title }) {
         </nav>
         <div className="border-t border-slate-200 p-3 dark:border-slate-800">
           <div className="mb-2 px-1 md:hidden lg:block">
-            <LanguageSwitcher className="w-full justify-start" />
+            <LanguageSwitcher placement="up" className="w-full" />
           </div>
           <div className="mb-2 hidden justify-center md:flex lg:hidden">
-            <LanguageSwitcher compact />
+            <LanguageSwitcher compact placement="up" />
           </div>
           <div className="mb-1 flex items-center justify-between px-1 md:justify-center lg:justify-between">
             <p className="truncate text-xs text-slate-500 md:hidden lg:block dark:text-slate-400">{profile?.email}</p>

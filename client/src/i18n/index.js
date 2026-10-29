@@ -6,10 +6,10 @@ import zh from "./zh.js";
 import ta from "./ta.js";
 
 export const LANGUAGES = [
-  { code: "en", label: "English", short: "EN", locale: "en-MY" },
-  { code: "ms", label: "Bahasa Melayu", short: "BM", locale: "ms-MY" },
-  { code: "zh", label: "中文", short: "中文", locale: "zh-Hans-MY" },
-  { code: "ta", label: "தமிழ்", short: "தமிழ்", locale: "ta-MY" },
+  { code: "en", label: "English", english: "English", short: "EN", locale: "en-MY" },
+  { code: "ms", label: "Bahasa Melayu", english: "Malay", short: "BM", locale: "ms-MY" },
+  { code: "zh", label: "中文", english: "Chinese", short: "中文", locale: "zh-Hans-MY" },
+  { code: "ta", label: "தமிழ்", english: "Tamil", short: "தமிழ்", locale: "ta-MY" },
 ];
 
 const DICTS = { ms, zh, ta };

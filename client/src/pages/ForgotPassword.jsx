@@ -33,7 +33,7 @@ export default function ForgotPassword() {
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <BackgroundImage />
       <div className="fixed right-4 top-4 z-50">
-        <LanguageSwitcher />
+        <LanguageSwitcher align="end" />
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center">
