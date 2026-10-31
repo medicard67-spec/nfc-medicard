@@ -362,7 +362,7 @@ export default function AdminRegisterCard() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("Search by name or IC...")}
-              className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
             />
             <button
               disabled={searching}

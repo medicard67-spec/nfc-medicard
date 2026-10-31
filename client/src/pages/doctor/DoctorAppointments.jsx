@@ -127,18 +127,20 @@ export default function DoctorAppointments() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("Search patient by name or IC...")}
                   autoFocus
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
+                {/* icon only on phones, so the search box keeps a usable width */}
                 <button
                   disabled={searching}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                  aria-label={t("Search")}
+                  className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 sm:px-4"
                 >
-                  <Search size={15} /> {searching ? t("Searching...") : t("Search")}
+                  <Search size={15} /> <span className="hidden sm:inline">{searching ? t("Searching...") : t("Search")}</span>
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   aria-label={t("Cancel")}
                 >
                   <X size={15} />
