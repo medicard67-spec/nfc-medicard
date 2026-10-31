@@ -15,6 +15,7 @@ import { exportPatientRecordPdf } from "../../lib/exportPdf.js";
 import { HOSPITAL_DEPARTMENTS } from "../../lib/hospitalDepartments.js";
 import { RENEWAL_FREQUENCIES, RENEWAL_FREQUENCY_LABELS } from "../../lib/medicationRenewal.js";
 import { t, dateLocale } from "../../i18n/index.js";
+import { nowTimeKey } from "../../lib/appointmentTime.js";
 
 const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "Update Record", "Message"];
 
@@ -900,6 +901,7 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
   const [diagnosis, setDiagnosis] = useState("");
   const [remarks, setRemarks] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -926,6 +928,10 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
       toast.error(t("Appointments can't be set on a past date."));
       return;
     }
+    if (appointmentDate === todayKey() && appointmentTime && appointmentTime < nowTimeKey()) {
+      toast.error(t("That time has already passed today."));
+      return;
+    }
     setSaving(true);
     try {
       const form = new FormData();
@@ -937,11 +943,12 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
       if (referDepartment.trim()) form.append("referredToDepartment", referDepartment.trim());
       await api.post("/medical-history", form, { headers: { "Content-Type": "multipart/form-data" } });
       if (appointmentDate) {
-        await api.post("/appointments", { patientId, date: appointmentDate, notes: remarks });
+        await api.post("/appointments", { patientId, date: appointmentDate, time: appointmentTime, notes: remarks });
       }
       setDiagnosis("");
       setRemarks("");
       setAppointmentDate("");
+      setAppointmentTime("");
       setImages([]);
       setReferDoctorName("");
       setReferDepartment("");
@@ -981,13 +988,27 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Schedule Next Appointment (optional)")}</label>
-          <input
-            type="date"
-            value={appointmentDate}
-            min={todayKey()}
-            onChange={(e) => setAppointmentDate(e.target.value)}
-            className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
-          />
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="date"
+              value={appointmentDate}
+              min={todayKey()}
+              onChange={(e) => setAppointmentDate(e.target.value)}
+              aria-label={t("Date")}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+            {/* a time is needed once a date is picked */}
+            <input
+              type="time"
+              value={appointmentTime}
+              required={!!appointmentDate}
+              disabled={!appointmentDate}
+              min={appointmentDate === todayKey() ? nowTimeKey() : undefined}
+              onChange={(e) => setAppointmentTime(e.target.value)}
+              aria-label={t("Time")}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm disabled:opacity-50"
+            />
+          </div>
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">

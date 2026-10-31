@@ -216,6 +216,7 @@ create table if not exists appointments (
   doctor_id uuid,
   doctor_name text,
   date date not null,
+  start_time time,
   notes text not null default '',
   status text not null default 'scheduled',
   created_at timestamptz not null default now()

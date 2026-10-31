@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Stethoscope } from "lucide-react";
+import { Calendar, Stethoscope, Clock } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -8,6 +8,7 @@ import EmptyState from "../../components/EmptyState.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { t, dateLocale } from "../../i18n/index.js";
+import { formatAppointmentTime, isUpcoming } from "../../lib/appointmentTime.js";
 
 function todayKey() {
   const d = new Date();
@@ -34,7 +35,7 @@ export default function PatientAppointments() {
 
   const upcoming = useMemo(() => {
     const today = todayKey();
-    return appointments.filter((a) => a.date >= today).slice(0, 4);
+    return appointments.filter((a) => isUpcoming(a, today)).slice(0, 4);
   }, [appointments]);
 
   return (
@@ -67,7 +68,10 @@ export default function PatientAppointments() {
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                         {a.doctorName || t("Unassigned")}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(a.date)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {formatDate(a.date)}
+                        {a.time && <> &middot; {formatAppointmentTime(a.time)}</>}
+                      </p>
                     </div>
                     <StatusBadge status={a.status} />
                   </button>
@@ -89,6 +93,11 @@ export default function PatientAppointments() {
                     </p>
                     <StatusBadge status={a.status} />
                   </div>
+                  {a.time && (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-brand-700 dark:text-brand-300">
+                      <Clock size={12} /> {formatAppointmentTime(a.time)}
+                    </p>
+                  )}
                   {a.notes && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{a.notes}</p>}
                 </div>
               )}

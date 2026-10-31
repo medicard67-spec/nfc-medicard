@@ -158,6 +158,7 @@ async function main() {
     doctor_id: doctor1Id,
     doctor_name: "Dr. Sarah Jenkins",
     date: "2026-08-10",
+    start_time: "09:30",
     notes: "3-month diabetes review",
     status: "scheduled",
   });

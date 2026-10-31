@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Plus, Search, X, User } from "lucide-react";
+import { Calendar, Plus, Search, X, User, Clock } from "lucide-react";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import MonthCalendar from "../../components/MonthCalendar.jsx";
@@ -9,6 +9,7 @@ import StatusBadge from "../../components/StatusBadge.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { t, dateLocale } from "../../i18n/index.js";
+import { formatAppointmentTime, nowTimeKey, isUpcoming } from "../../lib/appointmentTime.js";
 
 function todayKey() {
   const d = new Date();
@@ -32,6 +33,7 @@ export default function DoctorAppointments() {
   const [searching, setSearching] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -47,7 +49,7 @@ export default function DoctorAppointments() {
 
   const upcoming = useMemo(() => {
     const today = todayKey();
-    return appointments.filter((a) => a.date >= today).slice(0, 4);
+    return appointments.filter((a) => isUpcoming(a, today)).slice(0, 4);
   }, [appointments]);
 
   const runSearch = async (e) => {
@@ -70,21 +72,26 @@ export default function DoctorAppointments() {
     setSearchResults([]);
     setSelectedPatient(null);
     setDate("");
+    setTime("");
     setNotes("");
     setError(null);
   };
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!selectedPatient || !date) return;
+    if (!selectedPatient || !date || !time) return;
     if (date < todayKey()) {
       setError(t("Appointments can't be set on a past date."));
+      return;
+    }
+    if (date === todayKey() && time < nowTimeKey()) {
+      setError(t("That time has already passed today."));
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await api.post("/appointments", { patientId: selectedPatient.uid, date, notes });
+      await api.post("/appointments", { patientId: selectedPatient.uid, date, time, notes });
       toast.success(t("Appointment set with {name}.", { name: selectedPatient.name }));
       resetForm();
       setLoading(true);
@@ -166,16 +173,29 @@ export default function DoctorAppointments() {
                   {t("Change")}
                 </button>
               </div>
-              <div>
-                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Date")}</label>
-                <input
-                  type="date"
-                  value={date}
-                  min={todayKey()}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Date")}</label>
+                  <input
+                    type="date"
+                    value={date}
+                    min={todayKey()}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Time")}</label>
+                  <input
+                    type="time"
+                    value={time}
+                    min={date === todayKey() ? nowTimeKey() : undefined}
+                    onChange={(e) => setTime(e.target.value)}
+                    required
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Notes (optional)")}</label>
@@ -231,7 +251,10 @@ export default function DoctorAppointments() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{a.patientName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(a.date)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {formatDate(a.date)}
+                        {a.time && <> &middot; {formatAppointmentTime(a.time)}</>}
+                      </p>
                     </div>
                     <StatusBadge status={a.status} />
                   </button>
@@ -254,6 +277,11 @@ export default function DoctorAppointments() {
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{a.patientName}</p>
                     <StatusBadge status={a.status} />
                   </div>
+                  {a.time && (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-brand-700 dark:text-brand-300">
+                      <Clock size={12} /> {formatAppointmentTime(a.time)}
+                    </p>
+                  )}
                   {a.notes && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{a.notes}</p>}
                 </button>
               )}

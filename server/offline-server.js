@@ -78,7 +78,7 @@ const db = {
     { id: "msg-1", patient_id: "patient-1", doctor_id: "doctor-1", sender_role: "doctor", sender_name: "Dr. Sarah Jenkins", text: "Your latest lab results look good. Keep up with your medication schedule.", read: false, created_at: "2026-06-02T04:00:00.000Z" },
   ],
   appointments: [
-    { id: "appt-1", patient_id: "patient-1", doctor_id: "doctor-1", doctor_name: "Dr. Sarah Jenkins", date: "2026-08-10", notes: "3-month diabetes review", status: "scheduled", created_at: "2026-06-02T04:00:00.000Z" },
+    { id: "appt-1", patient_id: "patient-1", doctor_id: "doctor-1", doctor_name: "Dr. Sarah Jenkins", date: "2026-08-10", start_time: "09:30", notes: "3-month diabetes review", status: "scheduled", created_at: "2026-06-02T04:00:00.000Z" },
   ],
   vitals: [
     { id: "vital-1", patient_id: "patient-1", heart_rate: 78, note: "Resting, ward round", recorded_at: "2026-06-02T04:00:00.000Z" },
@@ -154,7 +154,11 @@ function toMessageJson(row) {
   return { id: row.id, patientId: row.patient_id, doctorId: row.doctor_id, senderRole: row.sender_role, senderName: row.sender_name, text: row.text, read: row.read, createdAt: row.created_at };
 }
 function toAppointmentJson(row) {
-  return { id: row.id, patientId: row.patient_id, doctorId: row.doctor_id, doctorName: row.doctor_name, date: row.date, notes: row.notes, status: row.status, createdAt: row.created_at };
+  return { id: row.id, patientId: row.patient_id, doctorId: row.doctor_id, doctorName: row.doctor_name, date: row.date, time: row.start_time || null, notes: row.notes, status: row.status, createdAt: row.created_at };
+}
+// date, then time (appointments without a time first)
+function byDateTime(a, b) {
+  return a.date.localeCompare(b.date) || (a.start_time || "").localeCompare(b.start_time || "");
 }
 function toAuditJson(row) {
   return { id: row.id, actorId: row.actor_id, actorName: row.actor_name, actorRole: row.actor_role, action: row.action, targetType: row.target_type, targetId: row.target_id, details: row.details, createdAt: row.created_at };
@@ -421,7 +425,7 @@ app.post("/api/messages", requireAuth, (req, res) => {
 // ---- appointments ------------------------------------------------------
 app.get("/api/appointments/mine", requireAuth, requireRole("doctor"), (req, res) => {
   const nameById = new Map(db.patients.map((p) => [p.id, p.name]));
-  const rows = db.appointments.filter((a) => a.doctor_id === req.user.uid).sort((a, b) => a.date.localeCompare(b.date));
+  const rows = db.appointments.filter((a) => a.doctor_id === req.user.uid).sort(byDateTime);
   res.json(rows.map((row) => ({ ...toAppointmentJson(row), patientName: nameById.get(row.patient_id) || "Unknown" })));
 });
 
@@ -429,22 +433,31 @@ app.get("/api/appointments", requireAuth, (req, res) => {
   const { patientId } = req.query;
   if (!patientId) return res.status(400).json({ error: "patientId query param required" });
   if (!canAccessPatient(req, patientId)) return res.status(403).json({ error: "Insufficient permissions" });
-  const rows = db.appointments.filter((a) => a.patient_id === patientId).sort((a, b) => a.date.localeCompare(b.date));
+  const rows = db.appointments.filter((a) => a.patient_id === patientId).sort(byDateTime);
   res.json(rows.map(toAppointmentJson));
 });
 
 app.post("/api/appointments", requireAuth, requireRole("admin", "doctor"), (req, res) => {
   const { patientId, date, notes } = req.body;
+  const time = req.body.time || null;
   if (!patientId || !date) return res.status(400).json({ error: "patientId and date are required" });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
     return res.status(400).json({ error: "Please pick a valid date." });
   }
-  if (date < new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" })) {
+  if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    return res.status(400).json({ error: "Please pick a valid time." });
+  }
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const nowTime = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kuala_Lumpur", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  if (date < today) {
     return res.status(400).json({ error: "Appointments can't be set on a past date." });
+  }
+  if (time && date === today && time < nowTime) {
+    return res.status(400).json({ error: "That time has already passed today." });
   }
   const row = {
     id: uid("appt"), patient_id: patientId, doctor_id: req.user.role === "doctor" ? req.user.uid : null,
-    doctor_name: req.user.name || req.user.email, date, notes: notes || "", status: "scheduled", created_at: now(),
+    doctor_name: req.user.name || req.user.email, date, start_time: time, notes: notes || "", status: "scheduled", created_at: now(),
   };
   db.appointments.push(row);
   res.status(201).json(toAppointmentJson(row));
