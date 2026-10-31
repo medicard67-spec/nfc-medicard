@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { t, dateLocale } from "../i18n/index.js";
 
-// Short weekday names, Sunday first, in the chosen language (4 Jan 2026 is a Sunday).
-function weekdayNames() {
-  return Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i).toLocaleDateString(dateLocale(), { weekday: "short" }));
+// Weekday names, Sunday first, in the chosen language (4 Jan 2026 is a Sunday). "short" ("Mon",
+// "திங்.") is too wide for a phone's day columns in some languages, so phones get "narrow" ("M").
+function weekdayNames(style = "short") {
+  return Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i).toLocaleDateString(dateLocale(), { weekday: style }));
 }
 
 function toDateKey(d) {
@@ -51,6 +52,7 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
   }, [cursor]);
 
   const todayKey = toDateKey(new Date());
+  const narrowNames = weekdayNames("narrow");
   const selectedEvents = eventsByDay.get(selected) || [];
 
   return (
@@ -74,8 +76,11 @@ export default function MonthCalendar({ events, renderEvent, emptyLabel = "No ap
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
-        {weekdayNames().map((w) => (
-          <div key={w}>{w}</div>
+        {weekdayNames().map((w, i) => (
+          <div key={i} className="min-w-0 truncate">
+            <span className="hidden sm:inline">{w}</span>
+            <span className="sm:hidden">{narrowNames[i]}</span>
+          </div>
         ))}
       </div>
 

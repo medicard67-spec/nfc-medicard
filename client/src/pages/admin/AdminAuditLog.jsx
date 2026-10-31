@@ -193,7 +193,7 @@ export default function AdminAuditLog() {
                   <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
                     <ActionIcon size={15} strokeWidth={2} />
                   </span>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1 break-words">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                       {t(ACTION_LABELS[e.action] || e.action)}
                     </p>
@@ -223,8 +223,11 @@ export default function AdminAuditLog() {
                       )}
                     </p>
                   </div>
-                  <p className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
-                    {new Date(e.createdAt).toLocaleString(dateLocale())}
+                  {/* date over time on phones, one line from sm up */}
+                  <p className="flex-shrink-0 text-right text-xs text-slate-400 dark:text-slate-500">
+                    <span className="block whitespace-nowrap sm:inline">{new Date(e.createdAt).toLocaleDateString(dateLocale())}</span>
+                    <span className="hidden sm:inline">, </span>
+                    <span className="block whitespace-nowrap sm:inline">{new Date(e.createdAt).toLocaleTimeString(dateLocale())}</span>
                   </p>
                 </li>
               );

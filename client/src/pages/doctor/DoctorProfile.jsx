@@ -7,11 +7,11 @@ import Avatar from "../../components/Avatar.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { t } from "../../i18n/index.js";
 
-function Field({ label, value }) {
+function Field({ label, value, className = "" }) {
   return (
-    <div>
+    <div className={className}>
       <p className="text-xs text-slate-400 dark:text-slate-500">{label}</p>
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{value || "—"}</p>
+      <p className="break-words text-sm font-medium text-slate-700 dark:text-slate-200">{value || "—"}</p>
     </div>
   );
 }
@@ -74,10 +74,11 @@ export default function DoctorProfile() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label={t("Email")} value={profile.email} />
+          {/* full row on phones: an email rarely fits in half a small screen */}
+          <Field label={t("Email")} value={profile.email} className="col-span-2 sm:col-span-1" />
           <Field label={t("Department")} value={profile.department} />
           <Field label={t("Hospital")} value={profile.hospital} />
-          <Field label={t("Role")} value="Doctor" />
+          <Field label={t("Role")} value={t("Doctor")} />
         </div>
       </Card>
     </div>

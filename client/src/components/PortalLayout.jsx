@@ -91,7 +91,7 @@ export default function PortalLayout({ navItems, title }) {
             <LanguageSwitcher placement="up" className="w-full" />
           </div>
           <div className="mb-2 hidden justify-center md:flex lg:hidden">
-            <LanguageSwitcher compact placement="up" />
+            <LanguageSwitcher rail placement="up" />
           </div>
           <div className="mb-1 flex items-center justify-between px-1 md:justify-center lg:justify-between">
             <p className="truncate text-xs text-slate-500 md:hidden lg:block dark:text-slate-400">{profile?.email}</p>

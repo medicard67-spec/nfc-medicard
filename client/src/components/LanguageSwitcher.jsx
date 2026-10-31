@@ -4,9 +4,10 @@ import { LANGUAGES, t } from "../i18n/index.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // Language picker: a button that opens a small animated menu. `compact` shows only the short code
-// (icon rail, mobile bar); `placement` "up" opens above the button (sidebar), "down" below it;
-// `align` "end" lines the menu up with the button's right edge (top-right corners).
-export default function LanguageSwitcher({ compact = false, placement = "down", align = "start", className = "" }) {
+// (mobile bar); `rail` is a 40px square with the icon over the code, for the tablet icon rail;
+// `placement` "up" opens above the button (sidebar), "down" below it; `align` "end" lines the menu
+// up with the button's right edge (top-right corners).
+export default function LanguageSwitcher({ compact = false, rail = false, placement = "down", align = "start", className = "" }) {
   const { lang, changeLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -79,18 +80,22 @@ export default function LanguageSwitcher({ compact = false, placement = "down", 
         aria-expanded={open}
         aria-controls={listId}
         title={t("Language")}
-        className={`inline-flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${
+        className={`inline-flex items-center rounded-xl border font-medium shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${
+          rail ? "h-10 w-10 flex-col justify-center gap-0.5 p-0 text-[10px] leading-none" : "w-full gap-2 px-3 py-2 text-sm"
+        } ${
           open
             ? "border-brand-300 bg-brand-50 text-brand-800 dark:border-brand-700 dark:bg-brand-900/40 dark:text-brand-100"
             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         }`}
       >
-        <Languages size={16} className="flex-shrink-0 text-brand-600 dark:text-brand-300" />
-        <span className="truncate">{compact ? current.short : current.label}</span>
-        <ChevronDown
-          size={15}
-          className={`ml-auto flex-shrink-0 text-slate-400 transition-transform duration-200 ${open !== up ? "rotate-180" : ""}`}
-        />
+        <Languages size={rail ? 14 : 16} className="flex-shrink-0 text-brand-600 dark:text-brand-300" />
+        <span className="max-w-full truncate">{compact || rail ? current.short : current.label}</span>
+        {!rail && (
+          <ChevronDown
+            size={15}
+            className={`ml-auto flex-shrink-0 text-slate-400 transition-transform duration-200 ${open !== up ? "rotate-180" : ""}`}
+          />
+        )}
       </button>
 
       <ul
