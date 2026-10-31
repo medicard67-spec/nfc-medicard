@@ -436,6 +436,12 @@ app.get("/api/appointments", requireAuth, (req, res) => {
 app.post("/api/appointments", requireAuth, requireRole("admin", "doctor"), (req, res) => {
   const { patientId, date, notes } = req.body;
   if (!patientId || !date) return res.status(400).json({ error: "patientId and date are required" });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
+    return res.status(400).json({ error: "Please pick a valid date." });
+  }
+  if (date < new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" })) {
+    return res.status(400).json({ error: "Appointments can't be set on a past date." });
+  }
   const row = {
     id: uid("appt"), patient_id: patientId, doctor_id: req.user.role === "doctor" ? req.user.uid : null,
     doctor_name: req.user.name || req.user.email, date, notes: notes || "", status: "scheduled", created_at: now(),

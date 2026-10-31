@@ -52,10 +52,22 @@ router.get("/", requireAuth, async (req, res) => {
   res.json(data.map(toJson));
 });
 
+// Today's date (YYYY-MM-DD) in Malaysia: the server runs on UTC, which is still
+// "yesterday" until 8 am Malaysian time.
+function malaysiaToday() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+}
+
 router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
   const { patientId, date, notes } = req.body;
   if (!patientId || !date) {
     return res.status(400).json({ error: "patientId and date are required" });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
+    return res.status(400).json({ error: "Please pick a valid date." });
+  }
+  if (date < malaysiaToday()) {
+    return res.status(400).json({ error: "Appointments can't be set on a past date." });
   }
 
   const { data, error } = await supabase

@@ -921,6 +921,11 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
 
   const submit = async (e) => {
     e.preventDefault();
+    // check before saving anything, so the record isn't saved without its appointment
+    if (appointmentDate && appointmentDate < todayKey()) {
+      toast.error(t("Appointments can't be set on a past date."));
+      return;
+    }
     setSaving(true);
     try {
       const form = new FormData();
@@ -979,6 +984,7 @@ function UpdateRecordTab({ patient, patientId, admissions, onSaved }) {
           <input
             type="date"
             value={appointmentDate}
+            min={todayKey()}
             onChange={(e) => setAppointmentDate(e.target.value)}
             className="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
           />

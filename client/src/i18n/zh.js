@@ -44,6 +44,8 @@ export default {
   "Allergies:": "过敏：",
   "Anatomy": "部位",
   "Appointment set with {name}.": "已与 {name} 预约。",
+  "Appointments can't be set on a past date.": "不能将预约设在已过去的日期。",
+  "Please pick a valid date.": "请选择有效的日期。",
   "Appointments": "预约",
   "Appointments your doctor schedules will appear here.": "医生为您安排的预约将显示在这里。",
   "Assign Card UID:": "分配卡 UID：",

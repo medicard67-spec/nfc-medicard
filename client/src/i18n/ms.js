@@ -44,6 +44,8 @@ export default {
   "Allergies:": "Alahan:",
   "Anatomy": "Anatomi",
   "Appointment set with {name}.": "Temujanji ditetapkan dengan {name}.",
+  "Appointments can't be set on a past date.": "Temujanji tidak boleh ditetapkan pada tarikh yang telah berlalu.",
+  "Please pick a valid date.": "Sila pilih tarikh yang sah.",
   "Appointments": "Temujanji",
   "Appointments your doctor schedules will appear here.": "Temujanji yang ditetapkan oleh doktor anda akan dipaparkan di sini.",
   "Assign Card UID:": "Tetapkan UID Kad:",

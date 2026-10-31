@@ -44,6 +44,8 @@ export default {
   "Allergies:": "ஒவ்வாமைகள்:",
   "Anatomy": "உடல் பகுதி",
   "Appointment set with {name}.": "{name} உடன் சந்திப்பு அமைக்கப்பட்டது.",
+  "Appointments can't be set on a past date.": "கடந்த தேதியில் சந்திப்பை அமைக்க முடியாது.",
+  "Please pick a valid date.": "சரியான தேதியைத் தேர்ந்தெடுக்கவும்.",
   "Appointments": "சந்திப்புகள்",
   "Appointments your doctor schedules will appear here.": "உங்கள் மருத்துவர் அமைக்கும் சந்திப்புகள் இங்கே தோன்றும்.",
   "Assign Card UID:": "அட்டை UID ஒதுக்கு:",

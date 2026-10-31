@@ -77,6 +77,10 @@ export default function DoctorAppointments() {
   const submit = async (e) => {
     e.preventDefault();
     if (!selectedPatient || !date) return;
+    if (date < todayKey()) {
+      setError(t("Appointments can't be set on a past date."));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -167,6 +171,7 @@ export default function DoctorAppointments() {
                 <input
                   type="date"
                   value={date}
+                  min={todayKey()}
                   onChange={(e) => setDate(e.target.value)}
                   required
                   className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
