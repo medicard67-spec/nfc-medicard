@@ -72,6 +72,18 @@ const db = {
   ],
   lab_results: [
     { id: "lab-1", patient_id: "patient-1", test_name: "HbA1c (Blood Sugar Panel)", physician: "Dr. Sarah Jenkins", physician_id: "doctor-1", date: "2026-06-02", flagged: false, file_url: null, file_name: null, created_at: "2026-06-02T03:05:00.000Z" },
+    // Sample reports (server/demo-files/labs), the same ones on Ahmad's live record.
+    ...[
+      ["lab-2", "ahmad-faiz-2026-09-21-fbc-dengue.pdf", "Full Blood Count & Dengue Serology", "2026-09-21", true],
+      ["lab-3", "ahmad-faiz-2026-09-24-fbc-repeat.pdf", "Full Blood Count (Repeat, Pre-discharge)", "2026-09-24", true],
+      ["lab-4", "ahmad-faiz-2026-10-05-ecg-12-lead.pdf", "12-Lead Resting ECG", "2026-10-05", false],
+      ["lab-5", "ahmad-faiz-2026-10-28-hba1c-fpg.pdf", "HbA1c & Fasting Plasma Glucose", "2026-10-28", true],
+      ["lab-6", "ahmad-faiz-2026-10-28-lipid-profile.pdf", "Fasting Lipid Profile", "2026-10-28", true],
+      ["lab-7", "ahmad-faiz-2026-10-28-renal-uacr.pdf", "Renal Profile & Urine Albumin-Creatinine Ratio", "2026-10-28", false],
+    ].map(([id, file, testName, date, flagged]) => ({
+      id, patient_id: "patient-1", test_name: testName, physician: "Dr. Sarah Jenkins", physician_id: "doctor-1",
+      date, flagged, file_url: `/demo-files/labs/${file}`, file_name: file, created_at: `${date}T04:00:00.000Z`,
+    })),
   ],
   radiology: [],
   messages: [
@@ -571,6 +583,7 @@ app.get("/api/audit", requireAuth, requireRole("admin"), (req, res) => {
 
 // ---- serve the built offline frontend ------------------------------------
 const distDir = path.join(__dirname, "..", "client", "dist-offline");
+app.use("/demo-files", express.static(path.join(__dirname, "demo-files")));
 app.use(express.static(distDir));
 app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(distDir, "index.html")));
 
