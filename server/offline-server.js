@@ -88,6 +88,7 @@ const db = {
   radiology: [],
   messages: [
     { id: "msg-1", patient_id: "patient-1", doctor_id: "doctor-1", sender_role: "doctor", sender_name: "Dr. Sarah Jenkins", text: "Your latest lab results look good. Keep up with your medication schedule.", read: false, created_at: "2026-06-02T04:00:00.000Z" },
+    { id: "msg-2", patient_id: "patient-1", doctor_id: "doctor-1", sender_role: "patient", sender_name: "Ahmad Faiz Bin Rahman", text: "Thank you doctor. Do I need to fast before my next HbA1c test?", read: false, created_at: "2026-06-02T09:15:00.000Z" },
   ],
   appointments: [
     { id: "appt-1", patient_id: "patient-1", doctor_id: "doctor-1", doctor_name: "Dr. Sarah Jenkins", date: "2026-08-10", start_time: "09:30", notes: "3-month diabetes review", status: "scheduled", created_at: "2026-06-02T04:00:00.000Z" },
@@ -394,13 +395,29 @@ app.post("/api/nfc/register", requireAuth, requireRole("admin"), (req, res) => {
 });
 
 // ---- messages ------------------------------------------------------
+// A doctor sees messages to or from them, plus patient messages to the whole care team.
+const forDoctor = (m, doctorId) => m.doctor_id === doctorId || (!m.doctor_id && m.sender_role === "patient");
+
 app.get("/api/messages/unread-count", requireAuth, (req, res) => {
   const { role, uid: userId } = req.user;
   if (role === "admin") return res.json({ count: 0 });
   const count = db.messages.filter((m) =>
-    !m.read && (role === "patient" ? m.patient_id === userId && m.sender_role === "doctor" : m.doctor_id === userId && m.sender_role === "patient")
+    !m.read && (role === "patient" ? m.patient_id === userId && m.sender_role === "doctor" : m.sender_role === "patient" && forDoctor(m, userId))
   ).length;
   res.json({ count });
+});
+
+app.get("/api/messages/inbox", requireAuth, requireRole("doctor"), (req, res) => {
+  const threads = new Map();
+  const rows = db.messages.filter((m) => forDoctor(m, req.user.uid)).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  for (const m of rows) {
+    if (!threads.has(m.patient_id)) {
+      const p = db.patients.find((x) => x.id === m.patient_id);
+      threads.set(m.patient_id, { patientId: m.patient_id, patientName: p?.name || "Unknown", avatarUrl: p?.avatar_url || null, lastMessage: toMessageJson(m), unread: 0 });
+    }
+    if (m.sender_role === "patient" && !m.read) threads.get(m.patient_id).unread += 1;
+  }
+  res.json([...threads.values()]);
 });
 
 app.get("/api/messages", requireAuth, (req, res) => {
@@ -426,8 +443,16 @@ app.post("/api/messages", requireAuth, (req, res) => {
   const { patientId, doctorId, text } = req.body;
   if (!patientId || !text) return res.status(400).json({ error: "patientId and text are required" });
   if (!canAccessPatient(req, patientId)) return res.status(403).json({ error: "Insufficient permissions" });
+  // a patient's reply goes to the doctor who last messaged them
+  let toDoctor = req.user.role === "doctor" ? req.user.uid : doctorId || null;
+  if (req.user.role === "patient" && !toDoctor) {
+    const last = db.messages
+      .filter((m) => m.patient_id === patientId && m.sender_role === "doctor" && m.doctor_id)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    toDoctor = last?.doctor_id || null;
+  }
   const row = {
-    id: uid("msg"), patient_id: patientId, doctor_id: req.user.role === "doctor" ? req.user.uid : doctorId || null,
+    id: uid("msg"), patient_id: patientId, doctor_id: toDoctor,
     sender_role: req.user.role, sender_name: req.user.name || req.user.email, text, read: false, created_at: now(),
   };
   db.messages.unshift(row);

@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   FileText, ClipboardList, FlaskConical, ScanLine, TriangleAlert, Phone, Pill, X, Pencil, Check,
-  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw,
+  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw, MessageCircle, Send,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { useUnread } from "../../context/UnreadContext.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
@@ -21,13 +23,16 @@ const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "
 
 export default function PatientDetail() {
   const { id } = useParams();
+  // ?tab=Message opens a tab directly (the doctor's inbox links here)
+  const [searchParams] = useSearchParams();
+  const startTab = TABS.includes(searchParams.get("tab")) ? searchParams.get("tab") : "Emergency";
   const [patient, setPatient] = useState(null);
   const [history, setHistory] = useState([]);
   const [medications, setMedications] = useState([]);
   const [labs, setLabs] = useState([]);
   const [radiology, setRadiology] = useState([]);
   const [admissions, setAdmissions] = useState([]);
-  const [tab, setTab] = useState("Emergency");
+  const [tab, setTab] = useState(startTab);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
@@ -43,7 +48,7 @@ export default function PatientDetail() {
   };
 
   useEffect(load, [id]);
-  useEffect(() => setTab("Emergency"), [id]);
+  useEffect(() => setTab(startTab), [id]);
 
   const medicationsNeedRenewal = medications.some((m) => {
     if (!m.endDate || m.renewalFrequency === "none") return false;
@@ -1284,22 +1289,49 @@ function MeasurementsPanel({ patient, onSaved }) {
   );
 }
 
+function messageTime(iso) {
+  return new Date(iso).toLocaleString(dateLocale(), { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+}
+
+// The whole conversation with this patient, oldest at the top, with the reply
+// box underneath. Checks for new messages every 15 s while open.
 function MessageTab({ patientId }) {
   const toast = useToast();
+  const { role, profile } = useAuth();
+  const { refresh: refreshUnread } = useUnread();
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const listRef = useRef(null);
+
+  const load = () =>
+    api
+      .get("/messages", { params: { patientId } })
+      .then((res) => setMessages([...res.data].reverse()))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  const markRead = () => api.post("/messages/mark-read", { patientId }).then(refreshUnread).catch(() => {});
 
   useEffect(() => {
-    api.post("/messages/mark-read", { patientId });
+    load().then(markRead);
+    const interval = setInterval(() => load().then(markRead), 15000);
+    return () => clearInterval(interval);
   }, [patientId]);
+
+  // keep the newest message in view
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages.length]);
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!text.trim()) return;
     setSending(true);
     try {
-      await api.post("/messages", { patientId, text });
+      await api.post("/messages", { patientId, text: text.trim() });
       setText("");
-      toast.success(t("Message sent to patient."));
+      await load();
     } catch (err) {
       toast.error(err.response?.data?.error || t("Failed to send message."));
     } finally {
@@ -1307,22 +1339,69 @@ function MessageTab({ patientId }) {
     }
   };
 
+  const isMine = (m) => m.senderRole === role && (role !== "doctor" || m.doctorId === profile?.uid);
+
   return (
-    <Card title={t("Message Patient")}>
-      <form onSubmit={submit} className="space-y-3">
+    <Card className="overflow-hidden !p-0">
+      <h3 className="px-4 pb-3 pt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">{t("Conversation")}</h3>
+      <div ref={listRef} className="max-h-[55vh] min-h-[10rem] space-y-3 overflow-y-auto border-y border-slate-100 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40">
+        {loading && <SkeletonList rows={2} />}
+        {!loading && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+            <MessageCircle size={22} className="mb-2" />
+            {t("No messages with this patient yet.")}
+          </div>
+        )}
+        {messages.map((m) => {
+          const mine = isMine(m);
+          return (
+            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] sm:max-w-[70%] ${mine ? "items-end" : "items-start"} flex flex-col`}>
+                {!mine && (
+                  <span className="mb-0.5 px-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {m.senderName}
+                    {m.senderRole === "patient" && <span className="text-slate-400 dark:text-slate-500"> · {t("Patient")}</span>}
+                  </span>
+                )}
+                <div
+                  className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm shadow-sm ${
+                    mine
+                      ? "rounded-br-md bg-brand-600 text-white"
+                      : m.senderRole === "patient"
+                      ? "rounded-bl-md bg-white text-slate-800 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
+                      : "rounded-bl-md bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+                  }`}
+                >
+                  {m.text}
+                </div>
+                <span className="mt-0.5 px-1 text-[11px] text-slate-400 dark:text-slate-500">{messageTime(m.createdAt)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <form onSubmit={submit} className="flex items-end gap-2 p-3">
         <textarea
-          required
           value={text}
           onChange={(e) => setText(e.target.value)}
-          rows={4}
-          placeholder={t("e.g. Your latest results are ready. Please schedule a follow-up.")}
-          className="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+          onKeyDown={(e) => {
+            // Enter sends, Shift+Enter starts a new line
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form.requestSubmit();
+            }
+          }}
+          rows={2}
+          placeholder={t("Write a message...")}
+          className="min-w-0 flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <button
-          disabled={sending}
-          className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          disabled={sending || !text.trim()}
+          aria-label={t("Send")}
+          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:px-4"
         >
-          {sending ? t("Sending...") : t("Send Message")}
+          <Send size={15} />
+          <span className="hidden sm:inline">{sending ? t("Sending...") : t("Send")}</span>
         </button>
       </form>
     </Card>

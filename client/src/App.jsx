@@ -31,6 +31,7 @@ const DoctorDirectory = lazy(() => import("./pages/doctor/DoctorDirectory.jsx"))
 const DoctorAddPatient = lazy(() => import("./pages/doctor/DoctorAddPatient.jsx"));
 const DoctorAppointments = lazy(() => import("./pages/doctor/DoctorAppointments.jsx"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile.jsx"));
+const DoctorMessages = lazy(() => import("./pages/doctor/DoctorMessages.jsx"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
 const AdminCheckIn = lazy(() => import("./pages/admin/AdminCheckIn.jsx"));
@@ -42,15 +43,6 @@ const AdminAddDoctor = lazy(() => import("./pages/admin/AdminAddDoctor.jsx"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog.jsx"));
 
 const PatientDetail = lazy(() => import("./pages/shared/PatientDetail.jsx"));
-
-const doctorNav = [
-  { to: "/doctor", label: "Dashboard", icon: Home, end: true },
-  { to: "/doctor/scan", label: "Scan NFC Card", icon: Nfc },
-  { to: "/doctor/directory", label: "Patient Directory", icon: FolderOpen },
-  { to: "/doctor/add-patient", label: "Register Patient", icon: UserPlus },
-  { to: "/doctor/appointments", label: "Appointments", icon: Calendar },
-  { to: "/doctor/profile", label: "Profile", icon: User },
-];
 
 const adminNav = [
   { to: "/admin", label: "Dashboard", icon: Home, end: true },
@@ -79,6 +71,16 @@ function PageFallback() {
 
 export default function App() {
   const { count: unreadCount } = useUnread();
+
+  const doctorNav = [
+    { to: "/doctor", label: "Dashboard", icon: Home, end: true },
+    { to: "/doctor/scan", label: "Scan NFC Card", icon: Nfc },
+    { to: "/doctor/directory", label: "Patient Directory", icon: FolderOpen },
+    { to: "/doctor/add-patient", label: "Register Patient", icon: UserPlus },
+    { to: "/doctor/appointments", label: "Appointments", icon: Calendar },
+    { to: "/doctor/messages", label: "Messages", icon: MessageCircle, badge: unreadCount },
+    { to: "/doctor/profile", label: "Profile", icon: User },
+  ];
 
   const patientNav = [
     { to: "/patient", label: "Home", icon: Home, end: true },
@@ -133,6 +135,7 @@ export default function App() {
           <Route path="directory" element={<DoctorDirectory />} />
           <Route path="add-patient" element={<DoctorAddPatient />} />
           <Route path="appointments" element={<DoctorAppointments />} />
+          <Route path="messages" element={<DoctorMessages />} />
           <Route path="profile" element={<DoctorProfile />} />
           <Route path="patient/:id" element={<PatientDetail />} />
         </Route>
