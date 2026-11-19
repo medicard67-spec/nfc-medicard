@@ -17,3 +17,14 @@ export function addDays(date, n) {
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
+
+// Age in whole years today (Malaysian date) from a "YYYY-MM-DD" date of birth,
+// so a stored age never goes stale. null when there is no usable date.
+export function ageFromDob(dob, at = new Date()) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob || "");
+  if (!m) return null;
+  const [ty, tm, td] = malaysiaNow(at).date.split("-").map(Number);
+  let age = ty - Number(m[1]);
+  if (tm < Number(m[2]) || (tm === Number(m[2]) && td < Number(m[3]))) age -= 1;
+  return age >= 0 ? age : null;
+}

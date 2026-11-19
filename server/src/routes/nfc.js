@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { createPatientAccount } from "./patients.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
+import { ageFromDob } from "../lib/time.js";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ function toEmergencyProfileJson(row) {
     cardUid: row.card_uid,
     name: row.name,
     avatarUrl: row.avatar_url,
-    age: row.age,
+    age: ageFromDob(row.dob) ?? row.age,
     gender: row.gender,
     bloodType: row.blood_type,
     allergies: row.allergies,

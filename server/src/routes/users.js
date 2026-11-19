@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
+import { ageFromDob } from "../lib/time.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { getClientOrigin } from "../lib/env.js";
 import { MALAYSIA_HOSPITALS } from "../lib/malaysiaHospitals.js";
@@ -90,7 +91,8 @@ export function toPatientJson(row) {
     email: row.email,
     ic: row.ic,
     dob: row.dob,
-    age: row.age,
+    // worked out from the date of birth when there is one, so it is always current
+    age: ageFromDob(row.dob) ?? row.age,
     gender: row.gender,
     bloodType: row.blood_type,
     allergies: row.allergies,

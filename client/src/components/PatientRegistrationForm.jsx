@@ -1,6 +1,8 @@
 import { useState } from "react";
 import api from "../lib/api.js";
 import Card from "./Card.jsx";
+import IcNumberField from "./IcNumberField.jsx";
+import { ageFrom, parseIc } from "../lib/mykad.js";
 import { t } from "../i18n/index.js";
 
 const emptyForm = {
@@ -16,6 +18,24 @@ export default function PatientRegistrationForm({ onRegistered }) {
   const [success, setSuccess] = useState(null);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  // A readable IC number fills in date of birth, age and gender (staff can still change them).
+  const updateIc = (ic, info) =>
+    setForm((f) => {
+      // if the IC stops being readable, clear what the previous IC filled in (not what staff typed)
+      const filledByIc = !info.dob && f.dob && f.dob === parseIc(f.ic).dob;
+      return {
+        ...f,
+        ic,
+        ...(info.dob && { dob: info.dob, age: String(info.age) }),
+        ...(filledByIc && { dob: "", age: "" }),
+        ...(info.gender && { gender: info.gender }),
+      };
+    });
+  const updateDob = (e) => {
+    const dob = e.target.value;
+    const age = ageFrom(dob);
+    setForm((f) => ({ ...f, dob, ...(age !== null && { age: String(age) }) }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -41,8 +61,8 @@ export default function PatientRegistrationForm({ onRegistered }) {
           <Input label={t("Full Name")} value={form.name} onChange={update("name")} required />
           <Input label={t("Email (login)")} type="email" value={form.email} onChange={update("email")} required />
           <Input label={t("Temporary Password")} value={form.password} onChange={update("password")} required />
-          <Input label={t("IC Number")} value={form.ic} onChange={update("ic")} />
-          <Input label={t("Date of Birth")} type="date" value={form.dob} onChange={update("dob")} />
+          <IcNumberField value={form.ic} onChange={updateIc} />
+          <Input label={t("Date of Birth")} type="date" value={form.dob} onChange={updateDob} />
           <Input label={t("Age")} type="number" value={form.age} onChange={update("age")} />
           <Select label={t("Gender")} value={form.gender} onChange={update("gender")} options={["Male", "Female", "Other"]} />
           <Select label={t("Blood Type")} value={form.bloodType} onChange={update("bloodType")} options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]} />
