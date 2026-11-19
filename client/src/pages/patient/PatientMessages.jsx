@@ -1,94 +1,24 @@
-import { useEffect, useState } from "react";
-import { MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import api from "../../lib/api.js";
-import Card from "../../components/Card.jsx";
-import EmptyState from "../../components/EmptyState.jsx";
-import { SkeletonList } from "../../components/Skeleton.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
-import { useUnread } from "../../context/UnreadContext.jsx";
-import { t, dateLocale } from "../../i18n/index.js";
+import Conversation from "../../components/Conversation.jsx";
+import { t } from "../../i18n/index.js";
 
+// The patient's chat with their care team: the same conversation view the
+// doctor sees on the patient's record, from the patient's side.
 export default function PatientMessages() {
   const { profile } = useAuth();
-  const toast = useToast();
-  const { refresh: refreshUnread } = useUnread();
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-
-  const load = () => {
-    if (!profile?.uid) return;
-    api
-      .get("/messages", { params: { patientId: profile.uid } })
-      .then((res) => setMessages(res.data))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, [profile?.uid]);
-
-  useEffect(() => {
-    if (!profile?.uid) return;
-    api.post("/messages/mark-read", { patientId: profile.uid }).then(refreshUnread);
-  }, [profile?.uid]);
-
-  const send = async (e) => {
-    e.preventDefault();
-    if (!text.trim()) return;
-    setSending(true);
-    try {
-      await api.post("/messages", { patientId: profile.uid, text });
-      setText("");
-      load();
-      toast.success(t("Message sent."));
-    } catch (err) {
-      toast.error(err.response?.data?.error || t("Failed to send message."));
-    } finally {
-      setSending(false);
-    }
-  };
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Messages")}</h1>
-
-      <form onSubmit={send} className="flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={t("Message your care team...")}
-          className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-        <button
-          disabled={sending}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-        >
-          {sending ? t("Sending...") : t("Send")}
-        </button>
-      </form>
-
-      {loading && <SkeletonList rows={2} />}
-
-      {!loading && messages.length === 0 && (
-        <EmptyState icon={MessageCircle} title={t("No messages yet")} subtitle={t("Messages from your care team will show up here.")} />
-      )}
-
-      <div className="space-y-3">
-        {messages.map((m) => (
-          <Card key={m.id}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {m.senderRole === "patient" ? t("You") : m.senderName}
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                {m.createdAt ? new Date(m.createdAt).toLocaleString(dateLocale()) : t("Just now")}
-              </p>
-            </div>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{m.text}</p>
-          </Card>
-        ))}
+      <div>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t("Messages")}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("Your conversation with your care team.")}</p>
       </div>
+      <Conversation
+        patientId={profile?.uid}
+        emptyText="No messages yet. Write to your care team below."
+        placeholder="Message your care team..."
+        listClass="max-h-[60vh]"
+      />
     </div>
   );
 }
