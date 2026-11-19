@@ -8,6 +8,7 @@ import { ToastProvider } from "./context/ToastContext.jsx";
 import { UnreadProvider } from "./context/UnreadContext.jsx";
 import { NotificationsProvider } from "./context/NotificationsContext.jsx";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
+import { getLanguage, loadLanguage } from "./i18n/index.js";
 import "./index.css";
 
 // Re-mount the app when the language changes so every screen redraws in the new language.
@@ -16,7 +17,8 @@ function LocalisedApp() {
   return <App key={lang} />;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+// Draw once the chosen language's phrases are in (instant for English).
+loadLanguage(getLanguage()).catch(() => {}).finally(() => ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <LanguageProvider>
       <ThemeProvider>
@@ -34,4 +36,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       </ThemeProvider>
     </LanguageProvider>
   </React.StrictMode>
-);
+));

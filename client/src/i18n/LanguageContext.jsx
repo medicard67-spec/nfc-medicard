@@ -1,12 +1,18 @@
 import { createContext, useContext, useState } from "react";
-import { getLanguage, setLanguageValue } from "./index.js";
+import { getLanguage, loadLanguage, setLanguageValue } from "./index.js";
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(getLanguage);
 
-  const changeLanguage = (code) => {
+  // fetch the language's phrases first, then switch (stays on the current language if offline)
+  const changeLanguage = async (code) => {
+    try {
+      await loadLanguage(code);
+    } catch {
+      return;
+    }
     setLanguageValue(code);
     setLang(code);
   };

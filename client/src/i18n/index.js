@@ -1,9 +1,6 @@
 // Interface language: English (source text), Bahasa Melayu, Chinese (Simplified, as used in
 // Malaysia) and Tamil. t() takes the English text and returns it in the chosen language, falling
 // back to English when a phrase has no translation yet. Patient data is never translated.
-import ms from "./ms.js";
-import zh from "./zh.js";
-import ta from "./ta.js";
 
 export const LANGUAGES = [
   { code: "en", label: "English", english: "English", short: "EN", locale: "en-MY" },
@@ -12,7 +9,15 @@ export const LANGUAGES = [
   { code: "ta", label: "தமிழ்", english: "Tamil", short: "தமிழ்", locale: "ta-MY" },
 ];
 
-const DICTS = { ms, zh, ta };
+// Each language's phrases are a separate file, downloaded only when that language is
+// used (English needs none), so most people never download the other three.
+const LOADERS = { ms: () => import("./ms.js"), zh: () => import("./zh.js"), ta: () => import("./ta.js") };
+const DICTS = {};
+
+export async function loadLanguage(code) {
+  if (!LOADERS[code] || DICTS[code]) return;
+  DICTS[code] = (await LOADERS[code]()).default;
+}
 const STORAGE_KEY = "medicard-lang";
 
 function initialLanguage() {
