@@ -8,6 +8,7 @@ import Conversation from "../../components/Conversation.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import Avatar from "../../components/Avatar.jsx";
+import CardStatusBadge from "../../components/CardStatusBadge.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { SkeletonList } from "../../components/Skeleton.jsx";
 import ImagingCard from "../../components/ImagingCard.jsx";
@@ -70,7 +71,10 @@ export default function PatientDetail() {
         <div className="flex items-center gap-3">
           <Avatar name={patient.name} url={patient.avatarUrl} size="sm" />
           <div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{patient.name}</h1>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{patient.name}</h1>
+              <CardStatusBadge cardUid={patient.cardUid} />
+            </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("IC:")} {patient.ic} &middot; {t(patient.gender)}, {patient.age} {t("yrs")}
             </p>

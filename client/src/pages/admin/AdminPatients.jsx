@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
+import CardStatusBadge from "../../components/CardStatusBadge.jsx";
 import { t } from "../../i18n/index.js";
 
 const mobileInput =
@@ -105,9 +106,12 @@ export default function AdminPatients() {
             ) : (
               <>
                 <div className="flex items-start justify-between gap-3">
-                  <Link to={`/admin/patients/${p.uid}`} className="min-w-0 break-words font-semibold text-slate-800 hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-400">
-                    {p.name}
-                  </Link>
+                  <div className="min-w-0 space-y-1">
+                    <Link to={`/admin/patients/${p.uid}`} className="block break-words font-semibold text-slate-800 hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-400">
+                      {p.name}
+                    </Link>
+                    <CardStatusBadge cardUid={p.cardUid} />
+                  </div>
                   <div className="flex flex-shrink-0 gap-3">
                     <Link to={`/admin/patients/${p.uid}`} className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
                       {t("View")}
@@ -141,6 +145,7 @@ export default function AdminPatients() {
               {/* the short ID only fits once the table has room for it */}
               <th className="hidden px-3 py-3 xl:table-cell">{t("Patient ID")}</th>
               <th className="px-3 py-3">{t("Name")}</th>
+              <th className="px-3 py-3">{t("Card")}</th>
               <th className="px-3 py-3">{t("Age")}</th>
               <th className="px-3 py-3">{t("Gender")}</th>
               <th className="px-3 py-3">{t("Height (cm)")}</th>
@@ -158,6 +163,9 @@ export default function AdminPatients() {
                     <td className="px-3 py-2">
                       {/* size: let the box shrink to its column instead of the default 20 characters */}
                       <input size={8} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
+                    </td>
+                    <td className="px-3 py-2">
+                      <CardStatusBadge cardUid={p.cardUid} />
                     </td>
                     <td className="px-3 py-2">
                       <input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-16 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
@@ -188,6 +196,9 @@ export default function AdminPatients() {
                       <Link to={`/admin/patients/${p.uid}`} className="hover:text-brand-600 dark:hover:text-brand-400 hover:underline">
                         {p.name}
                       </Link>
+                    </td>
+                    <td className="px-3 py-2">
+                      <CardStatusBadge cardUid={p.cardUid} />
                     </td>
                     <td className="px-3 py-2">{p.age}</td>
                     <td className="px-3 py-2">{t(p.gender)}</td>
