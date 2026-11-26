@@ -13,7 +13,9 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - name: Visit /health
-        run: curl --silent --show-error --fail --max-time 90 --retry 2 https://nfc-medicard.onrender.com/health
+        # While Render is still waking up it answers with a quick error page, so
+        # keep retrying (every 15 s, up to ~2 minutes) instead of failing at once.
+        run: curl --silent --show-error --fail --max-time 60 --retry 8 --retry-delay 15 --retry-all-errors https://nfc-medicard.onrender.com/health
