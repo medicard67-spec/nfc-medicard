@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Nfc, Search, UserPlus, Usb, QrCode, ArrowRight } from "lucide-react";
+import { Nfc, Search, UserPlus, Usb, QrCode, ArrowRight, Download } from "lucide-react";
+import { downloadCardPdf } from "../../lib/medicardPrint.js";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
 import IcNumberField from "../../components/IcNumberField.jsx";
@@ -143,7 +144,8 @@ export default function AdminRegisterCard() {
     setError(null);
     try {
       const { data } = await api.get("/patients", { params: { search: search.trim() } });
-      setSearchResults(data.filter((p) => !p.cardUid));
+      // patients with no card, or whose card was reported lost (it gets replaced)
+      setSearchResults(data.filter((p) => !p.cardUid || p.cardStatus === "lost"));
     } catch {
       setError(t("Search failed."));
     } finally {
@@ -296,6 +298,12 @@ export default function AdminRegisterCard() {
                 ? t("This patient can keep using their existing login — only the card is new.")
                 : `A verification email has been sent to ${success.email} — they must confirm it before they can log in.`}
             </p>
+            <button
+              onClick={() => downloadCardPdf({ name: success.name, cardUid: success.cardUid }).catch(() => setError(t("Couldn't create the PDF.")))}
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              <Download size={16} /> {t("Download card to print (PDF)")}
+            </button>
             <div className="mt-4">
               <QrCodeCard
                 value={success.cardUid}

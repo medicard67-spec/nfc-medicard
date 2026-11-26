@@ -110,7 +110,7 @@ export default function AdminPatients() {
                     <Link to={`/admin/patients/${p.uid}`} className="block break-words font-semibold text-slate-800 hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-400">
                       {p.name}
                     </Link>
-                    <CardStatusBadge cardUid={p.cardUid} />
+                    <CardStatusBadge cardUid={p.cardUid} status={p.cardStatus} />
                   </div>
                   <div className="flex flex-shrink-0 gap-3">
                     <Link to={`/admin/patients/${p.uid}`} className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">
@@ -165,7 +165,7 @@ export default function AdminPatients() {
                       <input size={8} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
                     </td>
                     <td className="px-3 py-2">
-                      <CardStatusBadge cardUid={p.cardUid} />
+                      <CardStatusBadge cardUid={p.cardUid} status={p.cardStatus} />
                     </td>
                     <td className="px-3 py-2">
                       <input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-16 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm" />
@@ -198,7 +198,7 @@ export default function AdminPatients() {
                       </Link>
                     </td>
                     <td className="px-3 py-2">
-                      <CardStatusBadge cardUid={p.cardUid} />
+                      <CardStatusBadge cardUid={p.cardUid} status={p.cardStatus} />
                     </td>
                     <td className="px-3 py-2">{p.age}</td>
                     <td className="px-3 py-2">{t(p.gender)}</td>

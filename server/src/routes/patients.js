@@ -161,21 +161,32 @@ router.post("/:id/card", requireAuth, requireRole("admin"), async (req, res) => 
   const { cardUid } = req.body;
   if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
 
-  const { data: patient } = await supabase.from("patients").select("id, name, card_uid").eq("id", req.params.id).maybeSingle();
+  const { data: patient } = await supabase.from("patients").select("id, name, card_uid, card_status").eq("id", req.params.id).maybeSingle();
   if (!patient) return res.status(404).json({ error: "Patient not found" });
-  if (patient.card_uid) return res.status(409).json({ error: "This patient already has a card assigned." });
+  // a card reported lost can be replaced; an active one can't be overwritten
+  const replacing = patient.card_uid && patient.card_status === "lost" ? patient.card_uid : null;
+  if (patient.card_uid && !replacing) return res.status(409).json({ error: "This patient already has a card assigned." });
 
   const { data: existingCard } = await supabase.from("patients").select("id").eq("card_uid", cardUid).maybeSingle();
   if (existingCard) return res.status(409).json({ error: "This card UID is already registered." });
+  const { data: retiredCard } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", cardUid).maybeSingle();
+  if (retiredCard) return res.status(409).json({ error: "This card was replaced before and can't be used again." });
 
+  if (replacing) {
+    await supabase.from("retired_cards").upsert({ card_uid: replacing, patient_id: patient.id, reason: "lost" });
+  }
   const { data, error } = await supabase
     .from("patients")
-    .update({ card_uid: cardUid, updated_at: new Date().toISOString() })
+    .update({
+      card_uid: cardUid,
+      updated_at: new Date().toISOString(),
+      ...(replacing ? { card_status: "active", card_lost_at: null } : {}),
+    })
     .eq("id", req.params.id)
     .select()
     .single();
   if (error || !data) return res.status(404).json({ error: "Patient not found" });
-  await logAudit(req.user, "nfc.register", "patient", data.id, { cardUid, name: data.name, existingPatient: true });
+  await logAudit(req.user, "nfc.register", "patient", data.id, { cardUid, name: data.name, existingPatient: true, replaced: replacing });
   res.json(toPatientJson(data));
 });
 

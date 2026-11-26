@@ -77,6 +77,9 @@ create table if not exists patients (
   emergency_contact_name text not null default '',
   emergency_contact_phone text not null default '',
   card_uid text unique,
+  -- 'lost' keeps the card on the patient so a scan can warn, until found or replaced
+  card_status text not null default 'active' check (card_status in ('active', 'lost')),
+  card_lost_at timestamptz,
   registered_by text,
   avatar_url text,
   created_at timestamptz not null default now(),
@@ -305,3 +308,28 @@ create table if not exists device_tokens (
 
 alter table device_tokens enable row level security;
 create index if not exists device_tokens_user_id_idx on device_tokens(user_id);
+
+-- ---------------------------------------------------------------------------
+-- retired_cards: replaced cards, blocked for good (and the card history).
+-- card_link_requests: a patient's pending "link my card" emailed-code check.
+-- ---------------------------------------------------------------------------
+create table if not exists retired_cards (
+  card_uid text primary key,
+  patient_id uuid references patients(id) on delete cascade,
+  reason text not null default 'lost',
+  linked_at timestamptz,
+  retired_at timestamptz not null default now()
+);
+
+alter table retired_cards enable row level security;
+create index if not exists retired_cards_patient_id_idx on retired_cards(patient_id);
+
+create table if not exists card_link_requests (
+  patient_id uuid primary key references patients(id) on delete cascade,
+  card_uid text not null,
+  attempts int not null default 0,
+  sent_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+
+alter table card_link_requests enable row level security;

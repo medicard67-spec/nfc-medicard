@@ -29,14 +29,14 @@ function bytesToHexUid(bytes) {
 // Starts a scan session and resolves with the first card's normalized UID.
 // Rejects if the user denies the NFC permission prompt, cancels via the
 // AbortSignal, or scanning otherwise fails.
-export function scanOnce({ signal } = {}) {
+export function scanOnce({ signal, prompt } = {}) {
   if (!isNfcSupported()) {
     return Promise.reject(new Error(t("NFC is not supported on this device/browser.")));
   }
-  return isNative ? scanOnceNative({ signal }) : scanOnceWeb({ signal });
+  return isNative ? scanOnceNative({ signal, prompt }) : scanOnceWeb({ signal });
 }
 
-function scanOnceNative({ signal }) {
+function scanOnceNative({ signal, prompt }) {
   return new Promise((resolve, reject) => {
     let listenerHandle = null;
     let settled = false;
@@ -63,7 +63,7 @@ function scanOnceNative({ signal }) {
     })
       .then((handle) => {
         listenerHandle = handle;
-        return CapacitorNfc.startScanning({ alertMessage: "Hold the patient's NFC card near your device..." });
+        return CapacitorNfc.startScanning({ alertMessage: prompt || "Hold the patient's NFC card near your device..." });
       })
       .catch((err) => finish(reject, err instanceof Error ? err : new Error(String(err))));
   });

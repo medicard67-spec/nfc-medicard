@@ -42,10 +42,27 @@ router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req,
     .eq("card_uid", req.params.cardUid)
     .maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
+  const by = req.user.name || req.user.email;
+  if (data && data.card_status === "lost") {
+    // a lost card opens nothing: the admins and the patient hear about the scan
+    await logAudit(req.user, "nfc.scan_lost", "patient", data.id, { cardUid: req.params.cardUid, method });
+    await notify((await adminIds()).filter((id) => id !== req.user.uid), "card.lost_scanned",
+      { patient: data.name, cardUid: req.params.cardUid, by }, `/admin/patients/${data.id}`);
+    await notify(data.id, "card.lost_scanned", { cardUid: req.params.cardUid, by }, "/patient/card");
+    return res.status(410).json({
+      lost: true,
+      error: "This card was reported lost, so its records are not shown. Find the patient by name or IC instead.",
+    });
+  }
   if (!data) {
+    const { data: retired } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", req.params.cardUid).maybeSingle();
+    if (retired) {
+      await logAudit(req.user, "nfc.scan_retired", "card", req.params.cardUid, { cardUid: req.params.cardUid, method });
+      return res.status(410).json({ retired: true, error: "This card was replaced and no longer works. Find the patient by name or IC instead." });
+    }
     // tell the admins: it may be a lost card from another system, or someone trying cards
     await notify((await adminIds()).filter((id) => id !== req.user.uid), "card.unknown",
-      { cardUid: req.params.cardUid, by: req.user.name || req.user.email }, "/admin/audit-log");
+      { cardUid: req.params.cardUid, by }, "/admin/audit-log");
     return res.status(404).json({ error: "This card is not registered to any patient." });
   }
   await logAudit(req.user, "nfc.scan", "patient", data.id, { cardUid: req.params.cardUid, method });
@@ -55,7 +72,7 @@ router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req,
     const { data: doctor } = await supabase.from("doctors").select("hospital").eq("id", req.user.uid).maybeSingle();
     hospital = doctor?.hospital || null;
   }
-  await notify(data.id, "card.scanned", { by: req.user.name || req.user.email, hospital, method }, "/patient/profile");
+  await notify(data.id, "card.scanned", { by, hospital, method }, "/patient/profile");
   res.json(toEmergencyProfileJson(data));
 });
 
@@ -71,7 +88,8 @@ router.post("/register", requireAuth, requireRole("admin"), async (req, res) => 
     .select("id")
     .eq("card_uid", cardUid)
     .maybeSingle();
-  if (existingCard) {
+  const { data: retiredCard } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", cardUid).maybeSingle();
+  if (existingCard || retiredCard) {
     return res.status(409).json({ error: "This card UID is already registered." });
   }
 

@@ -144,3 +144,36 @@ describe("GET /api/nfc/:cardUid", () => {
     );
   });
 });
+
+describe("GET /api/nfc/:cardUid with lost or replaced cards", () => {
+  it("does not open a card reported lost, and warns the admins and patient", async () => {
+    const made = [];
+    mockSupabase.from.mockImplementation((table) => {
+      const result = table === "patients"
+        ? { data: { id: "p1", name: "Ahmad Faiz", card_uid: "04A3B2C1", card_status: "lost" }, error: null }
+        : table === "profiles" ? { data: [{ id: "admin1" }], error: null } : { data: [], error: null };
+      const q = chain(result);
+      made.push({ table, q });
+      return q;
+    });
+
+    const res = await request(buildApp()).get("/api/nfc/04A3B2C1");
+
+    expect(res.status).toBe(410);
+    expect(res.body.lost).toBe(true);
+    expect(res.body.name).toBeUndefined();
+    const types = made.filter((m) => m.table === "notifications").map((m) => m.q.insert.mock.calls[0][0][0]);
+    expect(types.map((r) => [r.user_id, r.type])).toEqual([["admin1", "card.lost_scanned"], ["p1", "card.lost_scanned"]]);
+    mockSupabase.from.mockReset();
+  });
+
+  it("says a replaced card no longer works", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no patient has it
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { card_uid: "OLD1" }, error: null })); // retired
+
+    const res = await request(buildApp()).get("/api/nfc/OLD1");
+
+    expect(res.status).toBe(410);
+    expect(res.body.retired).toBe(true);
+  });
+});

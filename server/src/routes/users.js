@@ -103,6 +103,9 @@ export function toPatientJson(row) {
     emergencyContactName: row.emergency_contact_name,
     emergencyContactPhone: row.emergency_contact_phone,
     cardUid: row.card_uid,
+    // "active" or "lost" (null when there is no card); older rows have no status yet
+    cardStatus: row.card_uid ? row.card_status || "active" : null,
+    cardLostAt: row.card_lost_at || null,
     avatarUrl: row.avatar_url,
     createdAt: row.created_at,
   };

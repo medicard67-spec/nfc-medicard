@@ -51,6 +51,24 @@ export function describeNotification(n) {
       };
     case "card.unknown":
       return { icon: CreditCard, tone: "alert", title: t("Unregistered card scanned"), body: `${d.cardUid} · ${t("by {name}", { name: d.by })}` };
+    case "card.linked":
+      return {
+        icon: CreditCard, tone: "info",
+        title: t("{name} linked a new card", { name: d.patient }),
+        body: d.replaced ? t("Card ··{uid} · replaces a lost card", { uid: String(d.cardUid).slice(-4) }) : t("Card ··{uid}", { uid: String(d.cardUid).slice(-4) }),
+      };
+    case "card.lost":
+      return {
+        icon: TriangleAlert, tone: "warn",
+        title: t("Card reported lost: {name}", { name: d.patient }),
+        body: t("Card ··{uid} is blocked · by {name}", { uid: String(d.cardUid).slice(-4), name: d.by }),
+      };
+    case "card.lost_scanned":
+      return {
+        icon: ShieldAlert, tone: "alert",
+        title: d.patient ? t("Lost card scanned: {name}", { name: d.patient }) : t("Someone scanned your lost card"),
+        body: t("Card ··{uid} · by {name}. No records were shown.", { uid: String(d.cardUid).slice(-4), name: d.by }),
+      };
     case "admission.admitted":
       return { icon: BedDouble, tone: "info", title: t("You have been admitted"), body: [d.ward, d.by].filter(Boolean).join(" · ") };
     case "admission.discharged":

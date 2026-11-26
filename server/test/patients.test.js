@@ -148,7 +148,8 @@ describe("POST /api/patients/:id/card", () => {
 
   it("binds the card to an existing patient with no account changes", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz", card_uid: null }, error: null }));
-    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // card not in use
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // card never replaced
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: {

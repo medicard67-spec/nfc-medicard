@@ -173,3 +173,78 @@ describe("PATCH /api/queue/:id/call", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("POST /api/queue/self (patient taps their own card)", () => {
+  // answers per table, in the order the route asks
+  function tables(map) {
+    const made = [];
+    mockSupabase.from.mockImplementation((table) => {
+      const list = map[table] || [];
+      const n = made.filter((m) => m.table === table).length;
+      const q = chain(list[n] ?? { data: null, error: null });
+      made.push({ table, q });
+      return q;
+    });
+    return made;
+  }
+  const patient = { id: "p1", name: "Ahmad Faiz", card_uid: "AABB", card_status: "active" };
+
+  beforeEach(() => {
+    currentUser = { uid: "p1", role: "patient", name: "Ahmad Faiz", email: "faiz@example.com" };
+  });
+
+  it("checks in a patient with an appointment today, to that doctor", async () => {
+    const made = tables({
+      patients: [{ data: patient, error: null }],
+      queue_tickets: [
+        { data: null, error: null }, // no ticket yet today
+        { count: 6, error: null },
+        { data: { id: "t9", patient_id: "p1", patient_name: "Ahmad Faiz", number: 7, room: "Dr. Sarah Jenkins", status: "waiting" }, error: null },
+      ],
+      appointments: [{ data: { id: "a1", doctor_name: "Dr. Sarah Jenkins", start_time: "10:00:00" }, error: null }],
+    });
+
+    const res = await request(buildApp()).post("/api/queue/self").send({ cardUid: "aa:bb" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.number).toBe(7);
+    const insert = made.filter((m) => m.table === "queue_tickets")[2].q.insert;
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ patient_id: "p1", number: 7, room: "Dr. Sarah Jenkins" }));
+    mockSupabase.from.mockReset();
+  });
+
+  it("refuses without an appointment today", async () => {
+    tables({ patients: [{ data: patient, error: null }] });
+    const res = await request(buildApp()).post("/api/queue/self").send({ cardUid: "AABB" });
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe("no-appointment");
+    mockSupabase.from.mockReset();
+  });
+
+  it("refuses someone else's card or a lost card", async () => {
+    tables({ patients: [{ data: patient, error: null }, { data: { ...patient, card_status: "lost" }, error: null }] });
+    const other = await request(buildApp()).post("/api/queue/self").send({ cardUid: "CCDD" });
+    const lost = await request(buildApp()).post("/api/queue/self").send({ cardUid: "AABB" });
+    expect(other.status).toBe(403);
+    expect(lost.status).toBe(403);
+    mockSupabase.from.mockReset();
+  });
+
+  it("returns today's ticket instead of a second one", async () => {
+    tables({
+      patients: [{ data: patient, error: null }],
+      queue_tickets: [{ data: { id: "t3", patient_id: "p1", number: 3, room: "Room 1", status: "waiting" }, error: null }],
+    });
+    const res = await request(buildApp()).post("/api/queue/self").send({ cardUid: "AABB" });
+    expect(res.status).toBe(200);
+    expect(res.body.alreadyCheckedIn).toBe(true);
+    expect(res.body.number).toBe(3);
+    mockSupabase.from.mockReset();
+  });
+
+  it("is for patients only", async () => {
+    currentUser = { uid: "admin1", role: "admin", name: "System Administrator" };
+    const res = await request(buildApp()).post("/api/queue/self").send({ cardUid: "AABB" });
+    expect(res.status).toBe(403);
+  });
+});

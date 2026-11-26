@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   FileText, ClipboardList, FlaskConical, ScanLine, TriangleAlert, Phone, Pill, X, Pencil, Check,
-  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw,
+  Users, Share2, BedDouble, ChevronDown, ChevronRight, LogOut, RefreshCw, CreditCard,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { downloadCardPdf } from "../../lib/medicardPrint.js";
 import Conversation from "../../components/Conversation.jsx";
 import api from "../../lib/api.js";
 import Card from "../../components/Card.jsx";
@@ -21,8 +23,61 @@ import { nowTimeKey } from "../../lib/appointmentTime.js";
 
 const TABS = ["Emergency", "History", "Medications", "Lab Results", "Imaging", "Update Record", "Message"];
 
+const headerButton =
+  "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+
+// Admin: print the patient's card, or report it lost / found.
+function CardActions({ patient, onChanged }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const lost = patient.cardStatus === "lost";
+
+  const report = async () => {
+    if (!lost && !window.confirm(t("Block {name}'s card? It stops opening their records straight away.", { name: patient.name }))) return;
+    setBusy(true);
+    try {
+      const { data } = await api.post(`/cards/${lost ? "found" : "lost"}`, { patientId: patient.uid });
+      onChanged((p) => ({ ...p, cardStatus: data.status, cardLostAt: data.lostAt }));
+      toast.success(lost ? t("The card works again.") : t("Card blocked. Link a new one from Register New Card."));
+    } catch (err) {
+      toast.error(err.response?.data?.error || t("Something went wrong. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const print = async () => {
+    setBusy(true);
+    try {
+      await downloadCardPdf({ name: patient.name, cardUid: patient.cardUid });
+    } catch {
+      toast.error(t("Couldn't create the PDF."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      {!lost && (
+        <button onClick={print} disabled={busy} className={headerButton}>
+          <CreditCard size={15} /> {t("Card PDF")}
+        </button>
+      )}
+      <button
+        onClick={report}
+        disabled={busy}
+        className={lost ? headerButton : `${headerButton} !text-red-600 dark:!text-red-400`}
+      >
+        {lost ? <Check size={15} /> : <TriangleAlert size={15} />} {lost ? t("Card found") : t("Report card lost")}
+      </button>
+    </>
+  );
+}
+
 export default function PatientDetail() {
   const { id } = useParams();
+  const { role } = useAuth();
   // ?tab=Message opens a tab directly (the doctor's inbox links here)
   const [searchParams] = useSearchParams();
   const startTab = TABS.includes(searchParams.get("tab")) ? searchParams.get("tab") : "Emergency";
@@ -73,20 +128,23 @@ export default function PatientDetail() {
           <div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{patient.name}</h1>
-              <CardStatusBadge cardUid={patient.cardUid} />
+              <CardStatusBadge cardUid={patient.cardUid} status={patient.cardStatus} />
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("IC:")} {patient.ic} &middot; {t(patient.gender)}, {patient.age} {t("yrs")}
             </p>
           </div>
         </div>
-        <button
-          onClick={() => void exportPatientRecordPdf({ patient, history, medications, labs, radiology })}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-soft hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-        >
-          <FileText size={15} />
-          {t("Export PDF")}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {role === "admin" && patient.cardUid && <CardActions patient={patient} onChanged={setPatient} />}
+          <button
+            onClick={() => void exportPatientRecordPdf({ patient, history, medications, labs, radiology })}
+            className={headerButton}
+          >
+            <FileText size={15} />
+            {t("Export PDF")}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
