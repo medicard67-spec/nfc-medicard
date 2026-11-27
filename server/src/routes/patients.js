@@ -7,6 +7,7 @@ import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { uploadBuffer } from "../lib/upload.js";
 import { getClientOrigin } from "../lib/env.js";
+import { isPhoneToken } from "../lib/onlineCard.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -160,6 +161,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 router.post("/:id/card", requireAuth, requireRole("admin"), async (req, res) => {
   const { cardUid } = req.body;
   if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
+  if (isPhoneToken(cardUid)) return res.status(400).json({ error: "That was a phone, not a MediCard. Tap the physical card instead." });
 
   const { data: patient } = await supabase.from("patients").select("id, name, card_uid, card_status").eq("id", req.params.id).maybeSingle();
   if (!patient) return res.status(404).json({ error: "Patient not found" });

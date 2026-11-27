@@ -5,6 +5,7 @@ import { createPatientAccount } from "./patients.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { ageFromDob } from "../lib/time.js";
+import { isPhoneToken, resolvePhoneToken } from "../lib/onlineCard.js";
 
 const router = Router();
 
@@ -35,7 +36,20 @@ function toEmergencyProfileJson(row) {
 // patient chart is a separate, deliberate lookup (GET /patients/:id) from
 // the "Open Full Record" action, not something a scan exposes by default.
 router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
-  const method = SCAN_METHODS.has(req.query.method) ? req.query.method : "manual";
+  let method = SCAN_METHODS.has(req.query.method) ? req.query.method : "manual";
+  // a patient's phone (online MediCard) stands in for their physical card
+  if (isPhoneToken(req.params.cardUid)) {
+    const cardUid = await resolvePhoneToken(req.params.cardUid);
+    if (!cardUid) {
+      await logAudit(req.user, "nfc.scan_phone_invalid", "card", null, { method: "phone" });
+      return res.status(410).json({
+        retired: true,
+        error: "This phone's MediCard no longer works. Ask the patient to add their card to the phone again, or find them by name or IC.",
+      });
+    }
+    req.params.cardUid = cardUid;
+    method = "phone";
+  }
   const { data, error } = await supabase
     .from("patients")
     .select("*")
@@ -81,6 +95,9 @@ router.post("/register", requireAuth, requireRole("admin"), async (req, res) => 
   const { cardUid, email, password, name } = req.body;
   if (!cardUid || !email || !password || !name) {
     return res.status(400).json({ error: "cardUid, email, password, and name are required" });
+  }
+  if (isPhoneToken(cardUid)) {
+    return res.status(400).json({ error: "That was a phone, not a MediCard. Tap the physical card instead." });
   }
 
   const { data: existingCard } = await supabase

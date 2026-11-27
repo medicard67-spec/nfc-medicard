@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The online MediCard: staff readers select this AID ("MEDICARD" behind the
+     proprietary F0 prefix) and the phone answers with the patient's token.
+     Like a phone wallet, it only answers while the phone is unlocked. -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/online_card_description"
+    android:requireDeviceUnlock="true">
+    <aid-group
+        android:category="other"
+        android:description="@string/online_card_description">
+        <aid-filter android:name="F04D45444943415244" />
+    </aid-group>
+</host-apdu-service>

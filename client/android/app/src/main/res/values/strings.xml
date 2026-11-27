@@ -4,4 +4,5 @@
     <string name="title_activity_main">MediCard</string>
     <string name="package_name">com.medicard.nfc</string>
     <string name="custom_url_scheme">com.medicard.nfc</string>
+    <string name="online_card_description">MediCard on this phone</string>
 </resources>

@@ -177,3 +177,51 @@ describe("GET /api/nfc/:cardUid with lost or replaced cards", () => {
     expect(res.body.retired).toBe(true);
   });
 });
+
+describe("GET /api/nfc/:token from a patient's phone (online MediCard)", () => {
+  const TOKEN = `MCP${"0123456789ABCDEF".repeat(2)}`;
+  const byTable = (tables) => {
+    const made = [];
+    mockSupabase.from.mockImplementation((table) => {
+      const q = chain(tables[table] || { data: [], error: null });
+      made.push({ table, q });
+      return q;
+    });
+    return made;
+  };
+
+  it("opens the patient's records like their physical card", async () => {
+    const made = byTable({
+      online_cards: { data: { id: "oc1", patient_id: "p1", card_uid: "04A3B2C1", revoked_at: null }, error: null },
+      patients: { data: { id: "p1", name: "Ahmad Faiz", card_uid: "04A3B2C1", card_status: "active" }, error: null },
+    });
+
+    const res = await request(buildApp()).get(`/api/nfc/${TOKEN}`).query({ method: "nfc" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe("Ahmad Faiz");
+    expect(res.body.cardUid).toBe("04A3B2C1");
+    // looked up by hash, never by the token itself
+    const lookup = made.find((m) => m.table === "online_cards").q.eq.mock.calls[0];
+    expect(lookup[0]).toBe("token_hash");
+    expect(lookup[1]).not.toContain(TOKEN);
+    mockSupabase.from.mockReset();
+  });
+
+  it("refuses a phone whose card was replaced", async () => {
+    byTable({
+      online_cards: { data: { id: "oc1", patient_id: "p1", card_uid: "OLD1", revoked_at: null }, error: null },
+      patients: { data: { id: "p1", card_uid: "NEW2" }, error: null },
+    });
+    const res = await request(buildApp()).get(`/api/nfc/${TOKEN}`);
+    expect(res.status).toBe(410);
+    mockSupabase.from.mockReset();
+  });
+
+  it("refuses a removed phone", async () => {
+    byTable({ online_cards: { data: { id: "oc1", patient_id: "p1", card_uid: "04A3B2C1", revoked_at: "2026-11-27T00:00:00Z" }, error: null } });
+    const res = await request(buildApp()).get(`/api/nfc/${TOKEN}`);
+    expect(res.status).toBe(410);
+    mockSupabase.from.mockReset();
+  });
+});

@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { sendCardCode, checkCardCode, maskEmail } from "../lib/cardCode.js";
+import { isPhoneToken, newPhoneToken, hashPhoneToken } from "../lib/onlineCard.js";
 
 // "My MediCard": a patient checks a card they tap on their phone, links a
 // new card with an emailed code, and reports a card lost or found. Admins
@@ -51,10 +52,24 @@ router.get("/mine", requireAuth, requireRole("patient"), async (req, res) => {
     .select("card_uid, reason, linked_at, retired_at")
     .eq("patient_id", me.id)
     .order("retired_at", { ascending: false });
+  const { data: phones } = await supabase
+    .from("online_cards")
+    .select("id, card_uid, device_name, created_at, last_used_at")
+    .eq("patient_id", me.id)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false });
   res.json({
     ...cardJson(me),
     hasEmail: Boolean(me.email),
     history: (history || []).map((h) => ({ cardUid: h.card_uid, reason: h.reason, linkedAt: h.linked_at, retiredAt: h.retired_at })),
+    // phones the card was added to; a phone card of a replaced card no longer works
+    phones: (phones || []).map((p) => ({
+      id: p.id,
+      deviceName: p.device_name,
+      addedAt: p.created_at,
+      lastUsedAt: p.last_used_at,
+      works: p.card_uid === me.card_uid && me.card_status !== "lost",
+    })),
   });
 });
 
@@ -80,20 +95,34 @@ router.post("/check", requireAuth, requireRole("patient"), async (req, res) => {
   res.json({ result, cardUid, canLink, card: cardJson(me) });
 });
 
-// Step 1 of linking a card: check it is free, then email the patient a code.
+// Step 1 of adding a card (FinEasy style: tap your card, confirm by email).
+// Your own active card -> it gets added to this phone. A new, unused card ->
+// it is linked to your account (replacing a lost one) and added to the phone.
+// Anyone else's card is refused without saying whose it is.
 router.post("/link/start", requireAuth, requireRole("patient"), async (req, res) => {
   const cardUid = normalizeUid(req.body.cardUid);
   if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
+  if (isPhoneToken(cardUid)) return res.status(409).json({ code: "card-taken", error: "This card can't be added." });
   const me = await loadPatient(req.user.uid);
   if (!me) return res.status(404).json({ error: "Patient not found" });
-  if (me.card_uid && me.card_status !== "lost") {
-    return res.status(409).json({ code: "has-card", error: "You already have an active card. Report it lost first to replace it." });
+
+  let mode;
+  if (me.card_uid === cardUid) {
+    if (me.card_status === "lost") {
+      return res.status(409).json({ code: "card-lost", error: "This card is reported lost. Turn it back on first if you found it." });
+    }
+    mode = "add";
+  } else {
+    const { owner, retired } = await findCard(cardUid);
+    if (owner || retired) return res.status(409).json({ code: "card-taken", error: "This card can't be added." });
+    if (me.card_uid && me.card_status !== "lost") {
+      return res.status(409).json({ code: "has-card", error: "You already have an active card. Report it lost first to replace it." });
+    }
+    mode = "link";
   }
   if (!me.email) {
     return res.status(400).json({ code: "no-email", error: "Your account has no email. Please link your card at the registration desk." });
   }
-  const { owner, retired } = await findCard(cardUid);
-  if (owner || retired) return res.status(409).json({ code: "card-taken", error: "This card can't be linked." });
 
   const { data: pending } = await supabase.from("card_link_requests").select("sent_at").eq("patient_id", me.id).maybeSingle();
   if (pending) {
@@ -117,8 +146,8 @@ router.post("/link/start", requireAuth, requireRole("patient"), async (req, res)
     expires_at: new Date(now + CODE_MINUTES * 60000).toISOString(),
   });
   if (error) return res.status(500).json({ error: error.message });
-  await logAudit(req.user, "card.link_requested", "patient", me.id, { cardUid });
-  res.json({ emailHint: maskEmail(me.email), expiresInMinutes: CODE_MINUTES, cardUid });
+  await logAudit(req.user, "card.link_requested", "patient", me.id, { cardUid, mode });
+  res.json({ emailHint: maskEmail(me.email), expiresInMinutes: CODE_MINUTES, cardUid, mode });
 });
 
 // Step 2: the patient typed the code. Right code -> the card is theirs.
@@ -147,29 +176,71 @@ router.post("/link/confirm", requireAuth, requireRole("patient"), async (req, re
     return res.status(400).json({ code: "wrong-code", attemptsLeft: MAX_ATTEMPTS - attempts, error: "That code is not right." });
   }
 
-  // someone may have linked the card in the meantime
-  const { owner, retired } = await findCard(pending.card_uid);
-  if (owner || retired) {
-    await supabase.from("card_link_requests").delete().eq("patient_id", me.id);
-    return res.status(409).json({ code: "card-taken", error: "This card can't be linked." });
-  }
+  let updated = me;
+  if (me.card_uid === pending.card_uid) {
+    // already their card: only adding it to this phone
+    if (me.card_status === "lost") {
+      await supabase.from("card_link_requests").delete().eq("patient_id", me.id);
+      return res.status(409).json({ code: "card-lost", error: "This card is reported lost." });
+    }
+  } else {
+    // someone may have linked the card in the meantime
+    const { owner, retired } = await findCard(pending.card_uid);
+    if (owner || retired) {
+      await supabase.from("card_link_requests").delete().eq("patient_id", me.id);
+      return res.status(409).json({ code: "card-taken", error: "This card can't be added." });
+    }
 
-  const replaced = me.card_uid || null;
-  if (replaced) {
-    await supabase.from("retired_cards").upsert({ card_uid: replaced, patient_id: me.id, reason: "lost", linked_at: null });
+    const replaced = me.card_uid || null;
+    if (replaced) {
+      await supabase.from("retired_cards").upsert({ card_uid: replaced, patient_id: me.id, reason: "lost", linked_at: null });
+    }
+    const { data, error } = await supabase
+      .from("patients")
+      .update({ card_uid: pending.card_uid, card_status: "active", card_lost_at: null, updated_at: new Date().toISOString() })
+      .eq("id", me.id)
+      .select(PATIENT_COLUMNS)
+      .single();
+    if (error || !data) return res.status(500).json({ error: error?.message || "Could not link the card" });
+    updated = data;
+    await logAudit(req.user, "card.self_link", "patient", me.id, { cardUid: pending.card_uid, replaced, name: me.name });
+    await notify(await adminIds(), "card.linked", { patient: me.name, cardUid: pending.card_uid, replaced }, "/admin/patients");
   }
-  const { data: updated, error } = await supabase
-    .from("patients")
-    .update({ card_uid: pending.card_uid, card_status: "active", card_lost_at: null, updated_at: new Date().toISOString() })
-    .eq("id", me.id)
-    .select(PATIENT_COLUMNS)
-    .single();
-  if (error || !updated) return res.status(500).json({ error: error?.message || "Could not link the card" });
   await supabase.from("card_link_requests").delete().eq("patient_id", me.id);
 
-  await logAudit(req.user, "card.self_link", "patient", me.id, { cardUid: pending.card_uid, replaced, name: me.name });
-  await notify(await adminIds(), "card.linked", { patient: me.name, cardUid: pending.card_uid, replaced }, "/admin/patients");
-  res.json(cardJson(updated));
+  // the phone becomes the card: it keeps the token, we keep its hash
+  let onlineCard = null;
+  if (req.body.phone) {
+    const token = newPhoneToken();
+    const deviceName = String(req.body.deviceName || "").slice(0, 80) || null;
+    const { data: row, error } = await supabase
+      .from("online_cards")
+      .insert({ patient_id: me.id, card_uid: pending.card_uid, token_hash: hashPhoneToken(token), device_name: deviceName })
+      .select("id")
+      .single();
+    if (error || !row) return res.status(500).json({ error: error?.message || "Could not add the card to this phone" });
+    if (req.body.replaceId) {
+      await supabase.from("online_cards").update({ revoked_at: new Date().toISOString() })
+        .eq("id", req.body.replaceId).eq("patient_id", me.id).is("revoked_at", null);
+    }
+    await logAudit(req.user, "card.phone_added", "patient", me.id, { cardUid: pending.card_uid, deviceName });
+    onlineCard = { id: row.id, token };
+  }
+  res.json({ ...cardJson(updated), onlineCard });
+});
+
+// Remove the card from a phone (this one, or a lost phone from the list).
+router.delete("/online/:id", requireAuth, requireRole("patient"), async (req, res) => {
+  const { data, error } = await supabase
+    .from("online_cards")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .eq("patient_id", req.user.uid)
+    .is("revoked_at", null)
+    .select("id, device_name");
+  if (error) return res.status(500).json({ error: error.message });
+  if (data?.length) await logAudit(req.user, "card.phone_removed", "patient", req.user.uid, { deviceName: data[0].device_name });
+  res.json({ ok: true });
 });
 
 // Which patient a lost/found report is for: patients report their own,

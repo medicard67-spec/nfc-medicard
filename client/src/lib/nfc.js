@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { CapacitorNfc } from "@capgo/capacitor-nfc";
 import { t } from "../i18n/index.js";
+import { PhoneCard, hasPhoneCardPlugin } from "./phoneCard.js";
 
 // Android's WebView (what the installed app actually runs in) has no Web
 // NFC support at all -- NDEFReader exists on window so feature-detection
@@ -33,7 +34,25 @@ export function scanOnce({ signal, prompt } = {}) {
   if (!isNfcSupported()) {
     return Promise.reject(new Error(t("NFC is not supported on this device/browser.")));
   }
+  if (hasPhoneCardPlugin()) return scanOncePhoneCard({ signal });
   return isNative ? scanOnceNative({ signal, prompt }) : scanOnceWeb({ signal });
+}
+
+// Android app: reads a physical card's UID, or a patient's phone (online
+// MediCard) which answers with its "MCP..." token, like a payment terminal.
+function scanOncePhoneCard({ signal }) {
+  if (signal?.aborted) return Promise.reject(new Error(t("Scan cancelled.")));
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      PhoneCard.cancelRead().catch(() => {});
+      reject(new Error(t("Scan cancelled.")));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    PhoneCard.readTag({ timeoutMs: 120000 })
+      .then(({ uid }) => resolve(uid))
+      .catch((err) => reject(err instanceof Error ? err : new Error(String(err?.message || err))))
+      .finally(() => signal?.removeEventListener("abort", onAbort));
+  });
 }
 
 function scanOnceNative({ signal, prompt }) {

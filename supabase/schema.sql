@@ -333,3 +333,22 @@ create table if not exists card_link_requests (
 );
 
 alter table card_link_requests enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- online_cards: phones a patient added their MediCard to (tap the phone on a
+-- staff reader). Only the token's SHA-256 is stored; a phone card stops
+-- working once the physical card it came from is lost or replaced.
+-- ---------------------------------------------------------------------------
+create table if not exists online_cards (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients(id) on delete cascade,
+  card_uid text not null,
+  token_hash text not null unique,
+  device_name text,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at timestamptz
+);
+
+alter table online_cards enable row level security;
+create index if not exists online_cards_patient_id_idx on online_cards(patient_id);

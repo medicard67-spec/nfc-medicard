@@ -179,6 +179,72 @@ describe("POST /api/cards/link/start", () => {
   });
 });
 
+describe("adding a card to the phone (online MediCard)", () => {
+  const pending = (extra = {}) => ({
+    patient_id: "p1", card_uid: "AABB", attempts: 0,
+    sent_at: new Date().toISOString(), expires_at: new Date(Date.now() + 600000).toISOString(), ...extra,
+  });
+
+  it("emails a code when the patient taps their own active card", async () => {
+    answers({ data: me({ card_uid: "AABB" }), error: null }, { data: null, error: null });
+    const res = await request(buildApp()).post("/api/cards/link/start").send({ cardUid: "aa:bb" });
+    expect(res.status).toBe(200);
+    expect(res.body.mode).toBe("add");
+    expect(mockCode.send).toHaveBeenCalledWith("faiz@example.com");
+  });
+
+  it("refuses the patient's own card while it is reported lost", async () => {
+    answers({ data: me({ card_uid: "AABB", card_status: "lost" }), error: null });
+    const res = await request(buildApp()).post("/api/cards/link/start").send({ cardUid: "AABB" });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe("card-lost");
+  });
+
+  it("refuses a phone token as a card", async () => {
+    const res = await request(buildApp()).post("/api/cards/link/start").send({ cardUid: `MCP${"A".repeat(32)}` });
+    expect(res.status).toBe(409);
+    expect(mockCode.send).not.toHaveBeenCalled();
+  });
+
+  it("gives the phone a token and stores only its hash", async () => {
+    const insert = chain({ data: { id: "oc1" }, error: null });
+    answers(
+      { data: me({ card_uid: "AABB" }), error: null }, // patient
+      { data: pending(), error: null }, // waiting request
+      { data: null, error: null }, // delete request
+    );
+    mockSupabase.from.mockReturnValueOnce(insert);
+
+    const res = await request(buildApp()).post("/api/cards/link/confirm").send({ code: "123456", phone: true, deviceName: "Pixel 9" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.onlineCard.id).toBe("oc1");
+    expect(res.body.onlineCard.token).toMatch(/^MCP[0-9A-F]{32}$/);
+    const row = insert.insert.mock.calls[0][0];
+    expect(row).toMatchObject({ patient_id: "p1", card_uid: "AABB", device_name: "Pixel 9" });
+    expect(row.token_hash).toHaveLength(64);
+    expect(JSON.stringify(row)).not.toContain(res.body.onlineCard.token);
+  });
+
+  it("lists the phones the card is on", async () => {
+    answers(
+      { data: me({ card_uid: "AABB" }), error: null },
+      { data: [], error: null },
+      { data: [{ id: "oc1", card_uid: "AABB", device_name: "Pixel 9", created_at: "2026-11-27T00:00:00Z" }, { id: "oc0", card_uid: "OLD1", device_name: "Old phone" }], error: null },
+    );
+    const res = await request(buildApp()).get("/api/cards/mine");
+    expect(res.body.phones.map((p) => [p.id, p.works])).toEqual([["oc1", true], ["oc0", false]]);
+  });
+
+  it("removes the card from a phone", async () => {
+    const revoke = chain({ data: [{ id: "oc1", device_name: "Pixel 9" }], error: null });
+    mockSupabase.from.mockReturnValueOnce(revoke);
+    const res = await request(buildApp()).delete("/api/cards/online/oc1");
+    expect(res.status).toBe(200);
+    expect(revoke.eq).toHaveBeenCalledWith("patient_id", "p1");
+  });
+});
+
 describe("POST /api/cards/link/confirm", () => {
   const pending = (extra = {}) => ({
     patient_id: "p1", card_uid: "CCDD", attempts: 0,
@@ -198,7 +264,7 @@ describe("POST /api/cards/link/confirm", () => {
     const res = await request(buildApp()).post("/api/cards/link/confirm").send({ code: "123 456" });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ cardUid: "CCDD", status: "active", lostAt: null });
+    expect(res.body).toEqual({ cardUid: "CCDD", status: "active", lostAt: null, onlineCard: null });
     expect(mockCode.check).toHaveBeenCalledWith("faiz@example.com", "123456");
     expect(update.update).toHaveBeenCalledWith(expect.objectContaining({ card_uid: "CCDD", card_status: "active" }));
   });
