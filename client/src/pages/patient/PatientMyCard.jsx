@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import api from "../../lib/api.js";
 import { isNfcSupported, scanOnce } from "../../lib/nfc.js";
-import { PhoneCard, phoneCardStatus } from "../../lib/phoneCard.js";
+import { PhoneCard, phoneCardStatus, hasPhoneCardPlugin } from "../../lib/phoneCard.js";
 import { downloadCardPdf } from "../../lib/medicardPrint.js";
 import Card from "../../components/Card.jsx";
 import CardStatusBadge from "../../components/CardStatusBadge.jsx";
@@ -49,6 +49,13 @@ export default function PatientMyCard() {
     setCard(mine);
     setPhone(status);
   };
+
+  // while this screen is open, the phone answers readers as this app's card first
+  useEffect(() => {
+    if (!hasPhoneCardPlugin()) return;
+    PhoneCard.setActive({ active: true }).catch(() => {});
+    return () => PhoneCard.setActive({ active: false }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     load();
@@ -339,7 +346,7 @@ function ReadyToTap({ nfcOn }) {
       <div className="text-sm">
         <p className="font-semibold text-emerald-800 dark:text-emerald-200">{t("Ready to tap")}</p>
         <p className="text-emerald-800/80 dark:text-emerald-200/80">
-          {t("Unlock your phone and hold its back near the hospital's MediCard reader.")}
+          {t("Keep this screen open and hold the back of your phone against the staff's phone or reader.")}
         </p>
       </div>
     </div>

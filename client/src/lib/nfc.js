@@ -49,7 +49,16 @@ function scanOncePhoneCard({ signal }) {
     };
     signal?.addEventListener("abort", onAbort, { once: true });
     PhoneCard.readTag({ timeoutMs: 120000 })
-      .then(({ uid }) => resolve(uid))
+      .then(({ uid, iso, sw }) => {
+        // a phone (random UID starting 08) that didn't hand over a MediCard token
+        if (iso && !uid.startsWith("MCP") && uid.startsWith("08")) {
+          reject(new Error(sw === "6A82"
+            ? t("This phone has no MediCard added. On the patient's phone: My MediCard → Add to this phone.")
+            : t("This phone didn't answer as a MediCard (code {code}). Ask the patient to unlock the phone, open My MediCard and tap again.", { code: sw || "none" })));
+          return;
+        }
+        resolve(uid);
+      })
       .catch((err) => reject(err instanceof Error ? err : new Error(String(err?.message || err))))
       .finally(() => signal?.removeEventListener("abort", onAbort));
   });

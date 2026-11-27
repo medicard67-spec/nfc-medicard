@@ -1,12 +1,14 @@
 package com.medicard.nfc;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.nfc.cardemulation.CardEmulation;
 import android.nfc.tech.IsoDep;
 import android.os.Build;
 import android.os.Handler;
@@ -36,6 +38,8 @@ public class PhoneCardPlugin extends Plugin {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private PluginCall pendingRead;
+    private volatile boolean lastIso = false;
+    private volatile String lastSw = null;
     private int readGeneration = 0;
 
     static String storedToken(Context context) {
@@ -82,6 +86,51 @@ public class PhoneCardPlugin extends Plugin {
         call.resolve();
     }
 
+    // While the card screen is open, this app gets the tap first (like a
+    // wallet app in the foreground). Android drops it on pause, so it's
+    // re-applied in handleOnResume.
+    private volatile boolean wantPreferred = false;
+
+    @PluginMethod
+    public void setActive(PluginCall call) {
+        wantPreferred = Boolean.TRUE.equals(call.getBoolean("active", false));
+        applyPreferred();
+        call.resolve();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        applyPreferred();
+    }
+
+    @Override
+    protected void handleOnPause() {
+        super.handleOnPause();
+        Activity activity = getActivity();
+        NfcAdapter nfc = adapter();
+        if (activity == null || nfc == null) return;
+        try {
+            CardEmulation.getInstance(nfc).unsetPreferredService(activity);
+        } catch (Exception ignored) {}
+    }
+
+    private void applyPreferred() {
+        Activity activity = getActivity();
+        NfcAdapter nfc = adapter();
+        if (activity == null || nfc == null) return;
+        if (!getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) return;
+        activity.runOnUiThread(() -> {
+            try {
+                CardEmulation ce = CardEmulation.getInstance(nfc);
+                if (wantPreferred) ce.setPreferredService(activity, new ComponentName(activity, MediCardApduService.class));
+                else ce.unsetPreferredService(activity);
+            } catch (Exception ignored) {
+                // the activity isn't in the foreground yet; handleOnResume retries
+            }
+        });
+    }
+
     @PluginMethod
     public void openNfcSettings(PluginCall call) {
         Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -125,22 +174,26 @@ public class PhoneCardPlugin extends Plugin {
 
     private void onTag(Tag tag, int generation) {
         String uid = null;
+        String sw = null; // what an ISO-DEP tag (e.g. a phone) answered to our SELECT
         IsoDep iso = IsoDep.get(tag);
         if (iso != null) {
             try {
                 iso.connect();
-                iso.setTimeout(2000);
+                iso.setTimeout(3000);
                 byte[] res = iso.transceive(MediCardApduService.selectApdu());
-                if (res.length > 2 && res[res.length - 2] == (byte) 0x90 && res[res.length - 1] == 0x00) {
+                if (res.length >= 2) sw = String.format("%02X%02X", res[res.length - 2] & 0xff, res[res.length - 1] & 0xff);
+                if (res.length > 2 && "9000".equals(sw)) {
                     String token = new String(Arrays.copyOf(res, res.length - 2), StandardCharsets.US_ASCII);
                     if (token.matches("MCP[0-9A-F]{32}")) uid = token;
                 }
-            } catch (Exception ignored) {
-                // not a MediCard phone: fall back to the tag's own UID
+            } catch (Exception e) {
+                sw = "ERR";
             } finally {
                 try { iso.close(); } catch (Exception ignored) {}
             }
         }
+        lastIso = iso != null;
+        lastSw = sw;
         if (uid == null) {
             byte[] id = tag.getId();
             if (id == null || id.length == 0) {
@@ -170,6 +223,8 @@ public class PhoneCardPlugin extends Plugin {
         } else {
             JSObject result = new JSObject();
             result.put("uid", uid);
+            result.put("iso", lastIso);
+            result.put("sw", lastSw);
             call.resolve(result);
         }
     }

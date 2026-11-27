@@ -677,4 +677,7 @@ export default {
   "This card can't be added to your account. If it's yours, please visit the registration desk.": "Kad ini tidak boleh ditambah ke akaun anda. Jika ia milik anda, sila pergi ke kaunter pendaftaran.",
   "This card is reported lost. Tap \"I found it\" first, or add a new card.": "Kad ini dilaporkan hilang. Ketik \"Saya sudah jumpa\" dahulu, atau tambah kad baharu.",
   "That's not your current card. To replace your card, report it lost first.": "Itu bukan kad semasa anda. Untuk menggantikan kad anda, laporkan ia hilang dahulu.",
+  "Keep this screen open and hold the back of your phone against the staff's phone or reader.": "Biarkan skrin ini terbuka dan dekatkan belakang telefon anda pada telefon atau pembaca kakitangan.",
+  "This phone has no MediCard added. On the patient's phone: My MediCard → Add to this phone.": "Telefon ini belum ditambah MediCard. Pada telefon pesakit: MediCard Saya → Tambah ke telefon ini.",
+  "This phone didn't answer as a MediCard (code {code}). Ask the patient to unlock the phone, open My MediCard and tap again.": "Telefon ini tidak menjawab sebagai MediCard (kod {code}). Minta pesakit membuka kunci telefon, buka MediCard Saya dan ketik semula.",
 };
