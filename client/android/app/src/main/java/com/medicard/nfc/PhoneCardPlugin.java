@@ -131,6 +131,51 @@ public class PhoneCardPlugin extends Plugin {
         });
     }
 
+    // Phone-maker wallets that can copy an access card (its fixed UID) into
+    // the phone's secure chip. Apps can't fake a fixed UID themselves, so
+    // for the USB desk scanner we hand the patient over to these wallets.
+    private static final String[][] WALLETS = {
+        { "com.finshell.wallet", "OPPO Wallet" },
+        { "com.coloros.wallet", "OPPO Wallet" },
+        { "com.heytap.wallet", "Wallet" },
+        { "com.oneplus.wallet", "OnePlus Wallet" },
+        { "com.miui.tsmclient", "Mi Wallet" },
+        { "com.huawei.wallet", "Huawei Wallet" },
+        { "com.hihonor.wallet", "Honor Wallet" },
+        { "com.vivo.wallet", "vivo Wallet" },
+    };
+
+    private String[] findWallet() {
+        PackageManager pm = getContext().getPackageManager();
+        for (String[] w : WALLETS) {
+            if (pm.getLaunchIntentForPackage(w[0]) != null) return w;
+        }
+        return null;
+    }
+
+    @PluginMethod
+    public void walletInfo(PluginCall call) {
+        String[] w = findWallet();
+        JSObject result = new JSObject();
+        result.put("available", w != null);
+        result.put("name", w != null ? w[1] : null);
+        result.put("brand", Build.MANUFACTURER);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void openWallet(PluginCall call) {
+        String[] w = findWallet();
+        if (w == null) {
+            call.reject("No wallet that can copy cards was found on this phone.");
+            return;
+        }
+        Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(w[0]);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        call.resolve();
+    }
+
     @PluginMethod
     public void openNfcSettings(PluginCall call) {
         Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

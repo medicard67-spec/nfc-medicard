@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CreditCard, Nfc, Download, CheckCircle2, TriangleAlert, Plus, X, History, MailCheck, Smartphone, Trash2, Settings,
+  Wallet as WalletIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -31,6 +32,7 @@ export default function PatientMyCard() {
   const toast = useToast();
   const [card, setCard] = useState(null);
   const [phone, setPhone] = useState(null); // native status, null outside the Android app
+  const [wallet, setWallet] = useState(null); // { available, name } of the phone maker's wallet
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmLost, setConfirmLost] = useState(false);
@@ -55,6 +57,10 @@ export default function PatientMyCard() {
     if (!hasPhoneCardPlugin()) return;
     PhoneCard.setActive({ active: true }).catch(() => {});
     return () => PhoneCard.setActive({ active: false }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (hasPhoneCardPlugin()) PhoneCard.walletInfo().then(setWallet).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -214,6 +220,8 @@ export default function PatientMyCard() {
             ) : null
           )}
 
+          {status === "active" && wallet && <WalletCopy wallet={wallet} />}
+
           <Card>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               <ActionRow icon={Download} label={t("Download card to print (PDF)")} onClick={download} disabled={busy} />
@@ -350,6 +358,62 @@ function ReadyToTap({ nfcOn }) {
         </p>
       </div>
     </div>
+  );
+}
+
+// The USB desk scanner only reads a card's fixed ID, which only the phone
+// maker's wallet can copy (like FinEasy/OPPO Wallet). We send the patient there.
+function WalletCopy({ wallet }) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+
+  const openWallet = async () => {
+    try {
+      await PhoneCard.openWallet();
+    } catch {
+      toast.error(t("Couldn't open the wallet app."));
+    }
+  };
+
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        <WalletIcon size={22} className="mt-0.5 flex-shrink-0 text-brand-600 dark:text-brand-400" />
+        <div className="flex-1">
+          <p className="font-semibold text-slate-800 dark:text-slate-100">{t("Use your phone on the desk scanner")}</p>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            {wallet.available
+              ? t("Copy your MediCard into {wallet}. Your phone then works on every MediCard scanner, just like the card.", { wallet: wallet.name })
+              : t("Your phone's wallet can't copy cards, so the desk scanner can't read your phone. Use your card, or ask staff to scan your phone with their phone.")}
+          </p>
+        </div>
+      </div>
+      {wallet.available && (
+        <>
+          <button onClick={openWallet} className={`${btnPrimary} mt-3 w-full`}>
+            <WalletIcon size={16} /> {t("Add to {wallet}", { wallet: wallet.name })}
+          </button>
+          <button
+            onClick={() => setOpen(!open)}
+            className="mt-2 w-full text-center text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+          >
+            {open ? t("Hide steps") : t("How to copy your card")}
+          </button>
+          {open && (
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600 dark:text-slate-300">
+              <li>{t("Tap \"Add to {wallet}\" above.", { wallet: wallet.name })}</li>
+              <li>{t("Go to Access cards (sometimes called Door keys or Cards) and tap Add.")}</li>
+              <li>{t("Choose \"Copy physical card\" (or \"Simulate card\").")}</li>
+              <li>{t("Hold your MediCard on the back of your phone until it's copied.")}</li>
+              <li>{t("Name it MediCard. Now tap your unlocked phone on the hospital's scanner.")}</li>
+              <li className="text-slate-500 dark:text-slate-400">
+                {t("If you report your card lost, the copy on your phone is blocked too.")}
+              </li>
+            </ol>
+          )}
+        </>
+      )}
+    </Card>
   );
 }
 

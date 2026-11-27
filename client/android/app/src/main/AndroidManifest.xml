@@ -57,6 +57,19 @@
         </provider>
     </application>
 
+    <!-- Phone wallets that can copy a MediCard (Android 11+ hides other apps
+         unless they're listed here). -->
+    <queries>
+        <package android:name="com.finshell.wallet" />
+        <package android:name="com.coloros.wallet" />
+        <package android:name="com.heytap.wallet" />
+        <package android:name="com.oneplus.wallet" />
+        <package android:name="com.miui.tsmclient" />
+        <package android:name="com.huawei.wallet" />
+        <package android:name="com.hihonor.wallet" />
+        <package android:name="com.vivo.wallet" />
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
