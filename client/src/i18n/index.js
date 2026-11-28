@@ -1,17 +1,13 @@
-// Interface language: English (source text), Bahasa Melayu, Chinese (Simplified, as used in
-// Malaysia) and Tamil. t() takes the English text and returns it in the chosen language, falling
+// Interface language: English (source text) and Bahasa Melayu only. t() takes the English text and returns it in the chosen language, falling
 // back to English when a phrase has no translation yet. Patient data is never translated.
 
 export const LANGUAGES = [
   { code: "en", label: "English", english: "English", short: "EN", locale: "en-MY" },
   { code: "ms", label: "Bahasa Melayu", english: "Malay", short: "BM", locale: "ms-MY" },
-  { code: "zh", label: "中文", english: "Chinese", short: "中文", locale: "zh-Hans-MY" },
-  { code: "ta", label: "தமிழ்", english: "Tamil", short: "தமிழ்", locale: "ta-MY" },
 ];
 
-// Each language's phrases are a separate file, downloaded only when that language is
-// used (English needs none), so most people never download the other three.
-const LOADERS = { ms: () => import("./ms.js"), zh: () => import("./zh.js"), ta: () => import("./ta.js") };
+// The Malay phrases are a separate file, downloaded only when Malay is used (English needs none).
+const LOADERS = { ms: () => import("./ms.js") };
 const DICTS = {};
 
 export async function loadLanguage(code) {

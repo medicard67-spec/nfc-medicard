@@ -3,7 +3,7 @@ import Card from "./Card.jsx";
 import { t, dateLocale } from "../i18n/index.js";
 
 // "12 Oct 2026, 3:42 pm" in Malaysian format; used on the image (in the chosen language) and in
-// the PDF export (always English, since the PDF font has no Chinese or Tamil glyphs).
+// the PDF export (always English).
 export function formatImagingDate(iso, locale = dateLocale()) {
   if (!iso) return "";
   return new Date(iso).toLocaleString(locale, {

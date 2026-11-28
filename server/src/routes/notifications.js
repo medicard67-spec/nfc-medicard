@@ -58,7 +58,7 @@ router.post("/devices", requireAuth, async (req, res) => {
   const { token, platform, lang } = req.body || {};
   if (!token || typeof token !== "string") return res.status(400).json({ error: "token is required" });
   const { error } = await supabase.from("device_tokens").upsert(
-    { user_id: req.user.uid, token, platform: platform || "android", lang: ["en", "ms", "zh", "ta"].includes(lang) ? lang : "en", updated_at: new Date().toISOString() },
+    { user_id: req.user.uid, token, platform: platform || "android", lang: ["en", "ms"].includes(lang) ? lang : "en", updated_at: new Date().toISOString() },
     { onConflict: "token" }
   );
   if (error) return res.status(500).json({ error: error.message });

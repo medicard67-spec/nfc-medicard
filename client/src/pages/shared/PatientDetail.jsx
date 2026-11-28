@@ -672,7 +672,7 @@ function MedicationsTab({ medications, patientId, onSaved }) {
           </div>
           <div className="max-w-full">
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">{t("Renews")}</label>
-            {/* the longest option (Tamil) is wider than a phone, so let the box shrink to fit */}
+            {/* a long option can be wider than a phone, so let the box shrink to fit */}
             <select
               value={renewalFrequency}
               onChange={(e) => setRenewalFrequency(e.target.value)}

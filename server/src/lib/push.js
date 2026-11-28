@@ -29,38 +29,26 @@ const TEXT = {
   "queue.called": {
     en: ["It's your turn!", "Please go to {room} now · Queue number {number}"],
     ms: ["Giliran anda!", "Sila ke {room} sekarang · Nombor giliran {number}"],
-    zh: ["轮到您了！", "请现在前往 {room} · 排队号 {number}"],
-    ta: ["உங்கள் முறை!", "இப்போது {room} க்குச் செல்லவும் · வரிசை எண் {number}"],
   },
   "queue.next": {
     en: ["You're next", "Queue number {number} · {room}. Please get ready."],
     ms: ["Anda seterusnya", "Nombor giliran {number} · {room}. Sila bersedia."],
-    zh: ["下一位就是您", "排队号 {number} · {room}。请做好准备。"],
-    ta: ["அடுத்தது நீங்கள்", "வரிசை எண் {number} · {room}. தயாராக இருங்கள்."],
   },
   "message.new": {
     en: ["New message from {from}", "Tap to read and reply."],
     ms: ["Mesej baharu daripada {from}", "Ketik untuk membaca dan membalas."],
-    zh: ["来自 {from} 的新消息", "点击阅读并回复。"],
-    ta: ["{from} இடமிருந்து புதிய செய்தி", "படித்துப் பதிலளிக்கத் தட்டவும்."],
   },
   "card.scanned": {
     en: ["Your MediCard was scanned", "{by}{at}"],
     ms: ["MediCard anda telah diimbas", "{by}{at}"],
-    zh: ["您的 MediCard 已被扫描", "{by}{at}"],
-    ta: ["உங்கள் MediCard ஸ்கேன் செய்யப்பட்டது", "{by}{at}"],
   },
   "appointment.booked": {
     en: ["Appointment booked", "{doctor} · {date} {time}"],
     ms: ["Temujanji ditetapkan", "{doctor} · {date} {time}"],
-    zh: ["已预约", "{doctor} · {date} {time}"],
-    ta: ["சந்திப்பு பதிவு செய்யப்பட்டது", "{doctor} · {date} {time}"],
   },
   "lab.new": {
     en: ["New lab result", "{test}"],
     ms: ["Keputusan makmal baharu", "{test}"],
-    zh: ["新化验结果", "{test}"],
-    ta: ["புதிய ஆய்வக முடிவு", "{test}"],
   },
 };
 export const PUSHED_TYPES = new Set(Object.keys(TEXT));
