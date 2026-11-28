@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify } from "../lib/notify.js";
-import { malaysiaNow } from "../lib/time.js";
+import { malaysiaNow, malaysiaDayStart } from "../lib/time.js";
 
 const router = Router();
 
@@ -22,10 +22,67 @@ function toJson(row) {
   };
 }
 
+// Today's queue starts at midnight in Malaysia (the server itself runs on UTC).
 function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  return malaysiaDayStart();
+}
+
+// The patient's ticket still open today (waiting or called), if any.
+async function openTicket(patientId) {
+  const { data } = await supabase
+    .from("queue_tickets")
+    .select("*")
+    .eq("patient_id", patientId)
+    .gte("created_at", startOfToday())
+    .in("status", ["waiting", "called"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data || null;
+}
+
+// Gives a new ticket the next number for today. Two check-ins at the same
+// moment could both pick the same number, so after saving it checks for a
+// clash and, if this ticket was the later one, moves it to the next free number.
+async function createTicket(fields) {
+  const highest = async () => {
+    const { data } = await supabase
+      .from("queue_tickets")
+      .select("number")
+      .gte("created_at", startOfToday())
+      .order("number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.number || 0;
+  };
+  const number = (await highest()) + 1;
+  const { data: ticket, error } = await supabase
+    .from("queue_tickets")
+    .insert({ ...fields, number })
+    .select()
+    .single();
+  if (error) return { error };
+
+  let current = ticket;
+  for (let i = 0; i < 5; i++) {
+    const { data: same } = await supabase
+      .from("queue_tickets")
+      .select("id, created_at")
+      .eq("number", current.number)
+      .gte("created_at", startOfToday())
+      .neq("id", current.id);
+    const earlier = (same || []).some((t) => t.created_at < current.created_at || (t.created_at === current.created_at && t.id < current.id));
+    if (!earlier) break;
+    const { data: moved } = await supabase
+      .from("queue_tickets")
+      .update({ number: (await highest()) + 1 })
+      .eq("id", current.id)
+      .select()
+      .single();
+    if (!moved) break;
+    current = moved;
+  }
+  return { data: current };
 }
 
 // Registration desk: scan a card, assign the next queue number for today
@@ -42,23 +99,16 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
   if (patientError) return res.status(500).json({ error: patientError.message });
   if (!patient) return res.status(404).json({ error: "Patient not found" });
 
-  const { count, error: countError } = await supabase
-    .from("queue_tickets")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", startOfToday());
-  if (countError) return res.status(500).json({ error: countError.message });
+  // already in today's queue: show that ticket instead of a second one
+  const existing = await openTicket(patient.id);
+  if (existing) return res.json({ ...toJson(existing), alreadyCheckedIn: true });
 
-  const { data, error } = await supabase
-    .from("queue_tickets")
-    .insert({
-      patient_id: patient.id,
-      patient_name: patient.name,
-      number: (count || 0) + 1,
-      room,
-      checked_in_by: req.user.name || req.user.email,
-    })
-    .select()
-    .single();
+  const { data, error } = await createTicket({
+    patient_id: patient.id,
+    patient_name: patient.name,
+    room,
+    checked_in_by: req.user.name || req.user.email,
+  });
   if (error) return res.status(400).json({ error: error.message });
 
   await logAudit(req.user, "queue.checkin", "patient", patient.id, { number: data.number, room, name: patient.name });
@@ -81,15 +131,7 @@ router.post("/self", requireAuth, requireRole("patient"), async (req, res) => {
     return res.status(403).json({ code: "not-your-card", error: "Tap your own active MediCard to check in." });
   }
 
-  const { data: existing } = await supabase
-    .from("queue_tickets")
-    .select("*")
-    .eq("patient_id", patient.id)
-    .gte("created_at", startOfToday())
-    .in("status", ["waiting", "called"])
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const existing = await openTicket(patient.id);
   if (existing) return res.json({ ...toJson(existing), alreadyCheckedIn: true });
 
   const { data: appointment } = await supabase
@@ -105,18 +147,8 @@ router.post("/self", requireAuth, requireRole("patient"), async (req, res) => {
     return res.status(404).json({ code: "no-appointment", error: "You have no appointment today. Please go to the registration desk." });
   }
 
-  const { count, error: countError } = await supabase
-    .from("queue_tickets")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", startOfToday());
-  if (countError) return res.status(500).json({ error: countError.message });
-
   const room = appointment.doctor_name || "Waiting area";
-  const { data, error } = await supabase
-    .from("queue_tickets")
-    .insert({ patient_id: patient.id, patient_name: patient.name, number: (count || 0) + 1, room, checked_in_by: "Self check-in (card tap)" })
-    .select()
-    .single();
+  const { data, error } = await createTicket({ patient_id: patient.id, patient_name: patient.name, room, checked_in_by: "Self check-in (card tap)" });
   if (error) return res.status(400).json({ error: error.message });
 
   await logAudit(req.user, "queue.self_checkin", "patient", patient.id, { number: data.number, room, name: patient.name, cardUid });

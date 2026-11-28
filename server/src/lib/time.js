@@ -11,6 +11,17 @@ export function malaysiaNow(at = new Date()) {
   };
 }
 
+// Today's date in Malaysia, "YYYY-MM-DD".
+export function malaysiaToday(at = new Date()) {
+  return malaysiaNow(at).date;
+}
+
+// The moment today started in Malaysia (midnight UTC+8), as an ISO timestamp,
+// for "created today" filters.
+export function malaysiaDayStart(at = new Date()) {
+  return new Date(`${malaysiaToday(at)}T00:00:00+08:00`).toISOString();
+}
+
 // "YYYY-MM-DD" plus n days.
 export function addDays(date, n) {
   const d = new Date(`${date}T00:00:00Z`);

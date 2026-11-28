@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { createPatientAccount } from "./patients.js";
+import { createPatientAccount, cardUidProblem } from "./patients.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { ageFromDob } from "../lib/time.js";
@@ -96,19 +96,8 @@ router.post("/register", requireAuth, requireRole("admin"), async (req, res) => 
   if (!cardUid || !email || !password || !name) {
     return res.status(400).json({ error: "cardUid, email, password, and name are required" });
   }
-  if (isPhoneToken(cardUid)) {
-    return res.status(400).json({ error: "That was a phone, not a MediCard. Tap the physical card instead." });
-  }
-
-  const { data: existingCard } = await supabase
-    .from("patients")
-    .select("id")
-    .eq("card_uid", cardUid)
-    .maybeSingle();
-  const { data: retiredCard } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", cardUid).maybeSingle();
-  if (existingCard || retiredCard) {
-    return res.status(409).json({ error: "This card UID is already registered." });
-  }
+  const problem = await cardUidProblem(cardUid);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
 
   try {
     const patient = await createPatientAccount({ ...req.body, registeredBy: req.user.name || req.user.email });

@@ -320,6 +320,11 @@ export default function AdminCheckIn() {
                     <DoorOpen size={16} /> {ticket.room}
                   </p>
                 </div>
+                {ticket.alreadyCheckedIn && (
+                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                    {t("This patient is already checked in today. This is their existing number.")}
+                  </p>
+                )}
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t("Show the patient their number — they can also see it on their own account.")}
                 </p>

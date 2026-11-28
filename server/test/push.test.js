@@ -68,9 +68,21 @@ describe("POST /api/notifications/devices", () => {
     app.use(express.json());
     app.use("/api/notifications", notificationsRouter);
 
-    const res = await request(app).post("/api/notifications/devices").send({ token: "phone-1", platform: "android", lang: "ta" });
+    const res = await request(app).post("/api/notifications/devices").send({ token: "phone-1", platform: "android", lang: "ms" });
 
     expect(res.status).toBe(200);
-    expect(q.upsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "p1", token: "phone-1", lang: "ta" }), { onConflict: "token" });
+    expect(q.upsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "p1", token: "phone-1", lang: "ms" }), { onConflict: "token" });
+  });
+
+  it("stores English for a language the app no longer offers", async () => {
+    const q = chain({ data: null, error: null });
+    mockSupabase.from.mockReturnValueOnce(q);
+    const app = express();
+    app.use(express.json());
+    app.use("/api/notifications", notificationsRouter);
+
+    await request(app).post("/api/notifications/devices").send({ token: "phone-2", platform: "android", lang: "ta" });
+
+    expect(q.upsert).toHaveBeenCalledWith(expect.objectContaining({ lang: "en" }), { onConflict: "token" });
   });
 });

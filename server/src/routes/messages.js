@@ -104,12 +104,16 @@ router.post("/mark-read", requireAuth, async (req, res) => {
   }
 
   const otherRole = req.user.role === "patient" ? "doctor" : "patient";
-  const { error } = await supabase
+  let query = supabase
     .from("messages")
     .update({ read: true })
     .eq("patient_id", patientId)
     .eq("sender_role", otherRole)
     .eq("read", false);
+  // a doctor only reads what was sent to them (or to the whole care team),
+  // so messages for another doctor stay unread for that doctor
+  if (req.user.role === "doctor") query = query.or(doctorFilter(req.user.uid));
+  const { error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
@@ -126,6 +130,11 @@ router.post("/", requireAuth, async (req, res) => {
   // A patient's reply goes to the doctor who last messaged them, so it shows
   // in that doctor's inbox and unread badge.
   let toDoctor = req.user.role === "doctor" ? req.user.uid : doctorId || null;
+  // a patient can only address a doctor, never another kind of account
+  if (req.user.role !== "doctor" && toDoctor) {
+    const { data: isDoctor } = await supabase.from("profiles").select("id").eq("id", toDoctor).eq("role", "doctor").maybeSingle();
+    if (!isDoctor) toDoctor = null;
+  }
   if (req.user.role === "patient" && !toDoctor) {
     const { data: last } = await supabase
       .from("messages")

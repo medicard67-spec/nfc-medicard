@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { malaysiaToday } from "../lib/time.js";
+
+const TZ = "Asia/Kuala_Lumpur";
+const monthKey = (d) => d.toLocaleString("en-US", { month: "short", year: "2-digit", timeZone: TZ });
 
 const router = Router();
 
@@ -21,8 +25,10 @@ router.get("/stats", async (_req, res) => {
   const doctors = doctorsRes.data;
   const history = historyRes.data;
 
+  // months follow Malaysian dates (the server itself runs on UTC)
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const [year, month] = malaysiaToday().split("-").map(Number);
+  const startOfMonth = new Date(`${malaysiaToday().slice(0, 7)}-01T00:00:00+08:00`);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   let newRegistrationsThisMonth = 0;
@@ -40,15 +46,15 @@ router.get("/stats", async (_req, res) => {
   let activeTreatmentCases = 0;
   const monthBuckets = new Map();
   for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = d.toLocaleString("en-US", { month: "short", year: "2-digit" });
+    const d = new Date(Date.UTC(year, month - 1 - i, 15));
+    const key = monthKey(d);
     monthBuckets.set(key, 0);
   }
 
   history.forEach((h) => {
     const createdAt = new Date(h.created_at);
     if (createdAt >= thirtyDaysAgo) activeTreatmentCases++;
-    const key = createdAt.toLocaleString("en-US", { month: "short", year: "2-digit" });
+    const key = monthKey(createdAt);
     if (monthBuckets.has(key)) monthBuckets.set(key, monthBuckets.get(key) + 1);
   });
 

@@ -2,7 +2,9 @@ import { Router } from "express";
 import multer from "multer";
 import { supabase, LAB_RESULTS_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { uploadBuffer } from "../lib/upload.js";
+import { uploadBuffer, signFileUrl, fileNameOf } from "../lib/upload.js";
+import { malaysiaToday } from "../lib/time.js";
+import { isDate } from "./medications.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, careTeamIds, patientName } from "../lib/notify.js";
 
@@ -11,6 +13,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 
 
 function canAccessPatient(req, patientId) {
   return req.user.role === "admin" || req.user.role === "doctor" || req.user.uid === patientId;
+}
+
+async function toSignedJson(row) {
+  return { ...toJson(row), fileUrl: await signFileUrl(row.file_url) };
 }
 
 function toJson(row) {
@@ -41,7 +47,7 @@ router.get("/", requireAuth, async (req, res) => {
     .eq("patient_id", patientId)
     .order("date", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data.map(toJson));
+  res.json(await Promise.all(data.map(toSignedJson)));
 });
 
 router.post(
@@ -54,11 +60,12 @@ router.post(
     if (!patientId || !testName) {
       return res.status(400).json({ error: "patientId and testName are required" });
     }
+    if (date && !isDate(date)) return res.status(400).json({ error: "Please pick a valid date." });
 
     let fileUrl = null;
     let fileName = null;
     if (req.file) {
-      fileName = req.file.originalname;
+      fileName = fileNameOf(req.file);
       const destPath = `${patientId}/${Date.now()}-${fileName}`;
       fileUrl = await uploadBuffer(LAB_RESULTS_BUCKET, req.file.buffer, destPath, req.file.mimetype);
     }
@@ -70,7 +77,7 @@ router.post(
         test_name: testName,
         physician: req.user.name || req.user.email,
         physician_id: req.user.uid,
-        date: date || new Date().toISOString().slice(0, 10),
+        date: date || malaysiaToday(),
         flagged: flagged === "true" || flagged === true,
         file_url: fileUrl,
         file_name: fileName,
@@ -86,7 +93,7 @@ router.post(
       await notify(team, "lab.abnormal", { patient: await patientName(patientId), test: testName, by: req.user.name || req.user.email },
         `/doctor/patient/${patientId}?tab=Lab%20Results`);
     }
-    res.status(201).json(toJson(data));
+    res.status(201).json(await toSignedJson(data));
   }
 );
 

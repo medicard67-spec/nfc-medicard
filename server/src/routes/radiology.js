@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { supabase, RADIOLOGY_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { uploadBuffer } from "../lib/upload.js";
+import { uploadBuffer, signFileUrl, fileNameOf } from "../lib/upload.js";
 import { logAudit } from "../lib/audit.js";
 import { notify } from "../lib/notify.js";
 
@@ -11,6 +11,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 
 
 function canAccessPatient(req, patientId) {
   return req.user.role === "admin" || req.user.role === "doctor" || req.user.uid === patientId;
+}
+
+async function toSignedJson(row) {
+  return { ...toJson(row), fileUrl: await signFileUrl(row.file_url) };
 }
 
 function toJson(row) {
@@ -40,7 +44,7 @@ router.get("/", requireAuth, async (req, res) => {
     .eq("patient_id", patientId)
     .order("uploaded_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data.map(toJson));
+  res.json(await Promise.all(data.map(toSignedJson)));
 });
 
 router.post(
@@ -54,7 +58,7 @@ router.post(
       return res.status(400).json({ error: "patientId, type, and file are required" });
     }
 
-    const destPath = `${patientId}/${Date.now()}-${req.file.originalname}`;
+    const destPath = `${patientId}/${Date.now()}-${fileNameOf(req.file)}`;
     const fileUrl = await uploadBuffer(RADIOLOGY_BUCKET, req.file.buffer, destPath, req.file.mimetype);
 
     const { data, error } = await supabase
@@ -65,7 +69,7 @@ router.post(
         anatomy: anatomy || "",
         classification: classification || "",
         file_url: fileUrl,
-        file_name: req.file.originalname,
+        file_name: fileNameOf(req.file),
         uploaded_by: req.user.name || req.user.email,
       })
       .select()
@@ -73,7 +77,7 @@ router.post(
     if (error) return res.status(400).json({ error: error.message });
     await logAudit(req.user, "radiology.create", "patient", patientId, { type });
     await notify(patientId, "imaging.new", { type, anatomy: anatomy || "" }, "/patient/radiology");
-    res.status(201).json(toJson(data));
+    res.status(201).json(await toSignedJson(data));
   }
 );
 

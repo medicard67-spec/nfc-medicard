@@ -17,6 +17,7 @@ function canAccessPatient(req, patientId) {
 }
 
 async function createPatientAccount({ email, password, name, ic, dob, age, gender, bloodType, allergies, chronicIllnesses, height, weight, phone, emergencyContactName, emergencyContactPhone, cardUid, registeredBy }) {
+  name = icName(name);
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -25,7 +26,18 @@ async function createPatientAccount({ email, password, name, ic, dob, age, gende
   if (createError) throw new Error(createError.message);
 
   const uid = created.user.id;
+  try {
+    return await finishPatientAccount(uid, { email, name, ic, dob, age, gender, bloodType, allergies, chronicIllnesses, height, weight, phone, emergencyContactName, emergencyContactPhone, cardUid, registeredBy });
+  } catch (err) {
+    // don't leave a login behind with no profile: undo the whole account
+    await supabase.from("patients").delete().eq("id", uid);
+    await supabase.from("profiles").delete().eq("id", uid);
+    await supabase.auth.admin.deleteUser(uid).catch(() => {});
+    throw err;
+  }
+}
 
+async function finishPatientAccount(uid, { email, name, ic, dob, age, gender, bloodType, allergies, chronicIllnesses, height, weight, phone, emergencyContactName, emergencyContactPhone, cardUid, registeredBy }) {
   // admin.createUser() does not itself send an email; trigger Supabase's
   // built-in "confirm signup" email so the patient must verify before login.
   supabase.auth
@@ -69,6 +81,21 @@ async function createPatientAccount({ email, password, name, ic, dob, age, gende
   return toPatientJson(patient);
 }
 
+// Patient names are kept in capital letters, exactly as on the IC.
+export function icName(name) {
+  return String(name || "").replace(/\s+/g, " ").trim().toUpperCase();
+}
+
+// Why a card UID can't be given to a patient, or null when it can.
+export async function cardUidProblem(cardUid) {
+  if (isPhoneToken(cardUid)) return { status: 400, error: "That was a phone, not a MediCard. Tap the physical card instead." };
+  const { data: existingCard } = await supabase.from("patients").select("id").eq("card_uid", cardUid).maybeSingle();
+  if (existingCard) return { status: 409, error: "This card UID is already registered." };
+  const { data: retiredCard } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", cardUid).maybeSingle();
+  if (retiredCard) return { status: 409, error: "This card was replaced before and can't be used again." };
+  return null;
+}
+
 function toArray(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];
@@ -79,8 +106,10 @@ function toArray(value) {
 router.get("/", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
   const search = (req.query.search || "").toString().trim();
   let query = supabase.from("patients").select("*").order("name");
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,ic.ilike.%${search}%`);
+  // characters that would change the meaning of the filter itself are dropped
+  const term = search.replace(/[,()"\\*%]/g, " ").replace(/\s+/g, " ").trim();
+  if (term) {
+    query = query.or(`name.ilike.%${term}%,ic.ilike.%${term}%`);
   }
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
@@ -92,6 +121,10 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
   const { email, password, name } = req.body;
   if (!email || !password || !name) {
     return res.status(400).json({ error: "email, password, and name are required" });
+  }
+  if (req.body.cardUid) {
+    const problem = await cardUidProblem(req.body.cardUid);
+    if (problem) return res.status(problem.status).json({ error: problem.error });
   }
 
   try {
@@ -142,6 +175,10 @@ router.patch("/:id", requireAuth, async (req, res) => {
   for (const [key, column] of Object.entries(allowedMap)) {
     if (key in req.body) updates[column] = req.body[key];
   }
+  if ("name" in updates) {
+    updates.name = icName(updates.name);
+    if (!updates.name) return res.status(400).json({ error: "Name can't be empty." });
+  }
 
   const { data, error } = await supabase
     .from("patients")
@@ -150,6 +187,8 @@ router.patch("/:id", requireAuth, async (req, res) => {
     .select()
     .single();
   if (error || !data) return res.status(404).json({ error: "Patient not found" });
+  // the login profile carries the name too (shown on messages and the top bar)
+  if ("name" in updates) await supabase.from("profiles").update({ name: updates.name }).eq("id", req.params.id);
   await logAudit(req.user, "patient.update", "patient", req.params.id, { fields: Object.keys(updates) });
   res.json(toPatientJson(data));
 });
@@ -161,18 +200,14 @@ router.patch("/:id", requireAuth, async (req, res) => {
 router.post("/:id/card", requireAuth, requireRole("admin"), async (req, res) => {
   const { cardUid } = req.body;
   if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
-  if (isPhoneToken(cardUid)) return res.status(400).json({ error: "That was a phone, not a MediCard. Tap the physical card instead." });
 
   const { data: patient } = await supabase.from("patients").select("id, name, card_uid, card_status").eq("id", req.params.id).maybeSingle();
   if (!patient) return res.status(404).json({ error: "Patient not found" });
   // a card reported lost can be replaced; an active one can't be overwritten
   const replacing = patient.card_uid && patient.card_status === "lost" ? patient.card_uid : null;
   if (patient.card_uid && !replacing) return res.status(409).json({ error: "This patient already has a card assigned." });
-
-  const { data: existingCard } = await supabase.from("patients").select("id").eq("card_uid", cardUid).maybeSingle();
-  if (existingCard) return res.status(409).json({ error: "This card UID is already registered." });
-  const { data: retiredCard } = await supabase.from("retired_cards").select("card_uid").eq("card_uid", cardUid).maybeSingle();
-  if (retiredCard) return res.status(409).json({ error: "This card was replaced before and can't be used again." });
+  const problem = await cardUidProblem(cardUid);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
 
   if (replacing) {
     await supabase.from("retired_cards").upsert({ card_uid: replacing, patient_id: patient.id, reason: "lost" });
@@ -234,9 +269,11 @@ router.get("/:id/vitals", requireAuth, async (req, res) => {
 
 router.post("/:id/vitals", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
   const { heartRate, note } = req.body;
+  const bpm = Number(heartRate);
+  if (!Number.isFinite(bpm) || bpm <= 0 || bpm > 300) return res.status(400).json({ error: "Enter a heart rate between 1 and 300." });
   const { data, error } = await supabase
     .from("vitals")
-    .insert({ patient_id: req.params.id, heart_rate: Number(heartRate), note: note || "" })
+    .insert({ patient_id: req.params.id, heart_rate: Math.round(bpm), note: note || "" })
     .select()
     .single();
   if (error) return res.status(400).json({ error: error.message });

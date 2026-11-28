@@ -210,8 +210,8 @@ export default function Login() {
               form instead of making the evaluator copy-type an email. Small
               chips read as a utility, not a second card competing with the
               sign-in form above it. */}
-          <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800">
-            <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-card dark:border-slate-800 dark:bg-slate-900 lg:mt-6 lg:rounded-none lg:border-0 lg:border-t lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-4 lg:shadow-none dark:lg:bg-transparent">
+            <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-300">
               {t("Try a demo account")}
             </p>
             <div className="flex flex-wrap gap-1.5">

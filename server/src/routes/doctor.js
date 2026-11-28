@@ -3,6 +3,7 @@ import multer from "multer";
 import { supabase, AVATARS_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadBuffer } from "../lib/upload.js";
+import { malaysiaToday } from "../lib/time.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -46,14 +47,14 @@ router.get("/stats", async (req, res) => {
 
   const myPatientCount = new Set(history.map((h) => h.patient_id)).size;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = malaysiaToday();
   const upcomingAppointments = appointments.filter((a) => a.date >= today).length;
 
   const now = new Date();
   const weekBuckets = new Map();
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-    const key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const key = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "Asia/Kuala_Lumpur" });
     weekBuckets.set(key, 0);
   }
   const weekKeys = Array.from(weekBuckets.keys());

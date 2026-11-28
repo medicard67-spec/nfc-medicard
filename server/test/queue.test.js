@@ -62,7 +62,8 @@ describe("POST /api/queue", () => {
 
   it("assigns the next sequential number for today and returns the ticket", async () => {
     mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz" }, error: null })); // patient lookup
-    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null, count: 4 })); // today's count
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open ticket today
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { number: 4 }, error: null })); // highest number today
     mockSupabase.from.mockReturnValueOnce(
       chain({
         data: { id: "t1", patient_id: "p1", patient_name: "Ahmad Faiz", number: 5, room: "Room 3", checked_in_by: "System Administrator", created_at: new Date().toISOString() },
@@ -76,6 +77,37 @@ describe("POST /api/queue", () => {
     expect(res.body.number).toBe(5);
     expect(res.body.room).toBe("Room 3");
     expect(res.body.patientName).toBe("Ahmad Faiz");
+  });
+
+  it("doesn't give a patient a second ticket on the same day", async () => {
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(
+      chain({ data: { id: "t1", patient_id: "p1", patient_name: "Ahmad Faiz", number: 3, room: "Room 2", status: "waiting" }, error: null })
+    );
+
+    const res = await request(buildApp()).post("/api/queue").send({ patientId: "p1", room: "Room 3" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.number).toBe(3);
+    expect(res.body.alreadyCheckedIn).toBe(true);
+  });
+
+  it("moves a ticket to the next number when two check-ins pick the same one", async () => {
+    const mine = { id: "t2", patient_id: "p1", patient_name: "Ahmad Faiz", number: 5, room: "Room 3", created_at: "2026-11-29T02:00:01.000Z" };
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { id: "p1", name: "Ahmad Faiz" }, error: null }));
+    mockSupabase.from.mockReturnValueOnce(chain({ data: null, error: null })); // no open ticket
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { number: 4 }, error: null })); // highest -> 5
+    mockSupabase.from.mockReturnValueOnce(chain({ data: mine, error: null })); // insert as #5
+    mockSupabase.from.mockReturnValueOnce(chain({ data: [{ id: "t1", created_at: "2026-11-29T02:00:00.000Z" }], error: null })); // someone else got #5 first
+    const moveQ = chain({ data: { ...mine, number: 6 }, error: null });
+    mockSupabase.from.mockReturnValueOnce(moveQ); // update
+    mockSupabase.from.mockReturnValueOnce(chain({ data: { number: 5 }, error: null })); // highest -> 6
+
+    const res = await request(buildApp()).post("/api/queue").send({ patientId: "p1", room: "Room 3" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.number).toBe(6);
+    expect(moveQ.update).toHaveBeenCalledWith({ number: 6 });
   });
 });
 
@@ -198,7 +230,7 @@ describe("POST /api/queue/self (patient taps their own card)", () => {
       patients: [{ data: patient, error: null }],
       queue_tickets: [
         { data: null, error: null }, // no ticket yet today
-        { count: 6, error: null },
+        { data: { number: 6 }, error: null }, // highest number today
         { data: { id: "t9", patient_id: "p1", patient_name: "Ahmad Faiz", number: 7, room: "Dr. Sarah Jenkins", status: "waiting" }, error: null },
       ],
       appointments: [{ data: { id: "a1", doctor_name: "Dr. Sarah Jenkins", start_time: "10:00:00" }, error: null }],

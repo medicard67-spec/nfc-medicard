@@ -58,7 +58,13 @@ export default function PatientRegistrationForm({ onRegistered }) {
     <div className="space-y-4">
       <Card>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label={t("Full Name")} value={form.name} onChange={update("name")} required />
+          <Input
+            label={t("Full Name (as on IC)")}
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value.toUpperCase() }))}
+            autoCapitalize="characters"
+            required
+          />
           <Input label={t("Email (login)")} type="email" value={form.email} onChange={update("email")} required />
           <Input label={t("Temporary Password")} value={form.password} onChange={update("password")} required />
           <IcNumberField value={form.ic} onChange={updateIc} />

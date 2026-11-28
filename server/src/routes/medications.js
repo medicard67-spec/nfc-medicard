@@ -2,6 +2,7 @@ import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
+import { malaysiaToday } from "../lib/time.js";
 
 const router = Router();
 
@@ -13,26 +14,27 @@ function canAccessPatient(req, patientId) {
 
 // Adds one renewal interval to a "YYYY-MM-DD" date string. Returns null for
 // "none" -- a medication with no renewal cycle has no computed end date.
-function addInterval(dateStr, frequency) {
+// Months are added "calendar style": 31 Jan + 1 month is 28 (or 29) Feb, not
+// 3 Mar, and 29 Feb + 1 year is 28 Feb.
+export function addInterval(dateStr, frequency) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  switch (frequency) {
-    case "weekly":
-      date.setUTCDate(date.getUTCDate() + 7);
-      break;
-    case "monthly":
-      date.setUTCMonth(date.getUTCMonth() + 1);
-      break;
-    case "quarterly":
-      date.setUTCMonth(date.getUTCMonth() + 3);
-      break;
-    case "yearly":
-      date.setUTCFullYear(date.getUTCFullYear() + 1);
-      break;
-    default:
-      return null;
+  const months = { monthly: 1, quarterly: 3, yearly: 12 }[frequency];
+  if (frequency === "weekly") {
+    const date = new Date(Date.UTC(y, m - 1, d + 7));
+    return date.toISOString().slice(0, 10);
   }
-  return date.toISOString().slice(0, 10);
+  if (!months) return null;
+  const target = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(d, lastDay));
+  return target.toISOString().slice(0, 10);
+}
+
+// A real calendar date written "YYYY-MM-DD" (rejects "2026-02-30" and typos).
+export function isDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
 function toJson(row) {
@@ -75,7 +77,8 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
   }
   const renewalFrequency = RENEWAL_FREQUENCIES.has(req.body.renewalFrequency) ? req.body.renewalFrequency : "none";
 
-  const effectiveStart = startDate || new Date().toISOString().slice(0, 10);
+  if (startDate && !isDate(startDate)) return res.status(400).json({ error: "Please pick a valid start date." });
+  const effectiveStart = startDate || malaysiaToday();
 
   const { data, error } = await supabase
     .from("medications")
@@ -109,7 +112,7 @@ router.patch("/:id/renew", requireAuth, requireRole("admin", "doctor"), async (r
     return res.status(400).json({ error: "This medication has no renewal cycle to renew" });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = malaysiaToday();
   const newEndDate = addInterval(today, existing.renewal_frequency);
 
   const { data, error } = await supabase

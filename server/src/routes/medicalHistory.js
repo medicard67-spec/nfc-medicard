@@ -4,13 +4,20 @@ import { supabase, MEDICAL_IMAGES_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, patientName } from "../lib/notify.js";
-import { uploadBuffer } from "../lib/upload.js";
+import { uploadBuffer, signFileUrls, fileNameOf } from "../lib/upload.js";
+import { malaysiaToday } from "../lib/time.js";
+import { isDate } from "./medications.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 function canAccessPatient(req, patientId) {
   return req.user.role === "admin" || req.user.role === "doctor" || req.user.uid === patientId;
+}
+
+async function toSignedJson(row) {
+  const json = toJson(row);
+  return { ...json, imageUrls: await signFileUrls(json.imageUrls) };
 }
 
 function toJson(row) {
@@ -48,7 +55,7 @@ router.get("/", requireAuth, async (req, res) => {
     .eq("patient_id", patientId)
     .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data.map(toJson));
+  res.json(await Promise.all(data.map(toSignedJson)));
 });
 
 router.post(
@@ -61,6 +68,7 @@ router.post(
     if (!patientId || !diagnosis) {
       return res.status(400).json({ error: "patientId and diagnosis are required" });
     }
+    if (date && !isDate(date)) return res.status(400).json({ error: "Please pick a valid date." });
 
     const { data: submittingDoctor } = await supabase
       .from("doctors")
@@ -96,7 +104,7 @@ router.post(
     const files = req.files || [];
     const imageUrls = [];
     for (const [i, file] of files.entries()) {
-      const destPath = `${patientId}/${Date.now()}-${i}-${file.originalname}`;
+      const destPath = `${patientId}/${Date.now()}-${i}-${fileNameOf(file)}`;
       imageUrls.push(await uploadBuffer(MEDICAL_IMAGES_BUCKET, file.buffer, destPath, file.mimetype));
     }
 
@@ -105,7 +113,7 @@ router.post(
       .insert({
         patient_id: patientId,
         diagnosis,
-        date: date || new Date().toISOString().slice(0, 10),
+        date: date || malaysiaToday(),
         physician: req.user.name || req.user.email,
         physician_id: req.user.uid,
         physician_department: submittingDoctor?.department || "General",
@@ -131,7 +139,7 @@ router.post(
         { patient: await patientName(patientId), by: req.user.name || req.user.email, diagnosis },
         `/doctor/patient/${patientId}?tab=History`);
     }
-    res.status(201).json(toJson(data));
+    res.status(201).json(await toSignedJson(data));
   }
 );
 
@@ -141,6 +149,7 @@ router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, re
   for (const [key, column] of Object.entries(allowedMap)) {
     if (key in req.body) updates[column] = req.body[key];
   }
+  if ("date" in updates && !isDate(updates.date)) return res.status(400).json({ error: "Please pick a valid date." });
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ error: "No editable fields provided" });
   }
@@ -153,7 +162,7 @@ router.patch("/:id", requireAuth, requireRole("admin", "doctor"), async (req, re
     .single();
   if (error || !data) return res.status(404).json({ error: "Record not found" });
   await logAudit(req.user, "medical_history.update", "patient", data.patient_id, { fields: Object.keys(updates) });
-  res.json(toJson(data));
+  res.json(await toSignedJson(data));
 });
 
 export default router;

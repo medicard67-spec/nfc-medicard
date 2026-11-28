@@ -52,10 +52,16 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
     });
 
   const uid = created.user.id;
+  // if a later step fails, remove what was made so no half-created login is left
+  const undo = async () => {
+    await supabase.from("profiles").delete().eq("id", uid);
+    await supabase.auth.admin.deleteUser(uid).catch(() => {});
+  };
   const { error: profileError } = await supabase
     .from("profiles")
     .insert({ id: uid, role, name, email });
   if (profileError) {
+    await undo();
     return res.status(400).json({ error: profileError.message });
   }
 
@@ -64,6 +70,7 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
       .from("doctors")
       .insert({ id: uid, name, email, department: department || "General", hospital });
     if (doctorError) {
+      await undo();
       return res.status(400).json({ error: doctorError.message });
     }
   }

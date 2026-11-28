@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 
 import { ensureStorageBuckets } from "./lib/supabase.js";
+import { catchAsyncErrors } from "./lib/asyncErrors.js";
 import usersRoutes from "./routes/users.js";
 import patientsRoutes from "./routes/patients.js";
 import medicalHistoryRoutes from "./routes/medicalHistory.js";
@@ -52,28 +53,48 @@ app.use("/api", (_req, res, next) => {
   next();
 });
 
+// Record IDs are UUIDs. A malformed one (a typo, a cut-off link) gets a plain
+// answer here instead of a raw database error further down.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ID_PATHS = /^\/(patients|medications|admissions|medical-history|queue|cards\/online)\/([^/]+)/;
+app.use("/api", (req, res, next) => {
+  for (const id of [req.query.patientId, req.body?.patientId]) {
+    if (id !== undefined && id !== "" && !UUID.test(String(id))) {
+      return res.status(400).json({ error: "Invalid patient ID." });
+    }
+  }
+  const m = ID_PATHS.exec(req.path);
+  if (m && !["mine", "self"].includes(m[2]) && !UUID.test(m[2])) {
+    return res.status(404).json({ error: "Record not found." });
+  }
+  next();
+});
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.use("/api/users", usersRoutes);
-app.use("/api/patients", patientsRoutes);
-app.use("/api/medical-history", medicalHistoryRoutes);
-app.use("/api/medications", medicationsRoutes);
-app.use("/api/admissions", admissionsRoutes);
-app.use("/api/lab-results", labResultsRoutes);
-app.use("/api/radiology", radiologyRoutes);
-app.use("/api/messages", messagesRoutes);
-app.use("/api/nfc", nfcRoutes);
-app.use("/api/appointments", appointmentsRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/doctor", doctorRoutes);
-app.use("/api/audit", auditRoutes);
-app.use("/api/queue", queueRoutes);
-app.use("/api/notifications", notificationsRoutes);
-app.use("/api/cards", cardsRoutes);
+app.use("/api/users", catchAsyncErrors(usersRoutes));
+app.use("/api/patients", catchAsyncErrors(patientsRoutes));
+app.use("/api/medical-history", catchAsyncErrors(medicalHistoryRoutes));
+app.use("/api/medications", catchAsyncErrors(medicationsRoutes));
+app.use("/api/admissions", catchAsyncErrors(admissionsRoutes));
+app.use("/api/lab-results", catchAsyncErrors(labResultsRoutes));
+app.use("/api/radiology", catchAsyncErrors(radiologyRoutes));
+app.use("/api/messages", catchAsyncErrors(messagesRoutes));
+app.use("/api/nfc", catchAsyncErrors(nfcRoutes));
+app.use("/api/appointments", catchAsyncErrors(appointmentsRoutes));
+app.use("/api/admin", catchAsyncErrors(adminRoutes));
+app.use("/api/doctor", catchAsyncErrors(doctorRoutes));
+app.use("/api/audit", catchAsyncErrors(auditRoutes));
+app.use("/api/queue", catchAsyncErrors(queueRoutes));
+app.use("/api/notifications", catchAsyncErrors(notificationsRoutes));
+app.use("/api/cards", catchAsyncErrors(cardsRoutes));
 
-app.use((err, _req, res, _next) => {
+app.use((err, _req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: "This file is too large." });
+  if (err.name === "MulterError") return res.status(400).json({ error: "This file could not be uploaded." });
   console.error(err);
-  res.status(500).json({ error: "Internal server error" });
+  res.status(500).json({ error: "Something went wrong on the server. Please try again." });
 });
 
 const port = process.env.PORT || 4001;

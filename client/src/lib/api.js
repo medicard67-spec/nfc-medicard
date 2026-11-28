@@ -4,6 +4,9 @@ import { t } from "../i18n/index.js";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4001/api",
+  // never wait forever: after 2 minutes the request fails with a clear message
+  // (long enough for a large scan upload or the free server waking up)
+  timeout: 120000,
 });
 
 api.interceptors.request.use(async (config) => {
@@ -21,6 +24,9 @@ api.interceptors.response.use(
   (err) => {
     const data = err.response?.data;
     if (data && typeof data.error === "string") data.error = t(data.error);
+    if (!err.response && err.code === "ECONNABORTED") {
+      err.response = { status: 0, data: { error: t("The server is taking too long to answer. Please check your connection and try again.") } };
+    }
     return Promise.reject(err);
   }
 );

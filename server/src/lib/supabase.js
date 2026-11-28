@@ -21,6 +21,11 @@ export const RADIOLOGY_BUCKET = "radiology";
 export const AVATARS_BUCKET = "avatars";
 export const MEDICAL_IMAGES_BUCKET = "medical-images";
 
+// Medical files are private: they are only shown through short-lived signed
+// links handed out by the API to people allowed to see that patient.
+// Profile pictures stay public.
+export const PRIVATE_BUCKETS = [LAB_RESULTS_BUCKET, RADIOLOGY_BUCKET, MEDICAL_IMAGES_BUCKET];
+
 export async function ensureStorageBuckets() {
   const { data: buckets, error } = await supabase.storage.listBuckets();
   if (error) throw error;
@@ -28,19 +33,15 @@ export async function ensureStorageBuckets() {
   const byName = new Map(buckets.map((b) => [b.name, b]));
   for (const bucket of [LAB_RESULTS_BUCKET, RADIOLOGY_BUCKET, AVATARS_BUCKET, MEDICAL_IMAGES_BUCKET]) {
     const existing = byName.get(bucket);
-    // Public so uploadBuffer()'s getPublicUrl() results actually resolve in
-    // the browser -- the backend still gates who can upload via its own
-    // requireAuth/requireRole checks, this only affects read access to files.
+    const isPublic = !PRIVATE_BUCKETS.includes(bucket);
     if (!existing) {
-      const { error: createError } = await supabase.storage.createBucket(bucket, {
-        public: true,
-      });
+      const { error: createError } = await supabase.storage.createBucket(bucket, { public: isPublic });
       if (createError) throw createError;
-      console.log(`Created Supabase Storage bucket: ${bucket}`);
-    } else if (!existing.public) {
-      const { error: updateError } = await supabase.storage.updateBucket(bucket, { public: true });
+      console.log(`Created Supabase Storage bucket: ${bucket} (${isPublic ? "public" : "private"})`);
+    } else if (Boolean(existing.public) !== isPublic) {
+      const { error: updateError } = await supabase.storage.updateBucket(bucket, { public: isPublic });
       if (updateError) throw updateError;
-      console.log(`Made existing Supabase Storage bucket public: ${bucket}`);
+      console.log(`Made Supabase Storage bucket ${isPublic ? "public" : "private"}: ${bucket}`);
     }
   }
 }
