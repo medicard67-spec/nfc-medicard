@@ -29,6 +29,9 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
   if (!email || !password || !name || !role) {
     return res.status(400).json({ error: "email, password, name, role are required" });
   }
+  if (String(password).length < 6) {
+    return res.status(400).json({ error: "The password must be at least 6 characters." });
+  }
   if (!["doctor", "admin"].includes(role)) {
     return res.status(400).json({ error: "role must be 'doctor' or 'admin'" });
   }

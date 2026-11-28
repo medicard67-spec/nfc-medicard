@@ -44,6 +44,9 @@ router.get("/unread-count", requireAuth, async (req, res) => {
 // Mark the given notifications (ids) as read, or all of them when no ids are sent.
 // Only ever touches the logged-in user's own notifications.
 router.post("/read", requireAuth, async (req, res) => {
+  if (req.body?.ids !== undefined && !Array.isArray(req.body.ids)) {
+    return res.status(400).json({ error: "ids must be a list." });
+  }
   const ids = Array.isArray(req.body?.ids) ? req.body.ids : null;
   let query = supabase.from("notifications").update({ read: true }).eq("user_id", req.user.uid).eq("read", false);
   if (ids) query = query.in("id", ids);

@@ -4,7 +4,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { sendCardCode, checkCardCode, maskEmail } from "../lib/cardCode.js";
-import { isPhoneToken, newPhoneToken, hashPhoneToken } from "../lib/onlineCard.js";
+import { isPhoneToken, newPhoneToken, hashPhoneToken, normalizeUid } from "../lib/onlineCard.js";
 
 // "My MediCard": a patient checks a card they tap on their phone, links a
 // new card with an emailed code, and reports a card lost or found. Admins
@@ -16,9 +16,7 @@ export const MAX_ATTEMPTS = 5;
 export const RESEND_SECONDS = 60;
 
 // "04:a3:b2:c1" / "04 A3 B2 C1" -> "04A3B2C1", the format cards are stored in
-export function normalizeUid(value) {
-  return String(value || "").replace(/[\s:-]/g, "").toUpperCase();
-}
+export { normalizeUid };
 
 const PATIENT_COLUMNS = "id, name, email, card_uid, card_status, card_lost_at, created_at";
 

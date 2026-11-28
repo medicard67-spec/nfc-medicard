@@ -2,7 +2,8 @@ import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
-import { malaysiaToday } from "../lib/time.js";
+import { malaysiaToday, isDate } from "../lib/time.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 
@@ -30,12 +31,7 @@ export function addInterval(dateStr, frequency) {
   return target.toISOString().slice(0, 10);
 }
 
-// A real calendar date written "YYYY-MM-DD" (rejects "2026-02-30" and typos).
-export function isDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
-}
+export { isDate };
 
 function toJson(row) {
   return {
@@ -98,7 +94,7 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
     })
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   await logAudit(req.user, "medication.add", "patient", patientId, { name, dosage, renewalFrequency });
   res.status(201).json(toJson(data));
 });
@@ -121,7 +117,7 @@ router.patch("/:id/renew", requireAuth, requireRole("admin", "doctor"), async (r
     .eq("id", req.params.id)
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   await logAudit(req.user, "medication.renew", "patient", data.patient_id, { name: data.name, newEndDate });
   res.json(toJson(data));
 });

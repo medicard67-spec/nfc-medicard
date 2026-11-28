@@ -5,6 +5,12 @@ import { supabase } from "./supabase.js";
 // "MCP" + 32 hex characters instead of a card UID. Only its SHA-256 is stored.
 const TOKEN_RE = /^MCP[0-9A-F]{32}$/;
 
+// Card UIDs are stored as plain upper-case hex ("04A3A2ED3D0289"). A UID typed
+// in lower case or copied as "04:a3:a2..." means the same card.
+export function normalizeUid(value) {
+  return String(value || "").replace(/[\s:-]/g, "").toUpperCase();
+}
+
 export function isPhoneToken(value) {
   return TOKEN_RE.test(String(value || ""));
 }

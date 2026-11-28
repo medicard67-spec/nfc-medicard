@@ -6,7 +6,8 @@ import { logAudit } from "../lib/audit.js";
 import { notify, patientName } from "../lib/notify.js";
 import { uploadBuffer, signFileUrls, fileNameOf } from "../lib/upload.js";
 import { malaysiaToday } from "../lib/time.js";
-import { isDate } from "./medications.js";
+import { isDate } from "../lib/time.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -127,7 +128,7 @@ router.post(
       })
       .select()
       .single();
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     await logAudit(req.user, "medical_history.create", "patient", patientId, {
       diagnosis,
       images: imageUrls.length,

@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadBuffer, signFileUrl, fileNameOf } from "../lib/upload.js";
 import { logAudit } from "../lib/audit.js";
 import { notify } from "../lib/notify.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -74,7 +75,7 @@ router.post(
       })
       .select()
       .single();
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     await logAudit(req.user, "radiology.create", "patient", patientId, { type });
     await notify(patientId, "imaging.new", { type, anatomy: anatomy || "" }, "/patient/radiology");
     res.status(201).json(await toSignedJson(data));

@@ -143,3 +143,28 @@ describe("uploaded file names keep their accents", () => {
     expect(fileNameOf({ originalname: "scan.png" })).toBe("scan.png");
   });
 });
+
+describe("round 2 fixes", () => {
+  it("treats lower-case or colon-separated card UIDs as the same card", async () => {
+    const { normalizeUid } = await import("../src/lib/onlineCard.js");
+    expect(normalizeUid("04:a3:a2:ed:3d:02:89")).toBe("04A3A2ED3D0289");
+    expect(normalizeUid(" 04 a3 a2 ")).toBe("04A3A2");
+  });
+  it("answers database errors in plain words", async () => {
+    const { sendDbError } = await import("../src/lib/dbError.js");
+    const res = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    sendDbError(res, { code: "23503", message: 'violates foreign key constraint "x"' });
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: "Patient not found." });
+  });
+  it("refuses a blank message", async () => {
+    currentUser = { uid: "p1", role: "patient", name: "AHMAD FAIZ", email: "faiz@example.com" };
+    const res = await request(app("/api/messages", messagesRouter)).post("/api/messages").send({ patientId: "p1", text: "   " });
+    expect(res.status).toBe(400);
+  });
+  it("refuses an age that isn't a number", async () => {
+    const res = await request(app("/api/patients", patientsRouter)).patch("/api/patients/p1").send({ age: "abc" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/valid age/);
+  });
+});

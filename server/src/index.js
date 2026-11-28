@@ -89,8 +89,13 @@ app.use("/api/queue", catchAsyncErrors(queueRoutes));
 app.use("/api/notifications", catchAsyncErrors(notificationsRoutes));
 app.use("/api/cards", catchAsyncErrors(cardsRoutes));
 
+// unknown API addresses answer in JSON like everything else
+app.use("/api", (_req, res) => res.status(404).json({ error: "Not found." }));
+
 app.use((err, _req, res, next) => {
   if (res.headersSent) return next(err);
+  if (err.type === "entity.too.large") return res.status(413).json({ error: "This is too large to send." });
+  if (err.type === "entity.parse.failed") return res.status(400).json({ error: "The request could not be read." });
   if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: "This file is too large." });
   if (err.name === "MulterError") return res.status(400).json({ error: "This file could not be uploaded." });
   console.error(err);

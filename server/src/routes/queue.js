@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify } from "../lib/notify.js";
 import { malaysiaNow, malaysiaDayStart } from "../lib/time.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 
@@ -109,7 +110,7 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
     room,
     checked_in_by: req.user.name || req.user.email,
   });
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   await logAudit(req.user, "queue.checkin", "patient", patient.id, { number: data.number, room, name: patient.name });
   await notify(patient.id, "queue.checkin", { number: data.number, room }, "/patient");
@@ -149,7 +150,7 @@ router.post("/self", requireAuth, requireRole("patient"), async (req, res) => {
 
   const room = appointment.doctor_name || "Waiting area";
   const { data, error } = await createTicket({ patient_id: patient.id, patient_name: patient.name, room, checked_in_by: "Self check-in (card tap)" });
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   await logAudit(req.user, "queue.self_checkin", "patient", patient.id, { number: data.number, room, name: patient.name, cardUid });
   await notify(patient.id, "queue.checkin", { number: data.number, room }, "/patient");
@@ -196,7 +197,7 @@ router.patch("/:id/call", requireAuth, requireRole("admin", "doctor"), async (re
     .eq("id", ticket.id)
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   await logAudit(req.user, "queue.call", "patient", ticket.patient_id, { number: ticket.number, room: ticket.room, name: ticket.patient_name });
   // a fresh notification every call, so "call again" alerts the patient again
@@ -226,7 +227,7 @@ router.patch("/:id/done", requireAuth, requireRole("admin", "doctor"), async (re
     .eq("id", req.params.id)
     .select()
     .maybeSingle();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   if (!data) return res.status(404).json({ error: "Queue ticket not found" });
   res.json(toJson(data));
 });

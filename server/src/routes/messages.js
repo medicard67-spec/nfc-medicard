@@ -2,8 +2,10 @@ import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { notify } from "../lib/notify.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
+const MAX_MESSAGE = 5000;
 
 function canAccessPatient(req, patientId) {
   return req.user.role === "admin" || req.user.role === "doctor" || req.user.uid === patientId;
@@ -119,7 +121,11 @@ router.post("/mark-read", requireAuth, async (req, res) => {
 });
 
 router.post("/", requireAuth, async (req, res) => {
-  const { patientId, doctorId, text } = req.body;
+  const { patientId, doctorId } = req.body;
+  const text = String(req.body.text ?? "").trim();
+  if (text.length > MAX_MESSAGE) {
+    return res.status(400).json({ error: "This message is too long. Please keep it under 5,000 characters." });
+  }
   if (!patientId || !text) {
     return res.status(400).json({ error: "patientId and text are required" });
   }
@@ -159,7 +165,7 @@ router.post("/", requireAuth, async (req, res) => {
     })
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   const from = req.user.name || req.user.email;
   if (req.user.role === "patient") {
     // a message to the whole care team (no doctor yet) stays in every doctor's inbox, without a bell alert

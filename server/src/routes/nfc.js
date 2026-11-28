@@ -5,7 +5,7 @@ import { createPatientAccount, cardUidProblem } from "./patients.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { ageFromDob } from "../lib/time.js";
-import { isPhoneToken, resolvePhoneToken } from "../lib/onlineCard.js";
+import { isPhoneToken, resolvePhoneToken, normalizeUid } from "../lib/onlineCard.js";
 
 const router = Router();
 
@@ -37,6 +37,7 @@ function toEmergencyProfileJson(row) {
 // the "Open Full Record" action, not something a scan exposes by default.
 router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req, res) => {
   let method = SCAN_METHODS.has(req.query.method) ? req.query.method : "manual";
+  req.params.cardUid = normalizeUid(req.params.cardUid);
   // a patient's phone (online MediCard) stands in for their physical card
   if (isPhoneToken(req.params.cardUid)) {
     const cardUid = await resolvePhoneToken(req.params.cardUid);
@@ -92,15 +93,17 @@ router.get("/:cardUid", requireAuth, requireRole("admin", "doctor"), async (req,
 
 // Admin: register a new physical card and create the patient account behind it.
 router.post("/register", requireAuth, requireRole("admin"), async (req, res) => {
-  const { cardUid, email, password, name } = req.body;
+  const { email, password, name } = req.body;
+  const cardUid = normalizeUid(req.body.cardUid);
   if (!cardUid || !email || !password || !name) {
     return res.status(400).json({ error: "cardUid, email, password, and name are required" });
   }
+  if (String(password).length < 6) return res.status(400).json({ error: "The password must be at least 6 characters." });
   const problem = await cardUidProblem(cardUid);
   if (problem) return res.status(problem.status).json({ error: problem.error });
 
   try {
-    const patient = await createPatientAccount({ ...req.body, registeredBy: req.user.name || req.user.email });
+    const patient = await createPatientAccount({ ...req.body, cardUid, registeredBy: req.user.name || req.user.email });
     await logAudit(req.user, "nfc.register", "patient", patient.uid, { cardUid, name: patient.name });
     res.status(201).json(patient);
   } catch (err) {

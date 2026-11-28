@@ -2,7 +2,9 @@ import { Router } from "express";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { malaysiaNow } from "../lib/time.js";
+import { isDate } from "../lib/time.js";
 import { notify } from "../lib/notify.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 
@@ -69,7 +71,7 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
   if (!patientId || !date) {
     return res.status(400).json({ error: "patientId and date are required" });
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
+  if (!isDate(date)) {
     return res.status(400).json({ error: "Please pick a valid date." });
   }
   if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
@@ -96,7 +98,7 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
     })
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   await notify(patientId, "appointment.booked", { doctor: req.user.name || req.user.email, date, time }, "/patient/appointments");
   res.status(201).json(toJson(data));
 });

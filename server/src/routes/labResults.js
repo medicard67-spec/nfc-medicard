@@ -4,9 +4,10 @@ import { supabase, LAB_RESULTS_BUCKET } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadBuffer, signFileUrl, fileNameOf } from "../lib/upload.js";
 import { malaysiaToday } from "../lib/time.js";
-import { isDate } from "./medications.js";
+import { isDate } from "../lib/time.js";
 import { logAudit } from "../lib/audit.js";
 import { notify, careTeamIds, patientName } from "../lib/notify.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -84,7 +85,7 @@ router.post(
       })
       .select()
       .single();
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     await logAudit(req.user, "lab_result.create", "patient", patientId, { testName });
     await notify(patientId, "lab.new", { test: testName, flagged: data.flagged }, "/patient/labs");
     if (data.flagged) {

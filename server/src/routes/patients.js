@@ -7,7 +7,9 @@ import { logAudit } from "../lib/audit.js";
 import { notify, adminIds } from "../lib/notify.js";
 import { uploadBuffer } from "../lib/upload.js";
 import { getClientOrigin } from "../lib/env.js";
-import { isPhoneToken } from "../lib/onlineCard.js";
+import { isPhoneToken, normalizeUid } from "../lib/onlineCard.js";
+import { isDate } from "../lib/time.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -122,6 +124,8 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
   if (!email || !password || !name) {
     return res.status(400).json({ error: "email, password, and name are required" });
   }
+  if (String(password).length < 6) return res.status(400).json({ error: "The password must be at least 6 characters." });
+  if (req.body.cardUid) req.body.cardUid = normalizeUid(req.body.cardUid);
   if (req.body.cardUid) {
     const problem = await cardUidProblem(req.body.cardUid);
     if (problem) return res.status(problem.status).json({ error: problem.error });
@@ -175,6 +179,15 @@ router.patch("/:id", requireAuth, async (req, res) => {
   for (const [key, column] of Object.entries(allowedMap)) {
     if (key in req.body) updates[column] = req.body[key];
   }
+  // numbers and dates must really be numbers and dates (empty clears them)
+  for (const [col, max] of [["age", 150], ["height", 300], ["weight", 500]]) {
+    if (col in updates && updates[col] !== null && updates[col] !== "") {
+      const n = Number(updates[col]);
+      if (!Number.isFinite(n) || n <= 0 || n > max) return res.status(400).json({ error: `Please enter a valid ${col}.` });
+      updates[col] = n;
+    } else if (col in updates) updates[col] = null;
+  }
+  if ("dob" in updates && updates.dob && !isDate(updates.dob)) return res.status(400).json({ error: "Please pick a valid date of birth." });
   if ("name" in updates) {
     updates.name = icName(updates.name);
     if (!updates.name) return res.status(400).json({ error: "Name can't be empty." });
@@ -198,7 +211,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 // account, so a patient added earlier without a card (e.g. via "Add
 // Patient") has no way to receive one later without this.
 router.post("/:id/card", requireAuth, requireRole("admin"), async (req, res) => {
-  const { cardUid } = req.body;
+  const cardUid = normalizeUid(req.body.cardUid);
   if (!cardUid) return res.status(400).json({ error: "cardUid is required" });
 
   const { data: patient } = await supabase.from("patients").select("id, name, card_uid, card_status").eq("id", req.params.id).maybeSingle();
@@ -276,7 +289,7 @@ router.post("/:id/vitals", requireAuth, requireRole("admin", "doctor"), async (r
     .insert({ patient_id: req.params.id, heart_rate: Math.round(bpm), note: note || "" })
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   res.status(201).json({ id: data.id, patientId: data.patient_id, heartRate: data.heart_rate, note: data.note, recordedAt: data.recorded_at });
 });
 

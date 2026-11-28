@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { logAudit } from "../lib/audit.js";
 import { notify } from "../lib/notify.js";
+import { sendDbError } from "../lib/dbError.js";
 
 const router = Router();
 
@@ -64,7 +65,7 @@ router.post("/", requireAuth, requireRole("admin", "doctor"), async (req, res) =
     })
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   await logAudit(req.user, "admission.admit", "patient", patientId, { ward, reason });
   await notify(patientId, "admission.admitted", { ward: ward || "", by: req.user.name || req.user.email }, "/patient/history");
   res.status(201).json(toJson(data));
@@ -81,7 +82,7 @@ router.patch("/:id/discharge", requireAuth, requireRole("admin", "doctor"), asyn
     .eq("id", req.params.id)
     .select()
     .single();
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   await logAudit(req.user, "admission.discharge", "patient", admission.patient_id, { ward: admission.ward });
   await notify(admission.patient_id, "admission.discharged", { ward: admission.ward || "" }, "/patient/history");
   res.json(toJson(data));
