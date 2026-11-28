@@ -135,6 +135,7 @@ public class PhoneCardPlugin extends Plugin {
     // the phone's secure chip. Apps can't fake a fixed UID themselves, so
     // for the USB desk scanner we hand the patient over to these wallets.
     private static final String[][] WALLETS = {
+        { "com.fintech.life", "Fineasy" },
         { "com.finshell.wallet", "OPPO Wallet" },
         { "com.coloros.wallet", "OPPO Wallet" },
         { "com.heytap.wallet", "Wallet" },
@@ -145,10 +146,19 @@ public class PhoneCardPlugin extends Plugin {
         { "com.vivo.wallet", "vivo Wallet" },
     };
 
+    // The first of our known wallets that is installed and launchable, with
+    // the real app name the phone shows for it (so the button reads e.g.
+    // "Add to Fineasy", whatever the user actually has).
     private String[] findWallet() {
         PackageManager pm = getContext().getPackageManager();
         for (String[] w : WALLETS) {
-            if (pm.getLaunchIntentForPackage(w[0]) != null) return w;
+            if (pm.getLaunchIntentForPackage(w[0]) == null) continue;
+            String label = w[1];
+            try {
+                CharSequence l = pm.getApplicationLabel(pm.getApplicationInfo(w[0], 0));
+                if (l != null && l.length() > 0) label = l.toString();
+            } catch (Exception ignored) {}
+            return new String[]{ w[0], label };
         }
         return null;
     }
