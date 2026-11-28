@@ -415,14 +415,6 @@ function WalletCopy({ wallet }) {
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           {t("If you report your card lost, the copy on your phone is blocked too.")}
         </p>
-        <details className="group mt-3">
-          <summary className="cursor-pointer text-xs font-medium text-brand-700 dark:text-brand-300">
-            {t("Why can't MediCard do this itself?")}
-          </summary>
-          <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            {t("The desk scanner only reads a card's ID number. For security, Android gives every app a new random number on each tap and never lets an app send a fixed one — only your phone's built-in wallet can keep your card's real number in its protected chip. So the copy has to live in {wallet}, which MediCard can't do for you.", { wallet: wallet.name })}
-          </p>
-        </details>
       </div>
     </div>
   );
