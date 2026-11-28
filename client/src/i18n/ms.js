@@ -693,4 +693,8 @@ export default {
   "Hold your MediCard on the back of your phone until it's copied.": "Dekatkan MediCard anda pada belakang telefon sehingga ia disalin.",
   "Name it MediCard. Now tap your unlocked phone on the hospital's scanner.": "Namakannya MediCard. Kini ketik telefon anda yang tidak berkunci pada pengimbas hospital.",
   "If you report your card lost, the copy on your phone is blocked too.": "Jika anda melaporkan kad anda hilang, salinan dalam telefon anda juga disekat.",
+  "Tap your phone at the desk": "Ketik telefon anda di kaunter",
+  "Copy your MediCard into {wallet} once. Then just tap your phone on the hospital's desk scanner — no card needed.": "Salin MediCard anda ke dalam {wallet} sekali sahaja. Kemudian ketik telefon anda pada pengimbas kaunter hospital — tanpa perlukan kad.",
+  "Or let staff scan this phone with their phone": "Atau benarkan kakitangan mengimbas telefon ini dengan telefon mereka",
+  "This lets a staff member's phone or tablet read your phone. It does not work on the desk's USB scanner — for that, use your wallet above.": "Ini membolehkan telefon atau tablet kakitangan membaca telefon anda. Ia tidak berfungsi pada pengimbas USB kaunter — untuk itu, gunakan dompet anda di atas.",
 };
