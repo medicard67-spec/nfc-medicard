@@ -45,6 +45,13 @@ app.use(
 );
 app.use(express.json());
 
+// API answers change from one moment to the next (a card lost, found or
+// replaced), so browsers must never reuse a saved answer.
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/users", usersRoutes);
